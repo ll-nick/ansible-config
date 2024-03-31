@@ -1,0 +1,18 @@
+- name: Nerdfont // Ensure Fonts Directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share/fonts"
+    state: directory
+
+- name: Nerdfont // Check Font Exists
+  ansible.builtin.shell: "fc-list | grep -q JetBrainsMono"
+  register: font_exists
+  changed_when: false
+  ignore_errors: true
+
+- name: Nerdfont // Download
+  when: font_exists.rc != 0
+  ansible.builtin.unarchive:
+    src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
+    dest: "{{ ansible_env.HOME }}/.local/share/fonts/"
+    remote_src: yes
+

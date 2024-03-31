@@ -1,0 +1,16 @@
+- hosts: sudo_hosts
+  become: true
+  pre_tasks:
+    - name: pre-run | update package cache
+      apt: update_cache=yes
+      changed_when: False
+
+- hosts: sudo_hosts
+  become: true
+  roles:
+    - root_base
+
+- hosts: all
+  roles:
+    - base
+

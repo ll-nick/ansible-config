@@ -1,0 +1,6 @@
+- name: Install basic packages
+  ansible.builtin.apt:
+    pkg:
+    - git
+    - libfuse2
+    - terminator
