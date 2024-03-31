@@ -1,0 +1,6 @@
+- name: z // Install
+  ansible.builtin.git:
+    repo: "https://github.com/rupa/z.git"
+    dest: "{{ ansible_env.HOME }}/.config/z"
+    force: "true"
+

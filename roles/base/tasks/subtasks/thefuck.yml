@@ -1,0 +1,4 @@
+- name: thefuck // Install
+  ansible.builtin.pip:
+    name: thefuck
+    extra_args: --user

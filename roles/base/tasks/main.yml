@@ -1,6 +1,9 @@
 - block:
   - import_tasks: subtasks/bash.yml
+  - import_tasks: subtasks/fzf.yml
   - import_tasks: subtasks/nerdfont.yml
   - import_tasks: subtasks/nvim.yml
   - import_tasks: subtasks/starship.yml
   - import_tasks: subtasks/terminator.yml
+  - import_tasks: subtasks/thefuck.yml
+  - import_tasks: subtasks/z.yml
