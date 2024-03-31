@@ -1,0 +1,12 @@
+- name: bashrc // Clone Config
+  ansible.builtin.git:
+    repo: "https://github.com/ll-nick/bash-config"
+    dest: "{{ ansible_env.HOME }}/.config/bash"
+    force: "true"
+
+- name: bashrc // Create Symlink
+  ansible.builtin.file:
+    src:  "{{ ansible_env.HOME }}/.config/bash/.bashrc"
+    dest: "{{ ansible_env.HOME }}/.bashrc"
+    state: link
+    force: true
