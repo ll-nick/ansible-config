@@ -1,6 +1,7 @@
 - name: Install basic packages
   ansible.builtin.apt:
     pkg:
+    - curl
     - git
     - libfuse2
     - terminator
