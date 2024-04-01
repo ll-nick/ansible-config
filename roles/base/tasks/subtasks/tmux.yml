@@ -1,0 +1,23 @@
+- name: tmux // Download Appimage
+  ansible.builtin.get_url:
+    url: "https://github.com/nelsonenzo/tmux-appimage/releases/download/3.3a/tmux.appimage"
+    dest: "{{ ansible_env.HOME }}/.local/bin/tmux"
+    checksum: sha256:ba8f457f280caacf0e6f3b3772eb84be2b47800d0b853da680cddd09c353bcc3
+    mode: "0755"
+
+- name: tmux // Clone Config
+  ansible.builtin.git:
+    repo: "https://github.com/ll-nick/tmux-config.git"
+    dest: "{{ ansible_env.HOME }}/.config/tmux"
+    force: "true"
+  register: tmux_config
+
+- name: tmux // Clone TPM
+  ansible.builtin.git:
+    repo: "https://github.com/tmux-plugins/tpm"
+    dest: "{{ ansible_env.HOME }}/.config/tmux/plugins/tpm"
+    force: "true"
+
+- name: tmux // Install Plugins
+  ansible.builtin.shell: "bash {{ ansible_env.HOME }}/.config/tmux/plugins/tpm/bin/install_plugins"
+  when: tmux_config.changed
