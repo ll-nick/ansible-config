@@ -1,0 +1,5 @@
+- name: MRT // Add bash config
+  ansible.builtin.copy:
+    src: bash/mrt.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/mrt.bash"
+

@@ -1,0 +1,37 @@
+- name: Pre-Run // Group Host
+  hosts: all
+  tasks:
+    - name: Pre-Run // Setup MRT Group
+      add_host:
+        name: "{{ ansible_hostname }}"
+        groups: mrt
+      when: "'mrt' in ansible_hostname"
+    - name: Pre-Run // Setup TEST Group
+      add_host:
+        name: "{{ ansible_hostname }}"
+        groups: test
+      when: "'test' in ansible_hostname"
+
+- hosts: sudo_hosts
+  become: true
+  pre_tasks:
+    - name: Pre-Run // Update Package Cache
+      apt: update_cache=yes
+      changed_when: False
+
+- hosts: sudo_hosts
+  become: true
+  roles:
+    - root_base
+
+- hosts: all
+  roles:
+    - base
+
+- hosts: mrt
+  roles:
+    - mrt
+
+- hosts: test
+  roles:
+    - test
