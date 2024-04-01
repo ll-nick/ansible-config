@@ -15,3 +15,9 @@
     repo: "https://github.com/ll-nick/starship-config.git"
     dest: "{{ ansible_env.HOME }}/.config/starship"
     force: "true"
+
+- name: Starship // Add bash config
+  ansible.builtin.copy:
+    src: bash/prompt.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/prompt.bash"
+

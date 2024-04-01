@@ -2,3 +2,9 @@
   ansible.builtin.pip:
     name: thefuck
     extra_args: --user
+
+- name: thefuck // Add bash config
+  ansible.builtin.copy:
+    src: bash/thefuck.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/thefuck.bash"
+

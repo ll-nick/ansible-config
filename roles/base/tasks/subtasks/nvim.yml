@@ -11,3 +11,8 @@
     dest: "{{ ansible_env.HOME }}/.config/nvim"
     force: "true"
 
+- name: Neovim // Add bash config
+  ansible.builtin.copy:
+    src: bash/nvim.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"
+

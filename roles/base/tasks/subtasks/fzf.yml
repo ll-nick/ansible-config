@@ -13,3 +13,8 @@
     cmd: "bash {{ ansible_env.HOME }}/.config/fzf/install --xdg --key-bindings --completion --no-update-rc"
   when: not fzf_check.stat.exists
 
+- name: fzf // Add bash config
+  ansible.builtin.copy:
+    src: bash/fzf.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/fzf.bash"
+

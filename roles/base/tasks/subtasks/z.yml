@@ -4,3 +4,8 @@
     dest: "{{ ansible_env.HOME }}/.config/z"
     force: "true"
 
+- name: z // Add bash config
+  ansible.builtin.copy:
+    src: bash/z.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/z.bash"
+
