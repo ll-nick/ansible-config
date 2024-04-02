@@ -4,7 +4,7 @@
     - name: Pre-Run // Setup All Group
       add_host:
         name: "{{ ansible_hostname }}"
-        groups: all
+        groups: default
 
     - name: Pre-Run // Setup MRT Group
       add_host:
@@ -24,7 +24,7 @@
   roles:
     - privileged
 
-- hosts: all
+- hosts: default
   roles:
     - user_config
 
