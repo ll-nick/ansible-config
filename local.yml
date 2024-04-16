@@ -5,12 +5,14 @@
       add_host:
         name: "{{ ansible_hostname }}"
         groups: default
+      changed_when: False
 
     - name: Pre-Run // Setup MRT Group
       add_host:
         name: "{{ ansible_hostname }}"
         groups: mrt
       when: "'mrt' in ansible_hostname"
+      changed_when: False
 
 - hosts: privileged
   become: true
