@@ -26,3 +26,15 @@
   ansible.builtin.copy:
     src: bash/tmux.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
+
+- name: tmux // Install autostart service
+  ansible.builtin.copy:
+    src: systemd/tmux.service
+    dest: "{{ ansible_env.HOME }}/.config/systemd/user/tmux.service"
+
+- name: tmux // Enable autostart service
+  ansible.builtin.systemd:
+    unit: tmux
+    enabled: true
+    scope: user
+

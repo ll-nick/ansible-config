@@ -1,0 +1,17 @@
+[Unit]
+Description=tmux default session (detached)
+Documentation=man:tmux(1)
+
+[Service]
+Type=forking
+ExecStart=bash -c 'exec ~/.local/bin/tmux start-server'
+
+ExecStop=bash -c 'PATH=~/.local/bin:$PATH exec ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh'
+ExecStop=bash -c '~/.local/bin/tmux kill-server'
+KillMode=control-group
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
