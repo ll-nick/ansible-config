@@ -1,12 +1,14 @@
 [Unit]
-Description=tmux default session (detached)
+Description=Start tmux server and restore last session
 Documentation=man:tmux(1)
 
 [Service]
 Type=forking
-ExecStart=bash -c 'exec ~/.local/bin/tmux start-server'
+ExecStart=bash -c 'exec ~/.local/bin/tmux new-session -d -s main'
+ExecStartPost=bash -c "~/.local/bin/tmux new-session -d -s restore 'bash -c \"PATH=~/.local/bin:$PATH ~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh\"'"
 
-ExecStop=bash -c 'PATH=~/.local/bin:$PATH exec ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh'
+ExecStop=bash -c 'PATH=~/.local/bin:$PATH ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh'
+ExecStop=bash -c "sed -i 's#/tmp.*nvim#nvim#' ~/.config/tmux/plugins/tmux-resurrect/snapshots/last"
 ExecStop=bash -c '~/.local/bin/tmux kill-server'
 KillMode=control-group
 
