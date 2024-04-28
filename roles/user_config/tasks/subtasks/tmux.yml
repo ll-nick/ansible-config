@@ -27,6 +27,11 @@
     src: bash/tmux.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
 
+- name: tmux // Ensure systemd user service directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/systemd/user"
+    state: directory
+
 - name: tmux // Install autostart service
   ansible.builtin.copy:
     src: systemd/tmux.service
@@ -37,4 +42,3 @@
     unit: tmux
     enabled: true
     scope: user
-
