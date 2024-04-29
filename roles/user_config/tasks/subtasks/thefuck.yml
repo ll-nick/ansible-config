@@ -2,9 +2,14 @@
   ansible.builtin.pip:
     name: thefuck
     extra_args: --user
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: thefuck // Install
+  community.general.pipx:
+    name: thefuck
+  when: ansible_distribution == "Archlinux"
 
 - name: thefuck // Add bash config
   ansible.builtin.copy:
     src: bash/thefuck.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/thefuck.bash"
-
