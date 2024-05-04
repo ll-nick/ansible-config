@@ -4,8 +4,8 @@ Documentation=man:tmux(1)
 
 [Service]
 Type=forking
-ExecStart=bash -c 'exec ~/.local/bin/tmux new-session -d -s main'
-ExecStartPost=bash -c "~/.local/bin/tmux new-session -d -s restore 'bash -c \"PATH=~/.local/bin:$PATH ~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh\"'"
+ExecStart=bash -c 'export PATH=~/.local/bin:$PATH && exec tmux new-session -d -s main'
+ExecStartPost=bash -c "export PATH=~/.local/bin:$PATH && tmux new-session -d -s restore '~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh'"
 
 ExecStop=bash -c 'PATH=~/.local/bin:$PATH ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh'
 ExecStop=bash -c "sed -i 's#/tmp.*nvim#nvim#' ~/.config/tmux/plugins/tmux-resurrect/snapshots/last"
