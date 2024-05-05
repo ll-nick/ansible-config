@@ -13,5 +13,12 @@
     src: "https://github.com/jesseduffield/lazygit/releases/download/v0.41.0/lazygit_0.41.0_Linux_x86_64.tar.gz"
     dest: "{{ ansible_env.HOME }}/.local/bin/"
     remote_src: yes
-  when: not lazygit_install.stat.exists
+  when: not lazygit_install.stat.exists and ansible_architecture == "x86_64"
+
+- name: lazygit // Install
+  ansible.builtin.unarchive:
+    src: "https://github.com/jesseduffield/lazygit/releases/download/v0.41.0/lazygit_0.41.0_Linux_arm64.tar.gz"
+    dest: "{{ ansible_env.HOME }}/.local/bin/"
+    remote_src: yes
+  when: not lazygit_install.stat.exists and ansible_architecture == "aarch64"
 
