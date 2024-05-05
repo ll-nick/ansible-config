@@ -4,6 +4,7 @@
     dest: "{{ ansible_env.HOME }}/.local/bin/tmux"
     checksum: sha256:ba8f457f280caacf0e6f3b3772eb84be2b47800d0b853da680cddd09c353bcc3
     mode: "0755"
+  when: ansible_architecture == "x86_64"
 
 - name: tmux // Clone Config
   ansible.builtin.git:
