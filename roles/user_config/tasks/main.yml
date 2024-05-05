@@ -1,13 +1,15 @@
 - block:
   - import_tasks: subtasks/bash.yml
   - import_tasks: subtasks/fzf.yml
-  - import_tasks: subtasks/gnome.yml
   - import_tasks: subtasks/lazygit.yml
   - import_tasks: subtasks/nerdfont.yml
   - import_tasks: subtasks/nodejs.yml
   - import_tasks: subtasks/nvim.yml
   - import_tasks: subtasks/starship.yml
-  - import_tasks: subtasks/terminator.yml
   - import_tasks: subtasks/thefuck.yml
   - import_tasks: subtasks/tmux.yml
   - import_tasks: subtasks/z.yml
+  - include_tasks: subtasks/gnome.yml
+    when: ansible_facts['env']['DISPLAY'] is defined
+  - include_tasks: subtasks/terminator.yml
+    when: ansible_facts['env']['DISPLAY'] is defined
