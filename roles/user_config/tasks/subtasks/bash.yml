@@ -11,10 +11,10 @@
     state: link
     force: true
 
-- name: bashrc // Create profile symlink
+- name: bashrc // Create bash_profile symlink
   ansible.builtin.file:
-    src:  "{{ ansible_env.HOME }}/.config/bash/.profile"
-    dest: "{{ ansible_env.HOME }}/.profile"
+    src:  "{{ ansible_env.HOME }}/.config/bash/.bash_profile"
+    dest: "{{ ansible_env.HOME }}/.bash_profile"
     state: link
     force: true
 
