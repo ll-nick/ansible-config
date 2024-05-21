@@ -16,11 +16,17 @@
 
 - hosts: default
   become: true
+  tags: [never, privileged]
   pre_tasks:
-    - name: Pre-Run // Update Package Cache
+    - name: Pre-Run // Update pacman cache
+      pacman: update_cache=yes
+      changed_when: False
+      when: ansible_distribution == "Archlinux"
+
+    - name: Pre-Run // Update apt cache
       apt: update_cache=yes
       changed_when: False
-  tags: [never, privileged]
+      when: ansible_distribution in ["Debian", "Ubuntu"]
 
 - hosts: privileged
   become: true
