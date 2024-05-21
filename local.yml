@@ -1,7 +1,7 @@
 - name: Pre-Run // Group Host
   hosts: localhost
   tasks:
-    - name: Pre-Run // Setup All Group
+    - name: Pre-Run // Setup Default Group
       add_host:
         name: "{{ ansible_hostname }}"
         groups: default
@@ -14,12 +14,13 @@
       when: "'mrt' in ansible_hostname"
       changed_when: False
 
-- hosts: privileged
+- hosts: default
   become: true
   pre_tasks:
     - name: Pre-Run // Update Package Cache
       apt: update_cache=yes
       changed_when: False
+  tags: [never, privileged]
 
 - hosts: privileged
   become: true
