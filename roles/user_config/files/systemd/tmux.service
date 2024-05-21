@@ -1,19 +1,20 @@
 [Unit]
-Description=Start tmux server and restore last session
+Description=Persistent tmux sessions
 Documentation=man:tmux(1)
+After=graphical-session.target
 
 [Service]
 Type=forking
-ExecStart=bash -c 'export PATH=~/.local/bin:$PATH && exec tmux new-session -d -s main'
-ExecStartPost=bash -c "export PATH=~/.local/bin:$PATH && tmux new-session -d -s restore '~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh'"
+ExecStart=bash -l -c "tmux new-session -d -s restore '~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh'"
 
-ExecStop=bash -c 'PATH=~/.local/bin:$PATH ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh'
+ExecStop=bash -l -c "~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh"
 ExecStop=bash -c "sed -i 's#/tmp.*nvim#nvim#' ~/.config/tmux/plugins/tmux-resurrect/snapshots/last"
-ExecStop=bash -c '~/.local/bin/tmux kill-server'
+ExecStop=bash -l -c "tmux kill-server"
 KillMode=control-group
 
 Restart=on-failure
 RestartSec=5s
 
 [Install]
-WantedBy=default.target
+WantedBy=graphical-session.target
+
