@@ -1,3 +1,10 @@
+- name: Terminator // Install
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name: terminator
+    state: present
+
 - name: Terminator // Clone Config
   ansible.builtin.git:
     repo: "https://github.com/ll-nick/terminator-config.git"
