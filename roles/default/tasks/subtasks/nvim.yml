@@ -1,10 +1,65 @@
-- name: Neovim // Download Appimage
-  ansible.builtin.get_url:
-    url: "https://github.com/neovim/neovim/releases/download/v0.9.5/nvim.appimage"
-    dest: "{{ ansible_env.HOME }}/.local/bin/nvim"
-    checksum: sha256:0c82e5702af7a11fbb916a11b4a82e98928abf8266c74b2030ea740340437bf9
-    mode: "0755"
-  when: ansible_architecture == "x86_64"
+- name: nvim // Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - cmake
+      - curl
+      - unzip
+    state: present
+
+- name: nvim // Install arch dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - base-devel
+      - ninja
+    state: present
+  when: ansible_distribution == "Archlinux"
+
+- name: nvim // Install debian dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - build-essential
+      - gettext
+      - ninja-build
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: nvim // Check installed version
+  command: nvim --version | head -n 1
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  register: nvim_installed_version
+
+- when: nvim_installed_version is failed or nvim_installed_version.stdout.split()[1] is version(nvim_version, "!=")
+  block:
+    - name: nvim // Clone nvim
+      ansible.builtin.git:
+        repo: "https://github.com/neovim/neovim.git"
+        dest: "/tmp/nvim-{{ nvim_version }}"
+        depth: 1
+        version: "{{nvim_version}}"
+
+    - name: nvim // Make
+      command: make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX={{ ansible_env.HOME }}/.local
+      args:
+        chdir: "/tmp/nvim-{{ nvim_version }}"
+        creates: "/tmp/nvim-{{ nvim_version }}/build/bin/nvim"
+
+    - name: nvim // Install
+      command: make install
+      args:
+        chdir: "/tmp/nvim-{{ nvim_version }}"
+
+    - name: nvim // Remove build directory
+      ansible.builtin.file:
+        path: "/tmp/nvim-{{ nvim_version }}"
+        state: absent
 
 - name: Neovim // Clone Config
   ansible.builtin.git:
