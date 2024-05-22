@@ -7,6 +7,13 @@
         groups: default
       changed_when: False
 
+    - name: Pre-Run // Setup Display Group
+      add_host:
+        name: "{{ ansible_hostname }}"
+        groups: display
+      when: ansible_facts['env']['DISPLAY'] is defined
+      changed_when: False
+
     - name: Pre-Run // Setup MRT Group
       add_host:
         name: "{{ ansible_hostname }}"
@@ -31,6 +38,10 @@
 - hosts: default
   roles:
     - default
+
+- hosts: display
+  roles:
+    - display
 
 - hosts: mrt
   roles:

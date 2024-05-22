@@ -1,0 +1,4 @@
+- block:
+  - import_tasks: subtasks/gnome.yml
+  - import_tasks: subtasks/terminator.yml
+
