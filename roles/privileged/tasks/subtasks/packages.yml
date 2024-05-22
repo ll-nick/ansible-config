@@ -1,9 +1,0 @@
-- name: Install basic packages
-  ansible.builtin.apt:
-    pkg:
-    - curl
-    - git
-    - libfuse2
-    - python3-dev 
-    - python3-pip
-    - python3-setuptools

@@ -1,3 +1,11 @@
+- name: starship // Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - curl
+    state: present
+
 - name: Starship // Check Install
   shell:
     cmd: starship --version

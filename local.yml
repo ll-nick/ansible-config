@@ -28,14 +28,9 @@
       changed_when: False
       when: ansible_distribution in ["Debian", "Ubuntu"]
 
-- hosts: privileged
-  become: true
-  roles:
-    - privileged
-
 - hosts: default
   roles:
-    - user_config
+    - default
 
 - hosts: mrt
   roles:
