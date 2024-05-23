@@ -1,0 +1,7 @@
+services:
+  deployment-script:
+    image: deployment-script
+    build: .
+    ports:
+      - "1337:80"
+
