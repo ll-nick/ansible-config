@@ -27,9 +27,7 @@
   ansible.builtin.package:
     name:
       - build-essential
-      - libevent
       - libevent-dev
-      - ncurses
       - ncurses-dev
       - pkg-config
     state: present
