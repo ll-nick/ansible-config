@@ -36,7 +36,7 @@
   failed_when: false
   register: nvim_installed_version
 
-- when: nvim_installed_version is failed or nvim_installed_version.stdout.split()[1] is version(nvim_version, "!=")
+- when: nvim_installed_version.rc != 0 or nvim_installed_version.stdout.split()[1] is version(nvim_version, "!=")
   block:
     - name: nvim // Clone nvim
       ansible.builtin.git:

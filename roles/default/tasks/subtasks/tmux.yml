@@ -42,7 +42,7 @@
   failed_when: false
   register: tmux_installed_version
 
-- when: tmux_installed_version is failed or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
+- when: tmux_installed_version.rc != 0 or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
   block:
     - name: tmux // Clone tmux
       ansible.builtin.git:
