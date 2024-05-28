@@ -1,0 +1,70 @@
+- name: tmux // Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - autoconf
+      - automake
+      - bison
+      - xclip
+    state: present
+
+- name: tmux // Install arch dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - base-devel
+      - libevent
+      - ncurses
+      - pkgconf
+    state: present
+  when: ansible_distribution == "Archlinux"
+
+- name: tmux // Install debian dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - build-essential
+      - libevent-dev
+      - ncurses-dev
+      - pkg-config
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: tmux // Clone tmux
+  ansible.builtin.git:
+    repo: "https://github.com/tmux/tmux.git"
+    dest: "/tmp/tmux-{{ tmux_version }}"
+    depth: 1
+    version: "{{tmux_version}}"
+
+- name: tmux // Autogen
+  command: sh autogen.sh
+  args:
+    chdir: "/tmp/tmux-{{ tmux_version }}"
+    creates: "/tmp/tmux-{{ tmux_version }}/configure"
+
+- name: tmux // Configure
+  command: ./configure --prefix={{ ansible_env.HOME }}/.local
+  args:
+    chdir: "/tmp/tmux-{{ tmux_version }}"
+    creates: "/tmp/tmux-{{ tmux_version }}/Makefile"
+
+- name: tmux // Make
+  command: make
+  args:
+    chdir: "/tmp/tmux-{{ tmux_version }}"
+    creates: "/tmp/tmux-{{ tmux_version }}/tmux"
+
+- name: tmux // Install
+  command: make install
+  args:
+    chdir: "/tmp/tmux-{{ tmux_version }}"
+
+- name: tmux // Remove build directory
+  ansible.builtin.file:
+    path: "/tmp/tmux-{{ tmux_version }}"
+    state: absent
+
