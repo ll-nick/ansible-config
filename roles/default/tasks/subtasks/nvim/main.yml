@@ -1,0 +1,26 @@
+- name: nvim // Check installed version
+  command: nvim --version | head -n 1
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  register: nvim_installed_version
+
+- when: nvim_installed_version.rc != 0 or nvim_installed_version.stdout.split()[1] is version(nvim_version, "!=")
+  block:
+    - import_tasks: from_tarball.yml
+      when: ansible_architecture == "x86_64"
+
+    - import_tasks: from_source.yml
+      when: ansible_architecture != "x86_64"
+
+- name: Neovim // Clone Config
+  ansible.builtin.git:
+    repo: "https://github.com/ll-nick/neovim-config.git"
+    dest: "{{ ansible_env.HOME }}/.config/nvim"
+    force: "true"
+
+- name: Neovim // Add bash config
+  ansible.builtin.copy:
+    src: bash/nvim.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"
+

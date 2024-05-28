@@ -1,0 +1,54 @@
+- name: Neovim // Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - cmake
+      - curl
+      - unzip
+    state: present
+
+- name: Neovim // Install arch dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - base-devel
+      - ninja
+    state: present
+  when: ansible_distribution == "Archlinux"
+
+- name: Neovim // Install debian dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - build-essential
+      - gettext
+      - ninja-build
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Neovim // Clone nvim
+  ansible.builtin.git:
+    repo: "https://github.com/neovim/neovim.git"
+    dest: "/tmp/nvim-{{ nvim_version }}"
+    depth: 1
+    version: "{{nvim_version}}"
+
+- name: Neovim // Make
+  command: make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX={{ ansible_env.HOME }}/.local
+  args:
+    chdir: "/tmp/nvim-{{ nvim_version }}"
+    creates: "/tmp/nvim-{{ nvim_version }}/build/bin/nvim"
+
+- name: Neovim // Install
+  command: make install
+  args:
+    chdir: "/tmp/nvim-{{ nvim_version }}"
+
+- name: Neovim // Remove build directory
+  ansible.builtin.file:
+    path: "/tmp/nvim-{{ nvim_version }}"
+    state: absent
+
