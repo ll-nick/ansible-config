@@ -3,22 +3,26 @@
     path: "{{ ansible_env.HOME }}/.local/bin"
     state: directory
 
-- name: lazygit // Check Install
-  ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.local/bin/lazygit"
-  register: lazygit_install
+- name: lazygit // Check installed version
+  command: lazygit --version | grep -o ', version=[^,]*' | awk -F= '{print $2}'
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  register: lazygit_installed_version
 
-- name: lazygit // Install
-  ansible.builtin.unarchive:
-    src: "https://github.com/jesseduffield/lazygit/releases/download/v0.41.0/lazygit_0.41.0_Linux_x86_64.tar.gz"
-    dest: "{{ ansible_env.HOME }}/.local/bin/"
-    remote_src: yes
-  when: not lazygit_install.stat.exists and ansible_architecture == "x86_64"
+- when: lazygit_installed_version.rc != 0 or lazygit_installed_version.stdout is version(lazygit_version, "!=")
+  block:
+    - name: lazygit // Install
+      ansible.builtin.unarchive:
+        src: "https://github.com/jesseduffield/lazygit/releases/download/v{{ lazygit_version }}/lazygit_{{ lazygit_version }}_Linux_x86_64.tar.gz"
+        dest: "{{ ansible_env.HOME }}/.local/bin/"
+        remote_src: yes
+      when: ansible_architecture == "x86_64"
 
-- name: lazygit // Install
-  ansible.builtin.unarchive:
-    src: "https://github.com/jesseduffield/lazygit/releases/download/v0.41.0/lazygit_0.41.0_Linux_arm64.tar.gz"
-    dest: "{{ ansible_env.HOME }}/.local/bin/"
-    remote_src: yes
-  when: not lazygit_install.stat.exists and ansible_architecture == "aarch64"
+    - name: lazygit // Install
+      ansible.builtin.unarchive:
+        src: "https://github.com/jesseduffield/lazygit/releases/download/v{{ lazygit_version }}/lazygit_{{ lazygit_version }}_Linux_arm64.tar.gz"
+        dest: "{{ ansible_env.HOME }}/.local/bin/"
+        remote_src: yes
+      when: ansible_architecture == "aarch64"
 
