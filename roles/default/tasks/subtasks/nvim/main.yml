@@ -1,3 +1,11 @@
+- name: Neovim // Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - ripgrep # For telescope live grep
+    state: present
+
 - name: nvim // Check installed version
   command: nvim --version | head -n 1
   ignore_errors: true
