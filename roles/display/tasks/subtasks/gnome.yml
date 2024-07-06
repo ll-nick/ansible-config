@@ -1,3 +1,8 @@
+- name: Gnome // Setup keyboard layout
+  community.general.dconf:
+    key: "/org/gnome/desktop/input-sources/sources"
+    value: "[('xkb', 'eu'), ('xkb', 'de')]"
+
 - name: Gnome // Ensure Theme Directory
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.themes"
@@ -16,7 +21,9 @@
     remote_src: yes
 
 - name: Gnome // Set Application Theme
-  community.general.dconf: key="/org/gnome/desktop/interface/gtk-theme" value="'Catppuccin-Mocha-Standard-Blue-Dark'"
+  community.general.dconf:
+    key: "/org/gnome/desktop/interface/gtk-theme"
+    value: "'Catppuccin-Mocha-Standard-Blue-Dark'"
 
   # Todo: Fix this. Shell Theme requires user-themes extension
 # - name: Gnome // Set Shell Theme
@@ -40,7 +47,9 @@
     remote_src: yes
 
 - name: Gnome // Set Icon Theme
-  community.general.dconf: key="/org/gnome/desktop/interface/cursor-theme" value="'Catppuccin-Mocha-Blue-Cursors'"
+  community.general.dconf:
+    key: "/org/gnome/desktop/interface/cursor-theme"
+    value: "'Catppuccin-Mocha-Blue-Cursors'"
 
 - name: Gnome // Download Wallpaper
   ansible.builtin.get_url:
@@ -49,5 +58,7 @@
     checksum: sha256:1199a43751f1234d3fb92ecf614fbf34de2c07334d3fdd355891044f51bddada
 
 - name: Gnome // Set Wallpaper
-  dconf: key="/org/gnome/desktop/background/picture-uri" value="'file:///{{ ansible_env.HOME }}/Pictures/wallpaper.png'"
+  community.general.dconf:
+    key: "/org/gnome/desktop/background/picture-uri"
+    value: "'file:///{{ ansible_env.HOME }}/Pictures/wallpaper.png'"
 
