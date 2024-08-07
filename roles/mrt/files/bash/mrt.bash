@@ -13,3 +13,7 @@ function mrtf {
     printf '\e[5n'
 }
 
+if [ -f ~/.sqfs_tools/sqfs_tools.sh ]; then
+    source ~/.sqfs_tools/sqfs_tools.sh
+fi
+
