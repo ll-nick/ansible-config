@@ -2,6 +2,7 @@ services:
   deployment-script:
     image: deployment-script
     build: .
+    restart: unless-stopped
     ports:
       - "1337:80"
 
