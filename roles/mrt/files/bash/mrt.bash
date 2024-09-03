@@ -17,3 +17,7 @@ if [ -f ~/.sqfs_tools/sqfs_tools.sh ]; then
     source ~/.sqfs_tools/sqfs_tools.sh
 fi
 
+if  [ -f ~/.lazygit_ws_tools/lazygit_ws_tools.sh ]; then
+    source ~/.lazygit_ws_tools/lazygit_ws_tools.sh
+fi
+
