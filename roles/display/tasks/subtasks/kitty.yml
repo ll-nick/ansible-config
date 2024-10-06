@@ -62,13 +62,13 @@
 
     - name: kitty // Update Icon path in .desktop files
       ansible.builtin.shell:
-        cmd: "sed -i 's|Icon=kitty|Icon=$(readlink -f ~)/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g' ~/.local/share/applications/kitty*.desktop"
+        cmd: "sed -i 's|Icon=kitty|Icon={{ ansible_env.HOME }}/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g' ~/.local/share/applications/kitty*.desktop"
       args:
         executable: /bin/bash
 
     - name: kitty // Update Exec path in .desktop files
       ansible.builtin.shell:
-        cmd: "sed -i 's|Exec=kitty|Exec=$(readlink -f ~)/.local/kitty.app/bin/kitty|g' ~/.local/share/applications/kitty*.desktop"
+        cmd: "sed -i 's|Exec=kitty|Exec={{ ansible_env.HOME }}/.local/kitty.app/bin/kitty|g' ~/.local/share/applications/kitty*.desktop"
       args:
         executable: /bin/bash
 
