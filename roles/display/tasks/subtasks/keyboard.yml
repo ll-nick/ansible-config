@@ -1,3 +1,8 @@
+- name: Keyboard // Show all sources (required for EurKey layout to work)
+  community.general.dconf:
+    key: "/org/gnome/desktop/input-sources/show-all-sources"
+    value: "true"
+
 - name: Keyboard // Set layout
   community.general.dconf:
     key: "/org/gnome/desktop/input-sources/sources"
@@ -7,4 +12,3 @@
   community.general.dconf:
     key: "/org/gnome/desktop/input-sources/xkb-options"
     value: "['caps:escape_shifted_capslock']"
-
