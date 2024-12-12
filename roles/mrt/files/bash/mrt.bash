@@ -6,6 +6,8 @@ alias kitvpn='sudo openvpn --config ~/Documents/kit.ovpn'
 alias mensa='kit-mensa-cli'
 alias rf='rosbag_fancy'
 
+export ROSMON_DEBUGGER_TERMINAL="tmux new-window -n rosmon-debug"
+
 function mrtf {
   local cmd
   cmd=$(mrt --list | fzf | sed 's/\ \ \ .*//') &&
