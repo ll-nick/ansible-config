@@ -37,3 +37,7 @@
         remote_src: yes
       when: ansible_architecture == "aarch64"
 
+- name: lazygit // Add bash config
+  ansible.builtin.copy:
+    src: bash/lazygit.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/lazygit.bash"
