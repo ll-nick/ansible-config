@@ -21,7 +21,9 @@
   failed_when: false
   register: lazygit_installed_version
 
-- when: lazygit_installed_version.rc != 0 or lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
+- when:
+    - lazygit_installed_version.rc != 0
+    - lazygit_installed_version.stdout | length == 0 or lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
   block:
     - name: lazygit // Install
       ansible.builtin.unarchive:
