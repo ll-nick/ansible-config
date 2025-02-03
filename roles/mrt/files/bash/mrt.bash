@@ -4,6 +4,7 @@ source /opt/mrtros/setup.bash
 alias kitvpn='sudo openvpn --config ~/Documents/kit.ovpn'
 alias mensa='kit-mensa-cli'
 alias rf='rosbag_fancy'
+alias windows='vboxmanage startvm windows10'
 
 export ROSMON_DEBUGGER_TERMINAL="tmux new-window -n rosmon-debug"
 
