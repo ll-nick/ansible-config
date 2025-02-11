@@ -3,9 +3,16 @@
     path: "{{ ansible_env.HOME }}/.nvm"
   register: nvm_dir
 
-- name: Nodejs // Install nvm
-  when: not nvm_dir.stat.isdir is defined or not nvm_dir.stat.isdir
-  ansible.builtin.shell: PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash'
+- when: not nvm_dir.stat.isdir is defined or not nvm_dir.stat.isdir
+  block:
+    - name: Nodejs // Install curl
+      become: true
+      tags: [never, privileged]
+      ansible.builtin.package:
+        name: curl
+        state: present
+    - name: Nodejs // Install nvm
+      ansible.builtin.shell: PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash'
 
 - name: Nodejs // Add nvm bash config
   ansible.builtin.copy:
@@ -26,4 +33,4 @@
   ansible.builtin.shell: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && nvm install 20"
   args:
     executable: /bin/bash
-    
+
