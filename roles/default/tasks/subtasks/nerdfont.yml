@@ -9,10 +9,18 @@
   changed_when: false
   ignore_errors: true
 
-- name: Nerdfont // Download
-  when: font_exists.rc != 0
-  ansible.builtin.unarchive:
-    src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
-    dest: "{{ ansible_env.HOME }}/.local/share/fonts/"
-    remote_src: yes
+- when: font_exists.rc != 0
+  block:
+    - name: Nerdfont // Install unzip
+      become: true
+      tags: [never, privileged]
+      ansible.builtin.package:
+        name: unzip
+        state: present
+
+    - name: Nerdfont // Download and Extract
+      ansible.builtin.unarchive:
+        src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
+        dest: "{{ ansible_env.HOME }}/.local/share/fonts/"
+        remote_src: yes
 
