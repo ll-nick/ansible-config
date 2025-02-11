@@ -15,6 +15,18 @@ function mrtf {
     printf '\e[5n'
 }
 
+function kssh {
+  if klist -s; then
+    echo "Kerberos ticket found."
+  else
+    echo "No Kerberos ticket found. Run kinit."
+    kinit
+  fi
+
+  krenew -b -K 60 > /dev/null 2>&1
+  ssh "$@"
+}
+
 if [ -f ~/.sqfs_tools/sqfs_tools.sh ]; then
     source ~/.sqfs_tools/sqfs_tools.sh
 fi
