@@ -12,7 +12,13 @@
   set_fact:
     lazygit_latest_release_version: "{{ lazygit_latest_release.json.tag_name | regex_replace('^v', '') }}"
 
+- name: lazygit // Check if lazygit is installed
+  ansible.builtin.command: command -v lazygit
+  register: lazygit_installed
+  ignore_errors: true
+
 - name: lazygit // Check installed version
+  when: lazygit_installed.rc == 0
   ansible.builtin.shell: lazygit --version | grep -o ', version=[^,]*' | awk -F= '{print $2}'
   args:
     executable: /bin/bash
@@ -22,8 +28,8 @@
   register: lazygit_installed_version
 
 - when:
-    - lazygit_installed_version.rc != 0
-    - lazygit_installed_version.stdout | length == 0 or lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
+    - lazygit_installed.rc != 0
+    - lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
   block:
     - name: lazygit // Install
       ansible.builtin.unarchive:
