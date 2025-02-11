@@ -4,6 +4,7 @@
   ansible.builtin.package:
     name:
       - ripgrep # For telescope live grep
+      - python3-venv # clang-format dependency
     state: present
 
 - name: nvim // Check installed version
