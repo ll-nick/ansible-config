@@ -1,0 +1,17 @@
+- name: locale // Install apt dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - locales
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Locale // Install locales
+  become: true
+  tags: [never, privileged]
+  community.general.locale_gen:
+    name:
+      - de_DE.UTF-8
+      - en_US.UTF-8
+    state: present
