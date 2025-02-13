@@ -3,6 +3,14 @@
     path: "{{ ansible_env.HOME }}/.local/share/fonts"
     state: directory
 
+- name: Nerdfont // Install fontconfig
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - fontconfig
+    state: present
+
 - name: Nerdfont // Check Font Exists
   ansible.builtin.shell: "fc-list | grep -q JetBrainsMono"
   register: font_exists
