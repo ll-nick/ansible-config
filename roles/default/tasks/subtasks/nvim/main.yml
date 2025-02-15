@@ -14,7 +14,6 @@
   ansible.builtin.package:
     name:
       - ripgrep # For telescope live grep
-      - python-venv # clang-format dependency
     state: present    
   when: ansible_distribution == "Archlinux"
 
