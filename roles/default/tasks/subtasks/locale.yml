@@ -15,3 +15,5 @@
       - de_DE.UTF-8
       - en_US.UTF-8
     state: present
+  # This module is currently only supported by these distros
+  when: ansible_distribution in ["Debian", "Ubuntu"]
