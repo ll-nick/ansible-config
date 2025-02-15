@@ -48,3 +48,9 @@
   ansible.builtin.copy:
     src: bash/lazygit.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/lazygit.bash"
+
+- name: lazygit // Add lazygit config
+  ansible.builtin.copy:
+    src: layzgit/config.yml
+    dest: "{{ ansible_env.HOME }}/.config/lazygit/config.yml"
+
