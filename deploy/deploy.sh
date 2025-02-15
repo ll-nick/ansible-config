@@ -17,6 +17,16 @@ confirm() {
     esac
 }
 
+detect_distro() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        DISTRO=$ID
+    else
+        echo "Cannot determine the distribution. Exiting."
+        exit 1
+    fi
+}
+
 install_package() {
     COMMAND=$1
     DEBIAN_PACKAGE=$2
@@ -66,54 +76,57 @@ install_pipx() {
     fi
 }
 
-# Detect distribution
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    DISTRO=$ID
-else
-    echo "Cannot determine the distribution. Exiting."
-    exit 1
-fi
+install_ansible() {
+    if pipx list | grep -q ansible; then
+        echo "Ansible is already installed via pipx."
+        return
+    fi
 
-# Ensure pipx is in PATH
-export PATH="$HOME/.local/bin:$PATH"
+    echo "Ansible is not installed via pipx."
+    if confirm "Do you want to install Ansible using pipx?"; then
+        pipx install ansible-core
+    else
+        echo "Skipping Ansible installation."
+    fi
+}
 
-# Install ansible dependencies
-install_package "git" "git" "git"
-install_package "python3" "python3" "python"
-install_package "pip3" "python3-pip" "python-pip"
-install_pipx
+run_ansible() {
+    # Run ansible-pull
+    if ! confirm "All set to run ansible-pull. Do you wish to execute the playbook?"; then
+        echo "Skipping ansible-pull execution."
+        exit 1
+    fi
 
-# Install Ansible via pipx
-if ! pipx list | grep -q ansible; then
-  echo "Ansible is not installed via pipx."
-  if confirm "Do you want to install Ansible using pipx?"; then
-    pipx install ansible-core
-  else
-    echo "Skipping Ansible installation."
-  fi
-else
-  echo "Ansible is already installed via pipx."
-fi
+    # Ask if the user wants to run it with sudo privileges
+    echo -e "\nThe playbook installs as many tools as possible at the user level.\n\
+    However, some dependencies require sudo privileges for system-wide installation.\n\
+    Running the playbook without these privileges expects those packages to be pre-installed."
 
-# Run ansible-pull
-if ! confirm "All set to run ansible-pull. Do you wish to execute the playbook?"; then
-    echo "Skipping ansible-pull execution."
-    exit 1
-fi
+    if confirm "Do you want to run ansible-pull with sudo privileges?"; then
+        echo "Running ansible-pull with sudo..."
+        ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
+    else
+        echo "Running ansible-pull..."
+        ansible-pull -U https://github.com/ll-nick/ansible-config.git
+    fi
+}
 
-# Ask if the user wants to run it with sudo privileges
-echo -e "\nThe playbook installs as many tools as possible at the user level.\n\
-However, some dependencies require sudo privileges for system-wide installation.\n\
-Running the playbook without these privileges expects those packages to be pre-installed."
+main () {
+    # Ensure local binary directory is on PATH
+    export PATH="$HOME/.local/bin:$PATH"
 
-if confirm "Do you want to run ansible-pull with sudo privileges?"; then
-    echo "Running ansible-pull with sudo..."
-    ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
-else
-    echo "Running ansible-pull..."
-    ansible-pull -U https://github.com/ll-nick/ansible-config.git
-fi
+    detect_distro
 
-echo "Deployment completed successfully."
+    install_package "git" "git" "git"
+    install_package "python3" "python3" "python"
+    install_package "pip3" "python3-pip" "python-pip"
+    install_pipx
+    install_ansible
+
+    run_ansible
+
+    echo "Deployment completed successfully."
+}
+
+main
 
