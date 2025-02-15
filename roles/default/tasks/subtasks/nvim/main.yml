@@ -1,11 +1,22 @@
-- name: Neovim // Install dependencies
+- name: Neovim // Install Debian dependencies
   become: true
   tags: [never, privileged]
   ansible.builtin.package:
     name:
       - ripgrep # For telescope live grep
       - python3-venv # clang-format dependency
-    state: present
+    state: present    
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Neovim // Install Arch dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - ripgrep # For telescope live grep
+      - python-venv # clang-format dependency
+    state: present    
+  when: ansible_distribution == "Archlinux"
 
 - name: nvim // Check installed version
   command: nvim --version | head -n 1
