@@ -44,6 +44,28 @@ install_package() {
     fi
 }
 
+install_pipx() {
+    if command -v pipx >/dev/null 2>&1; then
+        echo "pipx is already installed."
+        return
+    fi
+
+    echo "pipx is not installed."
+    if ! confirm "Do you want to install pipx? This requires sudo on Arch."; then
+        echo "Skipping pipx installation."
+        return
+    fi
+
+    if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
+        python3 -m pip install --user pipx
+    elif [ "$DISTRO" = "arch" ]; then
+        sudo pacman -Syu --noconfirm python-pipx
+    else
+        echo "Unsupported distribution: $DISTRO"
+        exit 1
+    fi
+}
+
 # Detect distribution
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -53,25 +75,26 @@ else
     exit 1
 fi
 
+# Ensure pipx is in PATH
+export PATH="$HOME/.local/bin:$PATH"
+
 # Install ansible dependencies
 install_package "git" "git" "git"
 install_package "python3" "python3" "python"
 install_package "pip3" "python3-pip" "python-pip"
+install_pipx
 
-# Install Ansible
-if ! python3 -m pip show ansible >/dev/null 2>&1; then
-  echo "Ansible is not installed."
-  if confirm "Do you want to install ansible?"; then
-    python3 -m pip install --user ansible
+# Install Ansible via pipx
+if ! pipx list | grep -q ansible; then
+  echo "Ansible is not installed via pipx."
+  if confirm "Do you want to install Ansible using pipx?"; then
+    pipx install ansible-core
   else
     echo "Skipping Ansible installation."
   fi
 else
-  echo "Ansible is already installed."
+  echo "Ansible is already installed via pipx."
 fi
-
-# Add pip user base binary directory to PATH
-export PATH="$HOME/.local/bin:$PATH"
 
 # Run ansible-pull
 if ! confirm "All set to run ansible-pull. Do you wish to execute the playbook?"; then
