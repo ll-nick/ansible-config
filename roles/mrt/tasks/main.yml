@@ -3,3 +3,13 @@
     src: bash/mrt.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/mrt.bash"
 
+- name: MRT // Clone rossrc
+  ansible.builtin.git:
+    repo: "https://github.com/ll-nick/rossrc.git"
+    dest: "{{ ansible_env.HOME }}/.rossrc"
+    force: "true"
+
+- name: MRT // Source rossrc
+  ansible.builtin.copy:
+    src: bash/rossrc.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/rossrc.bash"

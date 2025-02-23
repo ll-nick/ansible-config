@@ -1,6 +1,3 @@
-source /opt/mrtsoftware/setup.bash
-source /opt/mrtros/setup.bash
-
 alias kitvpn='sudo openvpn --config ~/Documents/kit.ovpn'
 alias mensa='kit-mensa-cli'
 alias rf='rosbag_fancy'
