@@ -13,7 +13,7 @@
     lazygit_latest_release_version: "{{ lazygit_latest_release.json.tag_name | regex_replace('^v', '') }}"
 
 - name: lazygit // Check if lazygit is installed
-  ansible.builtin.command: command -v lazygit
+  ansible.builtin.shell: command -v lazygit
   register: lazygit_installed
   ignore_errors: true
 
