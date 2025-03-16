@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# update-reminder: A script to run all kinds of updates
+#
+# Usage:
+#   update-reminder [OPTIONS]
+#
+# Options:
+#   --check        Notify if it's been more than REMINDER_DAYS since last update.
+#   --yes, -y      Run updates without confirmation prompts.
+#
+# Description:
+#   This script is used to update various components of the system in one go.
+#   After running the updates, it records the current time in a file. If the
+#   script is run with the --check option, it will notify the user if it has
+#   been more than REMINDER_DAYS since the last update.
+
+UPDATE_TIMESTAMP="$HOME/.last_update_time"
+REMINDER_DAYS=7
+NO_CONFIRM=false
+CHECK_REMINDER=false
+
+PEACH="\033[38;2;250;179;135m"  # Catppuccin Mocha Peach
+BLUE="\033[38;2;116;199;236m"  # Catppuccin Mocha Blue
+RESET="\033[0m"
+
+update_reminder() {
+    if [ ! -f "$UPDATE_TIMESTAMP" ]; then
+        return
+    fi
+
+    last_update=$(cat "$UPDATE_TIMESTAMP")
+    current_time=$(date +%s)
+    elapsed_days=$(( (current_time - last_update) / 86400 ))
+
+    if [ "$elapsed_days" -lt "$REMINDER_DAYS" ]; then
+        return
+    fi
+
+    notify-send "Update Reminder" \
+        "It's been $elapsed_days days since your last update! Consider running 'update-reminder' to stay up to date." \
+        --icon=dialog-information
+}
+
+print_title() {
+    TITLE="
+
+ ██    ██ ██████  ██████   █████  ████████ ███████ ██████  
+ ██    ██ ██   ██ ██   ██ ██   ██    ██    ██      ██   ██ 
+ ██    ██ ██████  ██   ██ ███████    ██    █████   ██████  
+ ██    ██ ██      ██   ██ ██   ██    ██    ██      ██   ██ 
+  ██████  ██      ██████  ██   ██    ██    ███████ ██   ██ 
+
+    "
+    echo -e "${PEACH}$TITLE${RESET}"
+}
+
+
+print_section() {
+    local title="$1"
+    echo -e "\n ${BLUE}###############################################${RESET}"
+    echo -e " ${BLUE}#${RESET}  \033[1;33m$title\033[0m"
+    echo -e " ${BLUE}###############################################${RESET}\n"
+}
+
+confirm_step() {
+    local prompt_message="$1"
+    if [ "$NO_CONFIRM" = false ]; then
+        read -rp "$prompt_message (y/N): " response
+        case "$response" in
+            [yY][eE][sS]|[yY]) return 0 ;;
+            *) echo "Skipping..."; return 1 ;;
+        esac
+    fi
+    return 0
+}
+
+update_system() {
+    print_section "Updating System Packages 📦"
+    if command -v pacman &>/dev/null; then
+        if confirm_step "Proceed with update of system packages via pacman?"; then
+            sudo pacman -Syu --noconfirm
+        fi
+    elif command -v apt &>/dev/null; then
+        if confirm_step "Proceed with update of system packages via apt?"; then
+            sudo apt update && sudo apt upgrade -y
+        fi
+    else
+        echo "No Supported Package Manager Found!"
+    fi
+}
+
+update_dotfiles() {
+    print_section "Updating Dotfiles 🛠️"
+    if confirm_step "Update dotfiles via Ansible?"; then
+        if command -v ansible-pull &>/dev/null; then
+            ansible-pull -U https://github.com/ll-nick/ansible-config.git
+        else
+            echo "⚠️ Ansible-pull not installed - Skipping!"
+        fi
+    fi
+}
+
+update_tmux() {
+    print_section "Updating Tmux Plugins 🔧"
+    if confirm_step "Update Tmux plugins?"; then
+        if [ -d "$HOME/.config/tmux/plugins/tpm" ]; then
+            ~/.config/tmux/plugins/tpm/bin/update_plugins all
+        else
+            echo "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"
+        fi
+    fi
+}
+
+update_neovim() {
+    print_section "Updating Neovim Plugins ✨"
+    if confirm_step "Update Neovim plugins?"; then
+        if command -v nvim &>/dev/null; then
+            nvim --headless "+Lazy update" +qa
+        else
+            echo "⚠️ Neovim Not Found - Skipping!"
+        fi
+    fi
+}
+
+update_all() {
+    print_title
+    update_system
+    update_dotfiles
+    update_tmux
+    update_neovim
+    date +%s > "$UPDATE_TIMESTAMP"
+    print_section "✅ All Updates Completed!"
+}
+
+main () {
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            --yes|-y)
+                NO_CONFIRM=true
+                ;;
+            --check)
+                CHECK_REMINDER=true
+                ;;
+        esac
+    done
+
+    # Execute respective function based on arguments
+    if [ "$CHECK_REMINDER" = true ]; then
+        update_reminder
+    else
+        update_all
+    fi
+}
+
+main "$@"
+

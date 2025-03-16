@@ -1,0 +1,5 @@
+- name: update-all // Install script
+  ansible.builtin.copy:
+    src: scripts/update-all
+    dest: "{{ ansible_env.HOME }}/.local/bin/update-all"
+    mode: "0755"
