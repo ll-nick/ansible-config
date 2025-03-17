@@ -123,8 +123,22 @@ update_neovim() {
         return
     fi
 
-    if confirm_step "Update Neovim plugins?"; then
+    if confirm_step "Update Neovim plugins and commmit lazy-lock.json?"; then
         nvim --headless "+Lazy! sync" +qa
+        pushd "$HOME/.config/nvim" || return
+        git add lazy-lock.json
+        git commit -m "Version bump"
+        echo -e "\nChanges:"
+        git diff --staged
+        if confirm_step "Push changes to remote?"; then
+            git push
+        fi
+        popd || return
+        return
+    fi
+
+    if confirm_step "Restore Neovim plugins from lazy-lock.json?"; then
+        nvim --headless "+Lazy! restore" +qa
     fi
 }
 
