@@ -116,7 +116,7 @@ update_neovim() {
     print_section "Updating Neovim Plugins ✨"
     if confirm_step "Update Neovim plugins?"; then
         if command -v nvim &>/dev/null; then
-            nvim --headless "+Lazy update" +qa
+            nvim --headless "+Lazy! sync" +qa
         else
             echo "⚠️ Neovim Not Found - Skipping!"
         fi
