@@ -94,34 +94,37 @@ update_system() {
 
 update_dotfiles() {
     print_section "Updating Dotfiles 🛠️"
+    if ! command -v ansible-pull &> /dev/null; then
+        echo "⚠️ Ansible-pull not installed - Skipping!"
+        return
+    fi
+
     if confirm_step "Update dotfiles via Ansible?"; then
-        if command -v ansible-pull &> /dev/null; then
-            ansible-pull -U https://github.com/ll-nick/ansible-config.git
-        else
-            echo "⚠️ Ansible-pull not installed - Skipping!"
-        fi
+        ansible-pull -U https://github.com/ll-nick/ansible-config.git
     fi
 }
 
 update_tmux() {
     print_section "Updating Tmux Plugins 🔧"
+    if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
+        echo "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"
+        return
+    fi
+
     if confirm_step "Update Tmux plugins?"; then
-        if [ -d "$HOME/.config/tmux/plugins/tpm" ]; then
-            ~/.config/tmux/plugins/tpm/bin/update_plugins all
-        else
-            echo "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"
-        fi
+        ~/.config/tmux/plugins/tpm/bin/update_plugins all
     fi
 }
 
 update_neovim() {
     print_section "Updating Neovim Plugins ✨"
+    if ! command -v nvim &> /dev/null; then
+        echo "⚠️ Neovim Not Found - Skipping!"
+        return
+    fi
+
     if confirm_step "Update Neovim plugins?"; then
-        if command -v nvim &> /dev/null; then
-            nvim --headless "+Lazy! sync" +qa
-        else
-            echo "⚠️ Neovim Not Found - Skipping!"
-        fi
+        nvim --headless "+Lazy! sync" +qa
     fi
 }
 
