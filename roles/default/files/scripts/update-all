@@ -20,7 +20,7 @@ REMINDER_DAYS=7
 NO_CONFIRM=false
 CHECK_REMINDER=false
 
-PEACH="\033[38;2;250;179;135m"  # Catppuccin Mocha Peach
+PEACH="\033[38;2;250;179;135m" # Catppuccin Mocha Peach
 BLUE="\033[38;2;116;199;236m"  # Catppuccin Mocha Blue
 RESET="\033[0m"
 
@@ -31,7 +31,7 @@ update_reminder() {
 
     last_update=$(cat "$UPDATE_TIMESTAMP")
     current_time=$(date +%s)
-    elapsed_days=$(( (current_time - last_update) / 86400 ))
+    elapsed_days=$(((current_time - last_update) / 86400))
 
     if [ "$elapsed_days" -lt "$REMINDER_DAYS" ]; then
         return
@@ -55,7 +55,6 @@ print_title() {
     echo -e "${PEACH}$TITLE${RESET}"
 }
 
-
 print_section() {
     local title="$1"
     echo -e "\n ${BLUE}###############################################${RESET}"
@@ -68,8 +67,11 @@ confirm_step() {
     if [ "$NO_CONFIRM" = false ]; then
         read -rp "$prompt_message (y/N): " response
         case "$response" in
-            [yY][eE][sS]|[yY]) return 0 ;;
-            *) echo "Skipping..."; return 1 ;;
+            [yY][eE][sS] | [yY]) return 0 ;;
+            *)
+                echo "Skipping..."
+                return 1
+                ;;
         esac
     fi
     return 0
@@ -77,11 +79,11 @@ confirm_step() {
 
 update_system() {
     print_section "Updating System Packages 📦"
-    if command -v pacman &>/dev/null; then
+    if command -v pacman &> /dev/null; then
         if confirm_step "Proceed with update of system packages via pacman?"; then
             sudo pacman -Syu --noconfirm
         fi
-    elif command -v apt &>/dev/null; then
+    elif command -v apt &> /dev/null; then
         if confirm_step "Proceed with update of system packages via apt?"; then
             sudo apt update && sudo apt upgrade -y
         fi
@@ -93,7 +95,7 @@ update_system() {
 update_dotfiles() {
     print_section "Updating Dotfiles 🛠️"
     if confirm_step "Update dotfiles via Ansible?"; then
-        if command -v ansible-pull &>/dev/null; then
+        if command -v ansible-pull &> /dev/null; then
             ansible-pull -U https://github.com/ll-nick/ansible-config.git
         else
             echo "⚠️ Ansible-pull not installed - Skipping!"
@@ -115,7 +117,7 @@ update_tmux() {
 update_neovim() {
     print_section "Updating Neovim Plugins ✨"
     if confirm_step "Update Neovim plugins?"; then
-        if command -v nvim &>/dev/null; then
+        if command -v nvim &> /dev/null; then
             nvim --headless "+Lazy! sync" +qa
         else
             echo "⚠️ Neovim Not Found - Skipping!"
@@ -133,11 +135,11 @@ update_all() {
     print_section "✅ All Updates Completed!"
 }
 
-main () {
+main() {
     # Parse arguments
     for arg in "$@"; do
         case "$arg" in
-            --yes|-y)
+            --yes | -y)
                 NO_CONFIRM=true
                 ;;
             --check)
@@ -155,4 +157,3 @@ main () {
 }
 
 main "$@"
-
