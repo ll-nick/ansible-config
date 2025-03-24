@@ -6,22 +6,12 @@
       - python3-psutil
     state: present
 
-- name: Gnome // Ensure Icon Directory
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.icons"
-    state: directory
-
-- name: Gnome // Check Cursor Theme Existence
-  ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.cursor/Catppuccin-Mocha-Blue-Cursors"
-  register: cursor_dir
-
 - name: Gnome // Download Icon Theme
-  when: not cursor_dir.stat.isdir is defined or not cursor_dir.stat.isdir
   ansible.builtin.unarchive:
     src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
-    dest: "{{ ansible_env.HOME }}/.icons/"
+    dest: "{{ ansible_env.HOME }}/.local/share/icons/"
     remote_src: yes
+    creates: "{{ ansible_env.HOME }}/.icons/catppuccin-mocha-blue-cursors"
 
 - name: Gnome // Set Icon Theme
   community.general.dconf:
