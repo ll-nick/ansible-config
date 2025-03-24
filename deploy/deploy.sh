@@ -8,7 +8,7 @@ confirm() {
     # See https://stackoverflow.com/a/54396662
     read response <&2
     case "$response" in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS] | [yY])
             return 0
             ;;
         *)
@@ -32,7 +32,7 @@ install_package() {
     DEBIAN_PACKAGE=$2
     ARCH_PACKAGE=$3
 
-    if command -v $COMMAND >/dev/null 2>&1; then
+    if command -v $COMMAND > /dev/null 2>&1; then
         echo "$COMMAND is already installed."
         return
     fi
@@ -55,36 +55,41 @@ install_package() {
 }
 
 install_pipx() {
-    if command -v pipx >/dev/null 2>&1; then
+    VENV_DIR="$HOME/.local/venvs/pipx"
+    if [ -f "$VENV_DIR/bin/pipx" ]; then
         echo "pipx is already installed."
         return
     fi
 
     echo "pipx is not installed."
-    if ! confirm "Do you want to install pipx? This requires sudo on Arch."; then
+    if ! confirm "Do you want to install pipx using a virtual environment?"; then
         echo "Skipping pipx installation."
         return
     fi
 
-    if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
-        python3 -m pip install --user pipx
-    elif [ "$DISTRO" = "arch" ]; then
-        sudo pacman -Syu --noconfirm python-pipx
-    else
-        echo "Unsupported distribution: $DISTRO"
-        exit 1
+    # Create the virtual environment if it doesn't exist
+    if [ ! -d "$VENV_DIR" ]; then
+        echo "Creating virtual environment for pipx at $VENV_DIR"
+        python3 -m venv "$VENV_DIR"
     fi
+
+    # Activate the virtual environment and install pipx
+    source "$VENV_DIR/bin/activate"
+    pip install --upgrade pip
+    pip install pipx
+
+    echo "pipx installed successfully in virtual environment at $VENV_DIR"
 }
 
 install_ansible() {
-    if pipx list | grep -q ansible; then
+    if $HOME/.local/venvs/pipx/bin/pipx list | grep -q ansible; then
         echo "Ansible is already installed via pipx."
         return
     fi
 
     echo "Ansible is not installed via pipx."
     if confirm "Do you want to install Ansible using pipx?"; then
-        pipx install ansible-core
+        $HOME/.local/venvs/pipx/bin/pipx install ansible-core
     else
         echo "Skipping Ansible installation."
     fi
@@ -111,7 +116,7 @@ run_ansible() {
     fi
 }
 
-main () {
+main() {
     # Ensure local binary directory is on PATH
     export PATH="$HOME/.local/bin:$PATH"
 
@@ -129,4 +134,3 @@ main () {
 }
 
 main
-
