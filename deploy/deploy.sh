@@ -55,8 +55,7 @@ install_package() {
 }
 
 install_pipx() {
-    VENV_DIR="$HOME/.local/venvs/pipx"
-    if [ -f "$VENV_DIR/bin/pipx" ]; then
+    if [ -f "$PIPX_VENV_DIR/bin/pipx" ]; then
         echo "pipx is already installed."
         return
     fi
@@ -68,28 +67,29 @@ install_pipx() {
     fi
 
     # Create the virtual environment if it doesn't exist
-    if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating virtual environment for pipx at $VENV_DIR"
-        python3 -m venv "$VENV_DIR"
+    if [ ! -d "$PIPX_VENV_DIR" ]; then
+        echo "Creating virtual environment for pipx at $PIPX_VENV_DIR"
+        python3 -m venv "$PIPX_VENV_DIR"
     fi
 
     # Activate the virtual environment and install pipx
-    source "$VENV_DIR/bin/activate"
+    source "$PIPX_VENV_DIR/bin/activate"
     pip install --upgrade pip
     pip install pipx
 
-    echo "pipx installed successfully in virtual environment at $VENV_DIR"
+    echo "pipx installed successfully in virtual environment at $PIPX_VENV_DIR"
 }
 
 install_ansible() {
-    if $HOME/.local/venvs/pipx/bin/pipx list | grep -q ansible; then
+    if $PIPX_VENV_DIR/bin/pipx list | grep -q ansible; then
         echo "Ansible is already installed via pipx."
         return
     fi
 
     echo "Ansible is not installed via pipx."
     if confirm "Do you want to install Ansible using pipx?"; then
-        $HOME/.local/venvs/pipx/bin/pipx install ansible-core
+        $PIPX_VENV_DIR/bin/pipx install ansible-core
+        ansible-galaxy collection install community.general
     else
         echo "Skipping Ansible installation."
     fi
@@ -119,6 +119,7 @@ run_ansible() {
 main() {
     # Ensure local binary directory is on PATH
     export PATH="$HOME/.local/bin:$PATH"
+    export PIPX_VENV_DIR="$HOME/.local/venvs/pipx"
 
     detect_distro
 
