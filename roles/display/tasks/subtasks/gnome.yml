@@ -11,14 +11,14 @@
 - name: Gnome // Download Icon Theme
   when: not cursor_dir.stat.isdir is defined or not cursor_dir.stat.isdir
   ansible.builtin.unarchive:
-    src: https://github.com/catppuccin/cursors/releases/download/v0.2.0/Catppuccin-Mocha-Blue-Cursors.zip
+    src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
     dest: "{{ ansible_env.HOME }}/.icons/"
     remote_src: yes
 
 - name: Gnome // Set Icon Theme
   community.general.dconf:
     key: "/org/gnome/desktop/interface/cursor-theme"
-    value: "'Catppuccin-Mocha-Blue-Cursors'"
+    value: "'catppuccin-mocha-blue-cursors'"
 
 - name: Gnome // Download Wallpaper
   ansible.builtin.get_url:
