@@ -1,24 +1,3 @@
-- name: thefuck // Install arch dependencies
-  become: true
-  tags: [never, privileged]
-  ansible.builtin.package:
-    name:
-      - python-pip
-      - python-pipx
-    state: present
-  when: ansible_distribution == "Archlinux"
-
-- name: thefuck // Install debian dependencies
-  become: true
-  tags: [never, privileged]
-  ansible.builtin.package:
-    name:
-      - python3-dev 
-      - python3-pip
-      - python3-setuptools
-    state: present
-  when: ansible_distribution in ["Debian", "Ubuntu"]
-
 - name: thefuck // Install
   community.general.pipx:
     name: thefuck

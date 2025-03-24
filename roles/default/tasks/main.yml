@@ -6,6 +6,7 @@
   - import_tasks: subtasks/nerdfont.yml
   - import_tasks: subtasks/nodejs.yml
   - import_tasks: subtasks/nvim/main.yml
+  - import_tasks: subtasks/pipx.yml
   - import_tasks: subtasks/starship.yml
   - import_tasks: subtasks/thefuck.yml
   - import_tasks: subtasks/tmux/main.yml
