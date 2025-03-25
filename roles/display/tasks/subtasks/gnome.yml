@@ -9,7 +9,7 @@
 - name: Gnome // Download Icon Theme
   ansible.builtin.unarchive:
     src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
-    dest: "{{ ansible_env.HOME }}/.local/share/icons/"
+    dest: "{{ ansible_env.HOME }}/.icons/"
     remote_src: yes
     creates: "{{ ansible_env.HOME }}/.icons/catppuccin-mocha-blue-cursors"
 
