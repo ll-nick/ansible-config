@@ -13,6 +13,13 @@
     remote_src: yes
     creates: "{{ ansible_env.HOME }}/.icons/catppuccin-mocha-blue-cursors"
 
+  # It appears that some applications only respect the cursor theme in .local/share/icons while others only respect it in .icons
+  # So we'll copy the theme to both locations to ensure it works everywhere
+- name: Gnome // Copy Icon Theme to .local/share/icons
+  ansible.builtin.copy:
+    src: "{{ ansible_env.HOME }}/.icons/catppuccin-mocha-blue-cursors"
+    dest: "{{ ansible_env.HOME }}/.local/share/icons/catppuccin-mocha-blue-cursors"
+
 - name: Gnome // Set Icon Theme
   community.general.dconf:
     key: "/org/gnome/desktop/interface/cursor-theme"
