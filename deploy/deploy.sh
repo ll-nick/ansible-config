@@ -66,6 +66,13 @@ install_pipx() {
         return
     fi
 
+    # On older python versions, venv does not come bundled with python
+    if ! python3 -m venv --help &>/dev/null; then
+        echo "python3-venv is not installed. Installing..."
+        sudo apt update
+        sudo apt install -y python3-venv
+    fi
+
     # Create the virtual environment if it doesn't exist
     if [ ! -d "$PIPX_VENV_DIR" ]; then
         echo "Creating virtual environment for pipx at $PIPX_VENV_DIR"
