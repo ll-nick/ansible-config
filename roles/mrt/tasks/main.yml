@@ -18,7 +18,6 @@
         force: "true"
 
     - name: MRT // Add mrtros bash config
-      when: mrtsoftware_dir.stat.exists
       ansible.builtin.copy:
         src: bash/mrtros.bash
         dest: "{{ ansible_env.HOME }}/.config/bash/mrtros.bash"
