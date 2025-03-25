@@ -73,9 +73,8 @@ install_pipx() {
     fi
 
     # Activate the virtual environment and install pipx
-    source "$PIPX_VENV_DIR/bin/activate"
-    pip install --upgrade pip
-    pip install pipx
+    $PIPX_VENV_DIR/bin/python3 -m pip install --upgrade pip
+    $PIPX_VENV_DIR/bin/python3 -m pip install pipx
 
     echo "pipx installed successfully in virtual environment at $PIPX_VENV_DIR"
 }
