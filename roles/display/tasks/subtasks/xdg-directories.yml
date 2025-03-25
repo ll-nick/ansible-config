@@ -1,0 +1,25 @@
+- name: XDG Directories // Create custom XDG directories
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/misc/xdg-directories/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - desktop
+    - documents
+    - downloads
+    - music
+    - pictures
+    - public
+    - templates
+    - videos
+
+- name: Create symlink for downloads directory
+  ansible.builtin.file:
+    src: "{{ ansible_env.HOME }}/misc/xdg-directories/downloads"
+    dest: "{{ ansible_env.HOME }}/downloads"
+    state: link
+
+- name: XDG Directories // Define XDG directories
+  ansible.builtin.copy:
+    src: xdg-directories/user-dirs.dirs
+    dest: "{{ ansible_env.HOME }}/.config/user-dirs.dirs"

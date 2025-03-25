@@ -28,11 +28,11 @@
 - name: Gnome // Download Wallpaper
   ansible.builtin.get_url:
     url: "https://github.com/zhichaoh/catppuccin-wallpapers/blob/main/landscapes/shaded_landscape.png?raw=true"
-    dest: "{{ ansible_env.HOME }}/Pictures/wallpaper.png"
+    dest: "{{ lookup('env', 'XDG_PICTURES_DIR') }}/wallpaper.png"
     checksum: sha256:1199a43751f1234d3fb92ecf614fbf34de2c07334d3fdd355891044f51bddada
 
 - name: Gnome // Set Wallpaper
   community.general.dconf:
     key: "/org/gnome/desktop/background/picture-uri"
-    value: "'file:///{{ ansible_env.HOME }}/Pictures/wallpaper.png'"
+    value: "'file:///{{ lookup('env', 'XDG_PICTURES_DIR') }}/wallpaper.png'"
 
