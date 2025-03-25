@@ -6,6 +6,10 @@
       - python3-psutil
     state: present
 
+- name: Gnome // Ensure icons Directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.icons"
+    state: directory
 - name: Gnome // Download Cursor Theme to .icons
   ansible.builtin.unarchive:
     src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
@@ -15,6 +19,10 @@
 
   # It appears that some applications only respect the cursor theme in .local/share/icons while others only respect it in .icons
   # So we'll copy the theme to both locations to ensure it works everywhere
+- name: Gnome // Ensure icons Directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share/icons"
+    state: directory
 - name: Gnome // Download Cursor Theme to .local/share/icons
   ansible.builtin.unarchive:
     src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
