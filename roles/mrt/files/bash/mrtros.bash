@@ -12,3 +12,6 @@ function mrtf {
 if [ -f ~/.sqfs_tools/sqfs_tools.sh ]; then
     source ~/.sqfs_tools/sqfs_tools.sh
 fi
+
+source ~/.rossrc/rossrc.mrt.bash
+source ~/.rossrc/cd_hook.bash
