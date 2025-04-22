@@ -43,19 +43,26 @@
     src: bash/tmux.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
 
-- name: tmux // Ensure systemd user service directory
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/systemd/user"
-    state: directory
+- name: tmux // Check if systemd is available
+  ansible.builtin.shell: command -v systemctl
+  register: systemd_available
+  ignore_errors: true
 
-- name: tmux // Install autostart service
-  ansible.builtin.copy:
-    src: systemd/tmux.service
-    dest: "{{ ansible_env.HOME }}/.config/systemd/user/tmux.service"
+- when: systemd_available.rc == 0
+  block:
+    - name: tmux // Ensure systemd user service directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        state: directory
 
-- name: tmux // Enable autostart service
-  ansible.builtin.systemd:
-    unit: tmux
-    enabled: true
-    scope: user
+    - name: tmux // Install autostart service
+      ansible.builtin.copy:
+        src: systemd/tmux.service
+        dest: "{{ ansible_env.HOME }}/.config/systemd/user/tmux.service"
+
+    - name: tmux // Enable autostart service
+      ansible.builtin.systemd:
+        unit: tmux
+        enabled: true
+        scope: user
 
