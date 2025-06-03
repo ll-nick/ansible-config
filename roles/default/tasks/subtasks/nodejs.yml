@@ -30,7 +30,7 @@
 
 - name: Nodejs // Install Nodejs
   when: node_install_check.rc != 0
-  ansible.builtin.shell: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && nvm install 22"
+  ansible.builtin.shell: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && nvm install --lts"
   args:
     executable: /bin/bash
 
