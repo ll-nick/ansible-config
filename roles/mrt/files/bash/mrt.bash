@@ -1,4 +1,3 @@
-alias kitvpn='sudo openvpn --config ~/Documents/kit.ovpn'
 alias mensa='kit-mensa-cli'
 alias mrtbox='distrobox enter mrt-box'
 alias windows='vboxmanage startvm windows10'
