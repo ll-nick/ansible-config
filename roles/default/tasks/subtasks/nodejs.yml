@@ -12,7 +12,7 @@
         name: curl
         state: present
     - name: Nodejs // Install nvm
-      ansible.builtin.shell: PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash'
+      ansible.builtin.shell: PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash'
 
 - name: Nodejs // Add nvm bash config
   ansible.builtin.copy:
@@ -30,7 +30,7 @@
 
 - name: Nodejs // Install Nodejs
   when: node_install_check.rc != 0
-  ansible.builtin.shell: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && nvm install 20"
+  ansible.builtin.shell: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && nvm install 22"
   args:
     executable: /bin/bash
 
