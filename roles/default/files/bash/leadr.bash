@@ -1,0 +1,1 @@
+source <(leadr --bash)

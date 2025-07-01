@@ -1,0 +1,50 @@
+- name: leadr // Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/bin"
+    state: directory
+
+- name: leadr // Get latest release data
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/ll-nick/leadr/releases/latest
+  register: leadr_latest_release
+
+- name: leadr // Set latest version
+  set_fact:
+    leadr_latest_release_version: "{{ leadr_latest_release.json.tag_name | regex_replace('^v', '') }}"
+
+- name: leadr // Check if leadr is installed
+  ansible.builtin.shell: command -v leadr
+  register: leadr_installed
+  ignore_errors: true
+
+- name: leadr // Check installed version
+  when: leadr_installed.rc == 0
+  ansible.builtin.shell: leadr --version | awk '{print $2}'
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  register: leadr_installed_version
+
+- name: leadr // Install latest if needed
+  when:
+    - leadr_installed.rc != 0 or leadr_installed_version.stdout is version(leadr_latest_release_version, "!=")
+  block:
+    - name: leadr // Download latest version
+      ansible.builtin.get_url:
+        url: "https://github.com/ll-nick/leadr/releases/download/v{{ leadr_latest_release_version }}/leadr-v{{ leadr_latest_release_version }}-x86_64-unknown-linux-musl"
+        dest: "{{ ansible_env.HOME }}/.local/bin/leadr"
+        mode: '0755'
+
+- name: leadr // Add bash config
+  ansible.builtin.copy:
+    src: bash/leadr.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/leadr.bash"
+
+- name: leadr // Clone config
+  ansible.builtin.git:
+    repo: "https://github.com/ll-nick/leadr-config"
+    dest: "{{ ansible_env.HOME }}/.config/leadr"
+    force: "true"
+
