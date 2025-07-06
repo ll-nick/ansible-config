@@ -155,6 +155,19 @@ update_pipx() {
     fi
 }
 
+update_flatpak() {
+    print_section "Updating Flatpak Packages 📦"
+
+    if ! command -v flatpak &> /dev/null; then
+        echo "⚠️ Flatpak not installed - Skipping!"
+        return
+    fi
+
+    if confirm_step "Update all Flatpak packages?"; then
+        flatpak update -y
+    fi
+}
+
 update_all() {
     print_title
     update_system
@@ -162,6 +175,7 @@ update_all() {
     update_tmux
     update_neovim
     update_pipx
+    update_flatpak
     date +%s > "$UPDATE_TIMESTAMP"
     print_section "✅ All Updates Completed!"
 }
