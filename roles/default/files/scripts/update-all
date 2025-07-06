@@ -142,12 +142,26 @@ update_neovim() {
     fi
 }
 
+update_pipx() {
+    print_section "Updating pipx Packages 🐍"
+
+    if ! command -v pipx &> /dev/null; then
+        echo "⚠️ pipx not installed - Skipping!"
+        return
+    fi
+
+    if confirm_step "Update all pipx packages?"; then
+        pipx upgrade-all
+    fi
+}
+
 update_all() {
     print_title
     update_system
     update_dotfiles
     update_tmux
     update_neovim
+    update_pipx
     date +%s > "$UPDATE_TIMESTAMP"
     print_section "✅ All Updates Completed!"
 }
