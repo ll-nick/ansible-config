@@ -39,13 +39,14 @@
 
 - name: tmux // Add bash config
   ansible.builtin.copy:
-    src: bash/tmux.bash
+    src: tmux.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
 
 - name: tmux // Check if systemd is available
   ansible.builtin.shell: command -v systemctl
   register: systemd_available
   ignore_errors: true
+  changed_when: false
 
 - when: systemd_available.rc == 0
   block:
@@ -56,7 +57,7 @@
 
     - name: tmux // Install autostart service
       ansible.builtin.copy:
-        src: systemd/tmux.service
+        src: tmux.service
         dest: "{{ ansible_env.HOME }}/.config/systemd/user/tmux.service"
 
     - name: tmux // Enable autostart service

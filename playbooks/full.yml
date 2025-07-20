@@ -16,4 +16,5 @@
   hosts: localhost
   roles:
     - role: neovim
+    - role: tmux
 

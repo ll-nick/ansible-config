@@ -9,7 +9,6 @@
   - import_tasks: subtasks/pipx.yml
   - import_tasks: subtasks/starship.yml
   - import_tasks: subtasks/thefuck.yml
-  - import_tasks: subtasks/tmux/main.yml
   - import_tasks: subtasks/update.yml
   - import_tasks: subtasks/z.yml
 
