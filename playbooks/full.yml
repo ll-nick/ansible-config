@@ -1,0 +1,19 @@
+- hosts: localhost
+  become: true
+  tags: [never, privileged]
+  pre_tasks:
+    - name: Pre-Run // Update pacman cache
+      pacman: update_cache=yes
+      changed_when: False
+      when: ansible_distribution == "Archlinux"
+
+    - name: Pre-Run // Update apt cache
+      apt: update_cache=yes
+      changed_when: False
+      when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Full setup
+  hosts: localhost
+  roles:
+    - role: neovim
+

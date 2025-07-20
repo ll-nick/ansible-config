@@ -5,7 +5,7 @@
     name:
       - ripgrep # For telescope live grep
       - python3-venv # clang-format dependency
-    state: present    
+    state: present
   when: ansible_distribution in ["Debian", "Ubuntu"]
 
 - name: Neovim // Install Arch dependencies
@@ -14,7 +14,7 @@
   ansible.builtin.package:
     name:
       - ripgrep # For telescope live grep
-    state: present    
+    state: present
   when: ansible_distribution == "Archlinux"
 
 - name: nvim // Check installed version
@@ -59,6 +59,6 @@
 
 - name: Neovim // Add bash config
   ansible.builtin.copy:
-    src: bash/nvim.bash
+    src: nvim.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"
 
