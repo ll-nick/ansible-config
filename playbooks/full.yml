@@ -15,6 +15,7 @@
 - name: Full setup
   hosts: localhost
   roles:
+    - role: bash
     - role: neovim
     - role: tmux
 
