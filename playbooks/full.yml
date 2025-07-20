@@ -16,6 +16,7 @@
   hosts: localhost
   roles:
     - role: bash
+    - role: fzf
     - role: neovim
     - role: tmux
 

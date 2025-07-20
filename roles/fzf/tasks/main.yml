@@ -15,6 +15,6 @@
 
 - name: fzf // Add bash config
   ansible.builtin.copy:
-    src: bash/fzf.bash
+    src: fzf.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/fzf.bash"
 

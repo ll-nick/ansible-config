@@ -1,5 +1,4 @@
 - block:
-  - import_tasks: subtasks/fzf.yml
   - import_tasks: subtasks/lazygit.yml
   - import_tasks: subtasks/leadr.yml
   - import_tasks: subtasks/locale.yml
