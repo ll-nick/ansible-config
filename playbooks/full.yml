@@ -27,4 +27,5 @@
     - role: starship
     - role: thefuck
     - role: tmux
+    - role: update
 
