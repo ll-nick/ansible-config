@@ -1,23 +1,23 @@
-- name: lazygit // Ensure Directory
+- name: Ensure Directory
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.local/bin"
     state: directory
 
-- name: lazygit // Get latest release data
+- name: Get latest release data
   ansible.builtin.uri:
     url: https://api.github.com/repos/jesseduffield/lazygit/releases/latest
   register: lazygit_latest_release
 
-- name: lazygit // Set latest version
+- name: Set latest version
   set_fact:
     lazygit_latest_release_version: "{{ lazygit_latest_release.json.tag_name | regex_replace('^v', '') }}"
 
-- name: lazygit // Check if lazygit is installed
+- name: Check if lazygit is installed
   ansible.builtin.shell: command -v lazygit
   register: lazygit_installed
   ignore_errors: true
 
-- name: lazygit // Check installed version
+- name: Check installed version
   when: lazygit_installed.rc == 0
   ansible.builtin.shell: lazygit --version | grep -o ', version=[^,]*' | awk -F= '{print $2}'
   args:
@@ -27,25 +27,25 @@
   failed_when: false
   register: lazygit_installed_version
 
-- name: lazygit // Install
+- name: Install
   when: lazygit_installed.rc != 0 or lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
   ansible.builtin.unarchive:
     src: "https://github.com/jesseduffield/lazygit/releases/download/v{{ lazygit_latest_release_version }}/lazygit_{{ lazygit_latest_release_version }}_Linux_x86_64.tar.gz"
     dest: "{{ ansible_env.HOME }}/.local/bin/"
     remote_src: yes
 
-- name: lazygit // Add bash config
+- name: Add bash config
   ansible.builtin.copy:
-    src: bash/lazygit.bash
+    src: lazygit.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/lazygit.bash"
 
-- name: lazygit // Ensure config directory
+- name: Ensure config directory
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.config/lazygit"
     state: directory
 
-- name: lazygit // Add lazygit config
+- name: Add lazygit config
   ansible.builtin.copy:
-    src: lazygit/config.yml
+    src: config.yml
     dest: "{{ ansible_env.HOME }}/.config/lazygit/config.yml"
 

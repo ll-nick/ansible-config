@@ -17,6 +17,7 @@
   roles:
     - role: bash
     - role: fzf
+    - role: lazygit
     - role: neovim
     - role: tmux
 
