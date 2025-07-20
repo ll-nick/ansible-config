@@ -19,6 +19,7 @@
     - role: fzf
     - role: lazygit
     - role: leadr
+    - role: locale
     - role: neovim
     - role: tmux
 
