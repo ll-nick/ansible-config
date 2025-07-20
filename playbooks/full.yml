@@ -21,5 +21,6 @@
     - role: leadr
     - role: locale
     - role: neovim
+    - role: nerdfont
     - role: tmux
 

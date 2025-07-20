@@ -1,5 +1,4 @@
 - block:
-  - import_tasks: subtasks/nerdfont.yml
   - import_tasks: subtasks/nodejs.yml
   - import_tasks: subtasks/pipx.yml
   - import_tasks: subtasks/starship.yml
