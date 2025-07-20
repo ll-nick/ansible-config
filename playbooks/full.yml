@@ -23,5 +23,6 @@
     - role: neovim
     - role: nerdfont
     - role: nodejs
+    - role: pipx
     - role: tmux
 
