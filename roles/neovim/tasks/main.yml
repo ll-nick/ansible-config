@@ -1,4 +1,4 @@
-- name: Neovim // Install Debian dependencies
+- name: Install Debian dependencies
   become: true
   tags: [never, privileged]
   ansible.builtin.package:
@@ -8,7 +8,7 @@
     state: present
   when: ansible_distribution in ["Debian", "Ubuntu"]
 
-- name: Neovim // Install Arch dependencies
+- name: Install Arch dependencies
   become: true
   tags: [never, privileged]
   ansible.builtin.package:
@@ -44,20 +44,20 @@
             https://github.com/neovim/neovim-releases/releases/download/{{ nvim_version }}/nvim-linux-x86_64.tar.gz
           {% endif %}
 
-    - name: Neovim // Download and install compatible tarball
+    - name: Download and install compatible tarball
       ansible.builtin.unarchive:
         src: "{{ nvim_download_url }}"
         dest: "{{ ansible_env.HOME }}/.local/"
         remote_src: yes
         extra_opts: ['--strip-components=1']
 
-- name: Neovim // Clone Config
+- name: Clone Config
   ansible.builtin.git:
     repo: "https://github.com/ll-nick/neovim-config.git"
     dest: "{{ ansible_env.HOME }}/.config/nvim"
     force: "true"
 
-- name: Neovim // Add bash config
+- name: Add bash config
   ansible.builtin.copy:
     src: nvim.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"

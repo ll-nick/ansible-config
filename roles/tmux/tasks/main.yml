@@ -1,4 +1,4 @@
-- name: tmux // Install dependencies
+- name: Install dependencies
   become: true
   tags: [never, privileged]
   ansible.builtin.package:
@@ -6,43 +6,43 @@
       - xclip
     state: present
 
-- name: tmux // Check installed version
+- name: Check installed version
   command: tmux -V
   ignore_errors: true
   changed_when: false
   failed_when: false
   register: tmux_installed_version
 
-- name: tmux // Download binary
+- name: Download binary
   when: tmux_installed_version.rc != 0 or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
   ansible.builtin.get_url:
     url: "https://github.com/pythops/tmux-linux-binary/releases/download/v{{ tmux_version }}/tmux-linux-x86_64"
     dest: "{{ ansible_env.HOME }}/.local/bin/tmux"
     mode: "0755"
 
-- name: tmux // Clone Config
+- name: Clone Config
   ansible.builtin.git:
     repo: "https://github.com/ll-nick/tmux-config.git"
     dest: "{{ ansible_env.HOME }}/.config/tmux"
     force: "true"
   register: tmux_config
 
-- name: tmux // Clone TPM
+- name: Clone TPM
   ansible.builtin.git:
     repo: "https://github.com/tmux-plugins/tpm"
     dest: "{{ ansible_env.HOME }}/.config/tmux/plugins/tpm"
     force: "true"
 
-- name: tmux // Install Plugins
+- name: Install Plugins
   ansible.builtin.shell: "bash {{ ansible_env.HOME }}/.config/tmux/plugins/tpm/bin/install_plugins"
   when: tmux_config.changed
 
-- name: tmux // Add bash config
+- name: Add bash config
   ansible.builtin.copy:
     src: tmux.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
 
-- name: tmux // Check if systemd is available
+- name: Check if systemd is available
   ansible.builtin.shell: command -v systemctl
   register: systemd_available
   ignore_errors: true
@@ -50,17 +50,17 @@
 
 - when: systemd_available.rc == 0
   block:
-    - name: tmux // Ensure systemd user service directory
+    - name: Ensure systemd user service directory
       ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/.config/systemd/user"
         state: directory
 
-    - name: tmux // Install autostart service
+    - name: Install autostart service
       ansible.builtin.copy:
         src: tmux.service
         dest: "{{ ansible_env.HOME }}/.config/systemd/user/tmux.service"
 
-    - name: tmux // Enable autostart service
+    - name: Enable autostart service
       ansible.builtin.systemd:
         unit: tmux
         enabled: true

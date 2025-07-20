@@ -1,19 +1,19 @@
-- name: fzf // Clone
+- name: Clone
   git:
     repo: "https://github.com/junegunn/fzf.git"
     dest: "{{ ansible_env.HOME }}/.config/fzf/"
 
-- name: fzf // Check Install
+- name: Check Install
   stat:
     path: "{{ ansible_env.HOME }}/.config/fzf/fzf.bash"
   register: fzf_check
 
-- name: fzf // Run Install Script
+- name: Run Install Script
   shell:
     cmd: "bash {{ ansible_env.HOME }}/.config/fzf/install --xdg --key-bindings --completion --no-update-rc"
   when: not fzf_check.stat.exists
 
-- name: fzf // Add bash config
+- name: Add bash config
   ansible.builtin.copy:
     src: fzf.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/fzf.bash"
