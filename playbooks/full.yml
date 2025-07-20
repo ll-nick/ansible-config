@@ -22,5 +22,6 @@
     - role: locale
     - role: neovim
     - role: nerdfont
+    - role: nodejs
     - role: tmux
 
