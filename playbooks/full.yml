@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: local
   become: true
   tags: [never, privileged]
   pre_tasks:
@@ -13,7 +13,7 @@
       when: ansible_distribution in ["Debian", "Ubuntu"]
 
 - name: Full setup
-  hosts: localhost
+  hosts: local
   roles:
     - role: bash
     - role: fzf
