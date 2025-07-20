@@ -28,4 +28,5 @@
     - role: thefuck
     - role: tmux
     - role: update
+    - role: z
 
