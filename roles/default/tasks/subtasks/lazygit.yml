@@ -27,22 +27,12 @@
   failed_when: false
   register: lazygit_installed_version
 
-- when:
-    - lazygit_installed.rc != 0 or lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
-  block:
-    - name: lazygit // Install
-      ansible.builtin.unarchive:
-        src: "https://github.com/jesseduffield/lazygit/releases/download/v{{ lazygit_latest_release_version }}/lazygit_{{ lazygit_latest_release_version }}_Linux_x86_64.tar.gz"
-        dest: "{{ ansible_env.HOME }}/.local/bin/"
-        remote_src: yes
-      when: ansible_architecture == "x86_64"
-
-    - name: lazygit // Install
-      ansible.builtin.unarchive:
-        src: "https://github.com/jesseduffield/lazygit/releases/download/v{{ lazygit_latest_release_version }}/lazygit_{{ lazygit_latest_release_version }}_Linux_arm64.tar.gz"
-        dest: "{{ ansible_env.HOME }}/.local/bin/"
-        remote_src: yes
-      when: ansible_architecture == "aarch64"
+- name: lazygit // Install
+  when: lazygit_installed.rc != 0 or lazygit_installed_version.stdout is version(lazygit_latest_release_version, "!=")
+  ansible.builtin.unarchive:
+    src: "https://github.com/jesseduffield/lazygit/releases/download/v{{ lazygit_latest_release_version }}/lazygit_{{ lazygit_latest_release_version }}_Linux_x86_64.tar.gz"
+    dest: "{{ ansible_env.HOME }}/.local/bin/"
+    remote_src: yes
 
 - name: lazygit // Add bash config
   ansible.builtin.copy:

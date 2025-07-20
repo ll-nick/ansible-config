@@ -26,11 +26,30 @@
 
 - when: nvim_installed_version.rc != 0 or nvim_installed_version.stdout.split()[1] is version(nvim_version, "!=")
   block:
-    - import_tasks: from_tarball.yml
-      when: ansible_architecture == "x86_64"
+    - name: Get glibc version
+      command: ldd --version
+      register: ldd_output
+      changed_when: false
 
-    - import_tasks: from_source.yml
-      when: ansible_architecture != "x86_64"
+    - name: Parse glibc version from ldd output
+      set_fact:
+        glibc_version: "{{ ldd_output.stdout_lines[0].split()[-1] }}"
+
+    - name: Set Neovim download URL based on glibc version
+      set_fact:
+        nvim_download_url: >-
+          {% if glibc_version is version('2.32', '>=') %}
+            https://github.com/neovim/neovim/releases/download/{{ nvim_version }}/nvim-linux-x86_64.tar.gz
+          {% else %}
+            https://github.com/neovim/neovim-releases/releases/download/{{ nvim_version }}/nvim-linux-x86_64.tar.gz
+          {% endif %}
+
+    - name: Neovim // Download and install compatible tarball
+      ansible.builtin.unarchive:
+        src: "{{ nvim_download_url }}"
+        dest: "{{ ansible_env.HOME }}/.local/"
+        remote_src: yes
+        extra_opts: ['--strip-components=1']
 
 - name: Neovim // Clone Config
   ansible.builtin.git:

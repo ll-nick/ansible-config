@@ -13,13 +13,12 @@
   failed_when: false
   register: tmux_installed_version
 
-- when: tmux_installed_version.rc != 0 or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
-  block:
-    - import_tasks: install_prebuilt_binary.yml
-      when: ansible_architecture == "x86_64"
-
-    - import_tasks: from_source.yml
-      when: ansible_architecture != "x86_64"
+- name: tmux // Download binary
+  when: tmux_installed_version.rc != 0 or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
+  ansible.builtin.get_url:
+    url: "https://github.com/pythops/tmux-linux-binary/releases/download/v{{ tmux_version }}/tmux-linux-x86_64"
+    dest: "{{ ansible_env.HOME }}/.local/bin/tmux"
+    mode: "0755"
 
 - name: tmux // Clone Config
   ansible.builtin.git:
