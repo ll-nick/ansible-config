@@ -24,5 +24,6 @@
     - role: nerdfont
     - role: nodejs
     - role: pipx
+    - role: starship
     - role: tmux
 
