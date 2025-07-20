@@ -1,5 +1,4 @@
 - block:
-  - import_tasks: subtasks/thefuck.yml
   - import_tasks: subtasks/update.yml
   - import_tasks: subtasks/z.yml
 
