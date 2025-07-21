@@ -145,6 +145,7 @@ update_neovim() {
 update_pipx() {
     print_section "Updating pipx Packages 🐍"
 
+    PATH="$HOME/.local/venvs/pipx/bin:$PATH"
     if ! command -v pipx &> /dev/null; then
         echo "⚠️ pipx not installed - Skipping!"
         return
