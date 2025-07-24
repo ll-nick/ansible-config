@@ -17,7 +17,7 @@
     state: present
   when: ansible_distribution == "Archlinux"
 
-- name: nvim // Check installed version
+- name: Check installed version
   command: nvim --version | head -n 1
   ignore_errors: true
   changed_when: false
