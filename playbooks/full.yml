@@ -17,6 +17,9 @@
   roles:
     - role: bash
     - role: fzf
+    - role: gnome
+    - role: keyboard
+    - role: kitty
     - role: lazygit
     - role: leadr
     - role: locale
@@ -28,5 +31,6 @@
     - role: thefuck
     - role: tmux
     - role: update
+    - role: xdg-directories
     - role: z
 

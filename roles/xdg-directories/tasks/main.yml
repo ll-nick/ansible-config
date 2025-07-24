@@ -1,4 +1,4 @@
-- name: XDG Directories // Create custom XDG directories
+- name: Create custom XDG directories
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/misc/xdg-directories/{{ item }}"
     state: directory
@@ -18,7 +18,7 @@
     dest: "{{ ansible_env.HOME }}/downloads"
     state: link
 
-- name: XDG Directories // Define XDG directories
+- name: Define XDG directories
   ansible.builtin.copy:
-    src: xdg-directories/user-dirs.dirs
+    src: user-dirs.dirs
     dest: "{{ ansible_env.HOME }}/.config/user-dirs.dirs"

@@ -1,6 +1,0 @@
-- block:
-  - import_tasks: subtasks/gnome.yml
-  - import_tasks: subtasks/keyboard.yml
-  - import_tasks: subtasks/kitty.yml
-  - import_tasks: subtasks/xdg-directories.yml
-
