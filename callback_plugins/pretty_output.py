@@ -51,6 +51,16 @@ class CallbackModule(CallbackBase):
         self._display.display(f"{symbol} {name}", color=color)
 
     def v2_runner_on_ok(self, result):
+        if result._task.action == "debug":
+            msg = result._result.get("msg", None)
+            if msg:
+                formatted_msg = f"💬 {msg}"
+                border = "─" * (len(formatted_msg) + 3)
+                self._display.display(f" ┌{border}┐", color=C.COLOR_DEBUG)
+                self._display.display(f" │ {formatted_msg} │", color=C.COLOR_DEBUG)
+                self._display.display(f" └{border}┘", color=C.COLOR_DEBUG)
+                return  # Do not print as regular ok/changed task
+
         changed = result._result.get("changed", False)
         key = "changed" if changed else "ok"
         self.task_counts[key] += 1

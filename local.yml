@@ -25,6 +25,12 @@
             (ansible_facts['env']['WAYLAND_DISPLAY'] is defined
              and ansible_facts['env']['WAYLAND_DISPLAY'] | length > 0)
           }}
+    - debug:
+        msg: >-
+          {{
+            "Host has a display" if has_display
+            else "Host does not have a display"
+          }}
 
   roles:
     - role: bash
