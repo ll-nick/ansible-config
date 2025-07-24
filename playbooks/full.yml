@@ -14,18 +14,35 @@
 
 - name: Full setup
   hosts: local
+  pre_tasks:
+    - name: Check if host has a display
+      set_fact:
+        has_display: >-
+          {{
+            (ansible_facts['env']['DISPLAY'] is defined
+             and ansible_facts['env']['DISPLAY'] is match('^:[0-9]+$'))
+            or
+            (ansible_facts['env']['WAYLAND_DISPLAY'] is defined
+             and ansible_facts['env']['WAYLAND_DISPLAY'] | length > 0)
+          }}
+
   roles:
     - role: bash
     - role: fzf
     - role: gnome
+      when: has_display
     - role: keyboard
+      when: has_display
     - role: kitty
+      when: has_display
     - role: lazygit
     - role: leadr
     - role: locale
     - role: mrt
+      when: "'mrt' in ansible_hostname"
     - role: neovim
     - role: nerdfont
+      when: has_display
     - role: nodejs
     - role: pipx
     - role: starship
@@ -33,5 +50,6 @@
     - role: tmux
     - role: update
     - role: xdg-directories
+      when: has_display
     - role: z
 
