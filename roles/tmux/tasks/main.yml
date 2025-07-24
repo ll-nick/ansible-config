@@ -22,7 +22,7 @@
 
 - name: Clone Config
   ansible.builtin.git:
-    repo: "https://github.com/ll-nick/tmux-config.git"
+    repo: "{{ github_prefix }}ll-nick/tmux-config.git"
     dest: "{{ ansible_env.HOME }}/.config/tmux"
     force: "true"
   register: tmux_config

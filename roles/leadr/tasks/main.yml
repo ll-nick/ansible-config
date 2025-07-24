@@ -43,7 +43,7 @@
 
 - name: Clone config
   ansible.builtin.git:
-    repo: "https://github.com/ll-nick/leadr-config"
+    repo: "{{ github_prefix }}ll-nick/leadr-config"
     dest: "{{ ansible_env.HOME }}/.config/leadr"
     force: "true"
 

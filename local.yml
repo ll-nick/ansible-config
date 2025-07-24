@@ -32,6 +32,23 @@
             else "Host does not have a display"
           }}
 
+    - name: Check GitHub SSH access
+      shell: ssh -T git@github.com
+      register: github_ssh_test
+      failed_when: false
+      changed_when: false
+    - name: Set GitHub prefix
+      set_fact:
+        github_prefix: >-
+          {{
+            "git@github.com:"
+            if github_ssh_test.rc in [0, 1]
+            else "https://github.com/"
+          }}
+    - debug:
+        msg: "GitHub prefix set to {{ github_prefix }}"
+
+
   roles:
     - role: bash
     - role: fzf

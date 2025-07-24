@@ -53,7 +53,7 @@
 
 - name: Clone Config
   ansible.builtin.git:
-    repo: "https://github.com/ll-nick/neovim-config.git"
+    repo: "{{ github_prefix }}ll-nick/neovim-config.git"
     dest: "{{ ansible_env.HOME }}/.config/nvim"
     force: "true"
 
