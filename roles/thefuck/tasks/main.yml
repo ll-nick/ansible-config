@@ -1,0 +1,10 @@
+- name: Install
+  community.general.pipx:
+    name: thefuck
+    executable: "{{ ansible_env.HOME }}/.local/venvs/pipx/bin/pipx"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: thefuck.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/thefuck.bash"
+

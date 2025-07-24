@@ -1,0 +1,64 @@
+- name: Install Debian dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - ripgrep # For telescope live grep
+      - python3-venv # clang-format dependency
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Install Arch dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - ripgrep # For telescope live grep
+    state: present
+  when: ansible_distribution == "Archlinux"
+
+- name: Check installed version
+  command: nvim --version | head -n 1
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  register: nvim_installed_version
+
+- when: nvim_installed_version.rc != 0 or nvim_installed_version.stdout.split()[1] is version(nvim_version, "!=")
+  block:
+    - name: Get glibc version
+      command: ldd --version
+      register: ldd_output
+      changed_when: false
+
+    - name: Parse glibc version from ldd output
+      set_fact:
+        glibc_version: "{{ ldd_output.stdout_lines[0].split()[-1] }}"
+
+    - name: Set Neovim download URL based on glibc version
+      set_fact:
+        nvim_download_url: >-
+          {% if glibc_version is version('2.32', '>=') %}
+            https://github.com/neovim/neovim/releases/download/{{ nvim_version }}/nvim-linux-x86_64.tar.gz
+          {% else %}
+            https://github.com/neovim/neovim-releases/releases/download/{{ nvim_version }}/nvim-linux-x86_64.tar.gz
+          {% endif %}
+
+    - name: Download and install compatible tarball
+      ansible.builtin.unarchive:
+        src: "{{ nvim_download_url }}"
+        dest: "{{ ansible_env.HOME }}/.local/"
+        remote_src: yes
+        extra_opts: ['--strip-components=1']
+
+- name: Clone Config
+  ansible.builtin.git:
+    repo: "{{ github_prefix }}ll-nick/neovim-config.git"
+    dest: "{{ ansible_env.HOME }}/.config/nvim"
+    force: "true"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: nvim.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"
+

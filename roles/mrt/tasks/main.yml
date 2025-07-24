@@ -1,23 +1,23 @@
-- name: MRT // Add bash config
+- name: Add bash config
   ansible.builtin.copy:
-    src: bash/mrt.bash
+    src: mrt.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/mrt.bash"
 
-- name: MRT // Check if mrt tools are installed
+- name: Check if mrt tools are installed
   ansible.builtin.stat:
     path: /opt/mrtsoftware
   register: mrtsoftware_dir
 
-- name: MRT // ROS configuration
+- name: ROS configuration
   when: mrtsoftware_dir.stat.exists
   block:
-    - name: MRT // Clone rossrc
+    - name: Clone rossrc
       ansible.builtin.git:
-        repo: "https://github.com/ll-nick/rossrc.git"
+        repo: "{{ github_prefix }}ll-nick/rossrc.git"
         dest: "{{ ansible_env.HOME }}/.rossrc"
         force: "true"
 
-    - name: MRT // Add mrtros bash config
+    - name: Add mrtros bash config
       ansible.builtin.copy:
-        src: bash/mrtros.bash
+        src: mrtros.bash
         dest: "{{ ansible_env.HOME }}/.config/bash/mrtros.bash"

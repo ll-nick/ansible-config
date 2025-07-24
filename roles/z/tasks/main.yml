@@ -1,0 +1,11 @@
+- name: Install
+  ansible.builtin.git:
+    repo: "https://github.com/rupa/z.git"
+    dest: "{{ ansible_env.HOME }}/.config/z"
+    force: "true"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: z.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/z.bash"
+

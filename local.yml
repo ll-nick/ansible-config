@@ -1,27 +1,4 @@
-- name: Pre-Run // Group Host
-  hosts: localhost
-  tasks:
-    - name: Pre-Run // Setup Default Group
-      add_host:
-        name: "{{ ansible_hostname }}"
-        groups: default
-      changed_when: False
-
-    - name: Pre-Run // Setup Display Group
-      add_host:
-        name: "{{ ansible_hostname }}"
-        groups: display
-      when: ansible_facts['env']['DISPLAY'] is defined
-      changed_when: False
-
-    - name: Pre-Run // Setup MRT Group
-      add_host:
-        name: "{{ ansible_hostname }}"
-        groups: mrt
-      when: "'mrt' in ansible_hostname"
-      changed_when: False
-
-- hosts: default
+- hosts: local
   become: true
   tags: [never, privileged]
   pre_tasks:
@@ -35,15 +12,68 @@
       changed_when: False
       when: ansible_distribution in ["Debian", "Ubuntu"]
 
-- hosts: default
-  roles:
-    - default
+- name: Full setup
+  hosts: local
+  pre_tasks:
+    - name: Check if host has a display
+      set_fact:
+        has_display: >-
+          {{
+            (ansible_facts['env']['DISPLAY'] is defined
+             and ansible_facts['env']['DISPLAY'] is match('^:[0-9]+$'))
+            or
+            (ansible_facts['env']['WAYLAND_DISPLAY'] is defined
+             and ansible_facts['env']['WAYLAND_DISPLAY'] | length > 0)
+          }}
+    - debug:
+        msg: >-
+          {{
+            "Host has a display" if has_display
+            else "Host does not have a display"
+          }}
 
-- hosts: display
-  roles:
-    - display
+    - name: Check GitHub SSH access
+      shell: ssh -T git@github.com
+      register: github_ssh_test
+      failed_when: false
+      changed_when: false
+    - name: Set GitHub prefix
+      set_fact:
+        github_prefix: >-
+          {{
+            "git@github.com:"
+            if github_ssh_test.rc in [0, 1]
+            else "https://github.com/"
+          }}
+    - debug:
+        msg: "GitHub prefix set to {{ github_prefix }}"
 
-- hosts: mrt
-  roles:
-    - mrt
 
+  roles:
+    - role: bash
+    - role: fzf
+    - role: lazygit
+    - role: leadr
+    - role: locale
+    - role: neovim
+    - role: nodejs
+    - role: pipx
+    - role: starship
+    - role: thefuck
+    - role: tmux
+    - role: update
+    - role: z
+
+    - role: gnome
+      when: has_display
+    - role: keyboard
+      when: has_display
+    - role: kitty
+      when: has_display
+    - role: nerdfont
+      when: has_display
+    - role: xdg-directories
+      when: has_display
+
+    - role: mrt
+      when: "'mrt' in ansible_hostname"

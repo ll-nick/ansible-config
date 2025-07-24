@@ -1,0 +1,68 @@
+- name: Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - xclip
+    state: present
+
+- name: Check installed version
+  command: tmux -V
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  register: tmux_installed_version
+
+- name: Download binary
+  when: tmux_installed_version.rc != 0 or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
+  ansible.builtin.get_url:
+    url: "https://github.com/pythops/tmux-linux-binary/releases/download/v{{ tmux_version }}/tmux-linux-x86_64"
+    dest: "{{ ansible_env.HOME }}/.local/bin/tmux"
+    mode: "0755"
+
+- name: Clone Config
+  ansible.builtin.git:
+    repo: "{{ github_prefix }}ll-nick/tmux-config.git"
+    dest: "{{ ansible_env.HOME }}/.config/tmux"
+    force: "true"
+  register: tmux_config
+
+- name: Clone TPM
+  ansible.builtin.git:
+    repo: "https://github.com/tmux-plugins/tpm"
+    dest: "{{ ansible_env.HOME }}/.config/tmux/plugins/tpm"
+    force: "true"
+
+- name: Install Plugins
+  ansible.builtin.shell: "bash {{ ansible_env.HOME }}/.config/tmux/plugins/tpm/bin/install_plugins"
+  when: tmux_config.changed
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: tmux.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
+
+- name: Check if systemd is available
+  ansible.builtin.shell: command -v systemctl
+  register: systemd_available
+  ignore_errors: true
+  changed_when: false
+
+- when: systemd_available.rc == 0
+  block:
+    - name: Ensure systemd user service directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        state: directory
+
+    - name: Install autostart service
+      ansible.builtin.copy:
+        src: tmux.service
+        dest: "{{ ansible_env.HOME }}/.config/systemd/user/tmux.service"
+
+    - name: Enable autostart service
+      ansible.builtin.systemd:
+        unit: tmux
+        enabled: true
+        scope: user
+

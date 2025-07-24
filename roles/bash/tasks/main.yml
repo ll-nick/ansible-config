@@ -1,0 +1,27 @@
+- name: Clone config
+  ansible.builtin.git:
+    repo: "{{ github_prefix }}ll-nick/bash-config"
+    dest: "{{ ansible_env.HOME }}/.config/bash"
+    force: "true"
+
+- name: Create bashrc symlink
+  ansible.builtin.file:
+    src:  "{{ ansible_env.HOME }}/.config/bash/.bashrc"
+    dest: "{{ ansible_env.HOME }}/.bashrc"
+    state: link
+    force: true
+
+- name: Create .profile symlink
+  ansible.builtin.file:
+    src:  "{{ ansible_env.HOME }}/.config/bash/.bash_profile"
+    dest: "{{ ansible_env.HOME }}/.profile"
+    state: link
+    force: true
+
+- name: Create .bash_profile symlink
+  ansible.builtin.file:
+    src:  "{{ ansible_env.HOME }}/.config/bash/.bash_profile"
+    dest: "{{ ansible_env.HOME }}/.bash_profile"
+    state: link
+    force: true
+

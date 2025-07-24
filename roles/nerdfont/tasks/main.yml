@@ -1,0 +1,34 @@
+- name: Ensure Fonts Directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share/fonts"
+    state: directory
+
+- name: Install fontconfig
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - fontconfig
+    state: present
+
+- name: Check Font Exists
+  ansible.builtin.shell: "fc-list | grep -q JetBrainsMono"
+  register: font_exists
+  changed_when: false
+  ignore_errors: true
+
+- when: font_exists.rc != 0
+  block:
+    - name: Install unzip
+      become: true
+      tags: [never, privileged]
+      ansible.builtin.package:
+        name: unzip
+        state: present
+
+    - name: Download and Extract
+      ansible.builtin.unarchive:
+        src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
+        dest: "{{ ansible_env.HOME }}/.local/share/fonts/"
+        remote_src: yes
+
