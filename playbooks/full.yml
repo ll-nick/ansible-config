@@ -23,6 +23,7 @@
     - role: lazygit
     - role: leadr
     - role: locale
+    - role: mrt
     - role: neovim
     - role: nerdfont
     - role: nodejs
