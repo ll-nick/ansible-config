@@ -78,10 +78,58 @@ class CallbackModule(CallbackBase):
         self._print_task_line("unreachable", C.COLOR_UNREACHABLE)
 
     def v2_playbook_on_stats(self, stats):
-        summary = [
-            f"{self.task_counts['ok']} OK",
-            f"{self.task_counts['changed']} Changed",
-            f"{self.task_counts['failed']} Failed",
-            f"{self.task_counts['skipped']} Skipped",
+        # Prepare data with symbols in the Status column
+        data = [
+            (f"{SYMBOLS['ok']} OK", self.task_counts["ok"], "ok"),
+            (f"{SYMBOLS['changed']} Changed", self.task_counts["changed"], "changed"),
+            (f"{SYMBOLS['failed']} Failed", self.task_counts["failed"], "failed"),
+            (f"{SYMBOLS['skipped']} Skipped", self.task_counts["skipped"], "skipped"),
+            (
+                f"{SYMBOLS['unreachable']} Unreachable",
+                self.task_counts["unreachable"],
+                "unreachable",
+            ),
         ]
-        self._display.display("\nSUMMARY: " + ", ".join(summary), color=C.COLOR_OK)
+
+        # Define headers
+        header_status = "Status"
+        header_count = "Count"
+
+        # Calculate column widths using only the first two elements of each row
+        status_width = max(len(row[0]) for row in data + [(header_status, 0, "")])
+        count_width = max(len(str(row[1])) for row in data + [(header_status, 0, "")])
+
+        # Header and separators
+        header = f"{header_status:<{status_width}} | {header_count:<{count_width}}"
+        separator = "-" * len(header)
+
+        # Display header
+        self._display.display(f"\n▶ Summary", color=C.COLOR_VERBOSE)
+        self._display.display(separator, color=C.COLOR_CONSOLE_PROMPT)
+        self._display.display(header, color=C.COLOR_CONSOLE_PROMPT)
+        self._display.display(separator, color=C.COLOR_CONSOLE_PROMPT)
+
+        # Print each line with appropriate color
+        for label, count, key in data:
+            line = f"{label:<{status_width}} | {count:<{count_width}}"
+
+            # Color logic
+            if key == "failed":
+                color = C.COLOR_ERROR
+            elif key == "changed":
+                color = C.COLOR_CHANGED
+            elif key == "ok":
+                color = C.COLOR_OK
+            elif key == "skipped":
+                color = C.COLOR_SKIP
+            else:
+                color = C.COLOR_UNREACHABLE
+
+            self._display.display(line, color=color)
+
+        self._display.display(separator, color=C.COLOR_CONSOLE_PROMPT)
+
+        # Total count
+        total = sum(self.task_counts.values())
+        total_line = f"{'Total':<{status_width}} | {total:<{count_width}}"
+        self._display.display(total_line, color=C.COLOR_CONSOLE_PROMPT)
