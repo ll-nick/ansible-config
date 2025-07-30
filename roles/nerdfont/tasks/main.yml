@@ -11,6 +11,24 @@
       - fontconfig
     state: present
 
+- name: Install fallback font
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - fonts-noto
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Install fallback font
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - noto-fonts
+    state: present
+  when: ansible_distribution == "Archlinux"
+
 - name: Check Font Exists
   ansible.builtin.shell: "fc-list | grep -q JetBrainsMono"
   register: font_exists
