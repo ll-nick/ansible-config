@@ -62,7 +62,7 @@
     - role: thefuck
     - role: tmux
     - role: update
-    - role: z
+    - role: zoxide
 
     - role: gnome
       when: has_display

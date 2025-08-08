@@ -1,0 +1,26 @@
+- name: Install dependencies
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name:
+      - curl
+    state: present
+
+- name: Check Install
+  shell:
+    cmd: zoxide --version
+  register: zoxide_install_check
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
+
+- name: Install
+  shell:
+    cmd: "curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh"
+  when: starship_install_check.rc != 0
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: zoxide.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/zoxide.bash"
+
