@@ -50,6 +50,8 @@
 
 
   roles:
+    - role: mise
+
     - role: bash
     - role: fzf
     - role: lazygit
