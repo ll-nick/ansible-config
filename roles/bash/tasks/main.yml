@@ -25,3 +25,7 @@
     state: link
     force: true
 
+- name: Add inputrc
+  ansible.builtin.copy:
+    src: inputrc
+    dest: "{{ ansible_env.HOME }}/.inputrc"
