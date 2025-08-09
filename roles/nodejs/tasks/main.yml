@@ -1,36 +1,6 @@
-- name: Check nvm install
-  ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.nvm"
-  register: nvm_dir
-
-- when: not nvm_dir.stat.isdir is defined or not nvm_dir.stat.isdir
-  block:
-    - name: Install curl
-      become: true
-      tags: [never, privileged]
-      ansible.builtin.package:
-        name: curl
-        state: present
-    - name: Install nvm
-      ansible.builtin.shell: PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash'
-
-- name: Add nvm bash config
-  ansible.builtin.copy:
-    src: nvm.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/nvm.bash"
-
-- name: Check Nodejs install
-  ansible.builtin.shell:
-    cmd: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && node --version"
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global node
   args:
-    executable: /bin/bash
-  register: node_install_check
-  changed_when: false
-  ignore_errors: true
-
-- name: Install Nodejs
-  when: node_install_check.rc != 0
-  ansible.builtin.shell: "source {{ ansible_env.HOME }}/.config/bash/nvm.bash && nvm install --lts"
-  args:
-    executable: /bin/bash
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/node"
 
