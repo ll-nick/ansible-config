@@ -61,7 +61,6 @@
     - role: nodejs
     - role: pipx
     - role: starship
-    - role: thefuck
     - role: tmux
     - role: update
     - role: zoxide
