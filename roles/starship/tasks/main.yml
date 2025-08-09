@@ -1,22 +1,8 @@
-- name: Install dependencies
-  become: true
-  tags: [never, privileged]
-  ansible.builtin.package:
-    name:
-      - curl
-    state: present
-
-- name: Check Install
-  shell:
-    cmd: starship --version
-  register: starship_install_check
-  changed_when: false
-  ignore_errors: true
-
 - name: Install
-  shell:
-    cmd: "curl -sS https://starship.rs/install.sh | sh -s -- --bin-dir '{{ ansible_env.HOME }}/.local/bin' --yes"
-  when: starship_install_check.rc != 0
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global starship
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/starship"
 
 - name: Clone Config
   ansible.builtin.git:
