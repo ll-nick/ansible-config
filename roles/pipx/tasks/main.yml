@@ -1,15 +1,5 @@
-- name: Create virtual environment for pipx
-  ansible.builtin.command:
-    cmd: python3 -m venv ~/.local/venvs/pipx
-    creates: "{{ ansible_env.HOME }}/.local/venvs/pipx"
-
-- name: Install pipx in the virtual environment
-  ansible.builtin.pip:
-    name: pipx
-    executable: "{{ ansible_env.HOME }}/.local/venvs/pipx/bin/pip"
-
-- name: Add bash config
-  ansible.builtin.copy:
-    src: pipx.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/pipx.bash"
-
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global pipx
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/pipx"
