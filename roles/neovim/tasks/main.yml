@@ -3,9 +3,8 @@
   tags: [never, privileged]
   ansible.builtin.package:
     name:
-      - python3-venv # clang-format dependency
+      - unzip # clangd
     state: present
-  when: ansible_distribution in ["Debian", "Ubuntu"]
 
 - name: Get glibc version
   command: ldd --version
