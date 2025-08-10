@@ -27,7 +27,7 @@ detect_distro() {
     fi
 }
 
-install_package() {
+ensure_system_package() {
     PACKAGE=$1
 
     if command -v $PACKAGE > /dev/null 2>&1; then
@@ -52,7 +52,7 @@ install_package() {
     fi
 }
 
-install_mise() {
+ensure_mise() {
     if command -v mise > /dev/null 2>&1; then
         echo "mise is already installed."
         return
@@ -72,7 +72,7 @@ activate_mise() {
     eval "$($HOME/.local/bin/mise activate --shims)"
 }
 
-install_mise_package() {
+ensure_mise_package() {
     PACKAGE=$1
 
     if command -v $PACKAGE > /dev/null 2>&1; then
@@ -115,15 +115,15 @@ main() {
 
     detect_distro
 
-    install_package "curl"
-    install_package "git"
+    ensure_system_package "curl"
+    ensure_system_package "git"
 
-    install_mise
+    ensure_mise
     activate_mise
 
-    install_mise_package "python"
-    install_mise_package "pipx"
-    install_mise_package "ansible"
+    ensure_mise_package "python"
+    ensure_mise_package "pipx"
+    ensure_mise_package "ansible"
 
     # Additional tasks required for the playbook
     ansible-galaxy collection install community.general
