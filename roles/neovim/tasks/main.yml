@@ -3,19 +3,9 @@
   tags: [never, privileged]
   ansible.builtin.package:
     name:
-      - ripgrep # For telescope live grep
       - python3-venv # clang-format dependency
     state: present
   when: ansible_distribution in ["Debian", "Ubuntu"]
-
-- name: Install Arch dependencies
-  become: true
-  tags: [never, privileged]
-  ansible.builtin.package:
-    name:
-      - ripgrep # For telescope live grep
-    state: present
-  when: ansible_distribution == "Archlinux"
 
 - name: Check installed version
   command: nvim --version | head -n 1
