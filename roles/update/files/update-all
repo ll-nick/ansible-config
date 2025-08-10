@@ -142,6 +142,20 @@ update_neovim() {
     fi
 }
 
+update_mise() {
+    print_section "Updating Mise Packages 📦"
+
+    if ! command -v mise &> /dev/null; then
+        echo "⚠️ mise not installed - Skipping!"
+        return
+    fi
+
+    if confirm_step "Update mise packages?"; then
+        mise self-update
+        mise upgrade
+    fi
+}
+
 update_pipx() {
     print_section "Updating pipx Packages 🐍"
 
@@ -171,12 +185,15 @@ update_flatpak() {
 
 update_all() {
     print_title
+
     update_system
     update_dotfiles
     update_tmux
     update_neovim
+    update_mise
     update_pipx
     update_flatpak
+
     date +%s > "$UPDATE_TIMESTAMP"
     print_section "✅ All Updates Completed!"
 }
