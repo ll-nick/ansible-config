@@ -1,0 +1,10 @@
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global bat
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/bat"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: bat.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/bat.bash"
