@@ -37,8 +37,8 @@ ensure_system_package() {
 
     echo "$PACKAGE is not installed."
     if ! confirm "Do you want to install $PACKAGE? This requires sudo."; then
-        echo "Skipping $PACKAGE installation."
-        return
+        echo "ERROR: $PACKAGE is required but not installed."
+        exit 1
     fi
 
     if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
@@ -50,6 +50,12 @@ ensure_system_package() {
         echo "Unsupported distribution: $DISTRO"
         exit 1
     fi
+
+    # Verify install
+    if ! command -v "$PACKAGE" > /dev/null 2>&1; then
+        echo "ERROR: Failed to install $PACKAGE."
+        exit 1
+    fi
 }
 
 ensure_mise() {
@@ -59,13 +65,18 @@ ensure_mise() {
     fi
 
     echo "mise is not installed."
-    echo "mise is used to install ansible and its dependencies in an isolated environment."
     if ! confirm "Do you want to install mise?"; then
-        echo "Skipping mise installation."
-        return
+        echo "ERROR: mise is required but not installed."
+        exit 1
     fi
 
     curl https://mise.run | sh
+
+    # Verify install
+    if [ ! -f "$HOME/.local/bin/mise" ]; then
+        echo "ERROR: mise installation failed."
+        exit 1
+    fi
 }
 
 activate_mise() {
@@ -80,11 +91,17 @@ ensure_mise_package() {
         return
     fi
 
-    echo "$PACKAGE is not installed."
-    if confirm "Do you want to install $PACKAGE using mise?"; then
-        mise use --global $PACKAGE
-    else
-        echo "Skipping $PACKAGE installation."
+    if ! confirm "Do you want to install $PACKAGE using mise?"; then
+        echo "ERROR: $PACKAGE is required but not installed."
+        exit 1
+    fi
+
+    mise use --global $PACKAGE
+
+    # Verify install
+    if ! command -v "$PACKAGE" > /dev/null 2>&1; then
+        echo "ERROR: Failed to install $PACKAGE via mise."
+        exit 1
     fi
 }
 
