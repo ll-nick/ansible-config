@@ -55,6 +55,7 @@
     - role: mise
 
     - role: bat
+    - role: eza
     - role: fzf
     - role: lazygit
     - role: leadr
