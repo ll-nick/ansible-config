@@ -12,4 +12,4 @@
 - name: Add bash config
   ansible.builtin.copy:
     src: mise.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/mise.bash"
+    dest: "{{ ansible_env.HOME }}/.config/bash/_mise.bash"
