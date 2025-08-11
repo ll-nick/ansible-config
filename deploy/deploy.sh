@@ -2,7 +2,23 @@
 
 set -e
 
+NO_CONFIRM=false
+
+print_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Options:
+  -y, --no-confirm   Automatically answer yes to all prompts.
+  -h, --help         Show this help message and exit.
+EOF
+}
+
 confirm() {
+    if [ "$NO_CONFIRM" = true ]; then
+        return 0
+    fi
+
     printf "%s [y/N] " "$1"
     # Reading from stderr allows to execute the script by piping it to sh
     # See https://stackoverflow.com/a/54396662
@@ -127,6 +143,25 @@ run_ansible() {
 }
 
 main() {
+    # Parse options
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -y | --no-confirm)
+                NO_CONFIRM=true
+                shift
+                ;;
+            -h | --help)
+                print_help
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1"
+                print_help
+                exit 1
+                ;;
+        esac
+    done
+
     # Ensure local binary directory is on PATH
     export PATH="$HOME/.local/bin:$PATH"
 
@@ -150,4 +185,4 @@ main() {
     echo "Deployment completed successfully."
 }
 
-main
+main "$@"
