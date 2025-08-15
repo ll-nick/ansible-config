@@ -26,7 +26,7 @@ EOF
 
 print_header() {
     local title="$1"
-    local width=$((${#title}))
+    local width=$((${#title} + 3))
     local top="╭$(printf '─%.0s' $(seq 1 $width))╮"
     local bottom="╰$(printf '─%.0s' $(seq 1 $width))╯"
 
