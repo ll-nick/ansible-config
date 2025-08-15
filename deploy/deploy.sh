@@ -243,7 +243,7 @@ main() {
     ensure_mise
     activate_mise
 
-    ensure_mise_package "python"
+    MISE_PYTHON_COMPILE=false ensure_mise_package "python"
     ensure_mise_package "pipx"
     ensure_mise_package "ansible"
 
