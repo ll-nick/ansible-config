@@ -51,6 +51,11 @@
 
   roles:
     - role: bash
+
+    - role: mise
+
+    - role: bat
+    - role: eza
     - role: fzf
     - role: lazygit
     - role: leadr
@@ -59,7 +64,6 @@
     - role: nodejs
     - role: pipx
     - role: starship
-    - role: thefuck
     - role: tmux
     - role: update
     - role: zoxide

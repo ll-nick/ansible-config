@@ -1,0 +1,5 @@
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global ripgrep
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/ripgrep"

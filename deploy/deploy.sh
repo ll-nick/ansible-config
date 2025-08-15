@@ -1,9 +1,46 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 
+NO_CONFIRM=false
+PRIVILEGED_MODE=""
+
+COLOR_TITLE='\033[1;34m'   # Bold Blue
+COLOR_INFO='\033[0;36m'    # Cyan
+COLOR_WARN='\033[0;33m'    # Yellow
+COLOR_ERROR='\033[0;31m'   # Red
+COLOR_SUCCESS='\033[0;32m' # Green
+COLOR_RESET='\033[0m'
+
+print_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Options:
+  -y, --no-confirm   Automatically answer yes to all prompts.
+  --privileged       Run ansible-pull with sudo privileges (non-interactive).
+  --unprivileged     Run ansible-pull without sudo privileges (non-interactive).
+  -h, --help         Show this help message and exit.
+EOF
+}
+
+print_header() {
+    local title="$1"
+    local width=$((${#title}))
+    local top="╭$(printf '─%.0s' $(seq 1 $width))╮"
+    local bottom="╰$(printf '─%.0s' $(seq 1 $width))╯"
+
+    echo -e "\n${COLOR_TITLE}${top}${COLOR_RESET}"
+    echo -e "${COLOR_TITLE}│${COLOR_RESET} ${title} ${COLOR_TITLE}│${COLOR_RESET}"
+    echo -e "${COLOR_TITLE}${bottom}${COLOR_RESET}"
+}
+
 confirm() {
-    printf "%s [y/N] " "$1"
+    if [ "$NO_CONFIRM" = true ]; then
+        return 0
+    fi
+
+    printf "  ${COLOR_INFO}➤ %s${COLOR_RESET} [y/N] " "$1"
     # Reading from stderr allows to execute the script by piping it to sh
     # See https://stackoverflow.com/a/54396662
     read response <&2
@@ -21,123 +58,198 @@ detect_distro() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         DISTRO=$ID
+        echo -e "  ${COLOR_SUCCESS}✔ Detected distribution: $DISTRO${COLOR_RESET}"
     else
-        echo "Cannot determine the distribution. Exiting."
+        echo -e "  ${COLOR_ERROR}✖ Cannot determine the distribution. Exiting.${COLOR_RESET}"
         exit 1
     fi
 }
 
-install_package() {
-    COMMAND=$1
-    DEBIAN_PACKAGE=$2
-    ARCH_PACKAGE=$3
+ensure_system_package() {
+    PACKAGE=$1
 
-    if command -v $COMMAND > /dev/null 2>&1; then
-        echo "$COMMAND is already installed."
+    if command -v $PACKAGE > /dev/null 2>&1; then
+        echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE is already installed.${COLOR_RESET}"
         return
     fi
 
-    echo "$COMMAND is not installed."
-    if ! confirm "Do you want to install $COMMAND? This requires sudo."; then
-        echo "Skipping $COMMAND installation."
-        return
+    echo -e "  ${COLOR_WARN}⚠ $PACKAGE is not installed.${COLOR_RESET}"
+    if ! confirm "Do you want to install $PACKAGE? This requires sudo."; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: $PACKAGE is required but not installed.${COLOR_RESET}"
+        exit 1
     fi
 
+    echo -e "  ${COLOR_INFO}⬇ Installing $PACKAGE...${COLOR_RESET}"
     if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
         sudo apt-get update
-        sudo apt-get install -y $DEBIAN_PACKAGE
+        sudo apt-get install -y $PACKAGE
     elif [ "$DISTRO" = "arch" ]; then
-        sudo pacman -Syu --noconfirm $ARCH_PACKAGE
+        sudo pacman -Syu --noconfirm $PACKAGE
     else
-        echo "Unsupported distribution: $DISTRO"
+        echo -e "  ${COLOR_ERROR}✖ Unsupported distribution: $DISTRO${COLOR_RESET}"
+        exit 1
+    fi
+
+    # Verify install
+    if ! command -v "$PACKAGE" > /dev/null 2>&1; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: Failed to install $PACKAGE.${COLOR_RESET}"
+        exit 1
+    fi
+
+    echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE installed successfully.${COLOR_RESET}"
+}
+
+ensure_mise() {
+
+    if command -v mise > /dev/null 2>&1; then
+        echo -e "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}"
+        return
+    fi
+
+    echo -e "  ${COLOR_WARN}⚠ mise is not installed.${COLOR_RESET}"
+    if ! confirm "Do you want to install mise?"; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: mise is required but not installed.${COLOR_RESET}"
+        exit 1
+    fi
+
+    echo -e "  ${COLOR_INFO}⬇ Installing mise...${COLOR_RESET}"
+    curl https://mise.run | sh
+
+    # Verify install
+    if [ ! -f "$HOME/.local/bin/mise" ]; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: mise installation failed.${COLOR_RESET}"
         exit 1
     fi
 }
 
-install_pipx() {
-    if [ -f "$PIPX_VENV_DIR/bin/pipx" ]; then
-        echo "pipx is already installed."
-        return
-    fi
-
-    echo "pipx is not installed."
-    if ! confirm "Do you want to install pipx using a virtual environment?"; then
-        echo "Skipping pipx installation."
-        return
-    fi
-
-    # On older python versions, venv does not come bundled with python
-    if ! python3 -m venv --help &>/dev/null; then
-        echo "python3-venv is not installed. Installing..."
-        sudo apt update
-        sudo apt install -y python3-venv
-    fi
-
-    # Create the virtual environment if it doesn't exist
-    if [ ! -d "$PIPX_VENV_DIR" ]; then
-        echo "Creating virtual environment for pipx at $PIPX_VENV_DIR"
-        python3 -m venv "$PIPX_VENV_DIR"
-    fi
-
-    # Activate the virtual environment and install pipx
-    $PIPX_VENV_DIR/bin/python3 -m pip install --upgrade pip
-    $PIPX_VENV_DIR/bin/python3 -m pip install pipx
-
-    echo "pipx installed successfully in virtual environment at $PIPX_VENV_DIR"
+activate_mise() {
+    eval "$($HOME/.local/bin/mise activate --shims)"
+    echo -e "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}"
 }
 
-install_ansible() {
-    if $PIPX_VENV_DIR/bin/pipx list | grep -q ansible; then
-        echo "Ansible is already installed via pipx."
+ensure_mise_package() {
+    local PACKAGE=$1
+    local MISE_DIR="$HOME/.local/share/mise/installs/$PACKAGE"
+
+    if [ -d "$MISE_DIR" ]; then
+        echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE is already installed via mise.${COLOR_RESET}"
         return
     fi
 
-    echo "Ansible is not installed via pipx."
-    if confirm "Do you want to install Ansible using pipx?"; then
-        $PIPX_VENV_DIR/bin/pipx install ansible-core
-        ansible-galaxy collection install community.general
-    else
-        echo "Skipping Ansible installation."
+    echo -e "  ${COLOR_WARN}⚠ ${PACKAGE} is not installed via mise.${COLOR_RESET}"
+    if ! confirm "Do you want to install $PACKAGE using mise?"; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: $PACKAGE is required but not installed.${COLOR_RESET}"
+        exit 1
     fi
+
+    echo -e "  ${COLOR_INFO}⬇ Installing $PACKAGE via mise...${COLOR_RESET}"
+    mise use --global "$PACKAGE"
+
+    if [ ! -d "$MISE_DIR" ]; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: Failed to install $PACKAGE via mise.${COLOR_RESET}"
+        exit 1
+    fi
+
+    echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE installed successfully via mise.${COLOR_RESET}"
+}
+
+install_ansible_galaxy_collection() {
+    if ansible-galaxy collection list | grep -q 'community.general'; then
+        echo -e "  ${COLOR_SUCCESS}✔ community.general collection is already installed.${COLOR_RESET}"
+        return
+    fi
+
+    echo -e "  ${COLOR_INFO}⬇ Installing community.general collection...${COLOR_RESET}"
+    ansible-galaxy collection install community.general
 }
 
 run_ansible() {
-    # Run ansible-pull
-    if ! confirm "All set to run ansible-pull. Do you wish to execute the playbook?"; then
-        echo "Skipping ansible-pull execution."
+    if ! confirm "Do you wish to execute the playbook?"; then
+        echo -e "  ${COLOR_WARN}⚠ Skipping ansible-pull execution.${COLOR_RESET}"
         exit 1
     fi
 
     # Ask if the user wants to run it with sudo privileges
-    echo -e "\nThe playbook installs as many tools as possible at the user level.\n\
-    However, some dependencies require sudo privileges for system-wide installation.\n\
-    Running the playbook without these privileges expects those packages to be pre-installed."
+    echo -e "\n  💬 The playbook installs many tools at the user level.\n\
+     Some require sudo for system-wide installation.\n\
+     Running without sudo expects those packages pre-installed.\n"
 
-    if confirm "Do you want to run ansible-pull with sudo privileges?"; then
-        echo "Running ansible-pull with sudo..."
+    if [ "$NO_CONFIRM" = true ] && [ -z "$PRIVILEGED_MODE" ]; then
+        echo -e "  ${COLOR_ERROR}✖ ERROR: --no-confirm requires either --privileged or --unprivileged flag.${COLOR_RESET}"
+        exit 1
+    fi
+
+    if [ -z "$PRIVILEGED_MODE" ]; then
+        if confirm "Do you want to run ansible-pull with sudo privileges?"; then
+            PRIVILEGED_MODE=true
+        else
+            PRIVILEGED_MODE=false
+        fi
+    fi
+
+    if [ "$PRIVILEGED_MODE" = true ]; then
+        echo -e "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}"
         ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
     else
-        echo "Running ansible-pull..."
+        echo -e "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}"
         ansible-pull -U https://github.com/ll-nick/ansible-config.git
     fi
+
+    echo -e "  ${COLOR_SUCCESS}✔ ansible-pull execution completed.${COLOR_RESET}"
 }
 
 main() {
+    # Parse options
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -y | --no-confirm)
+                NO_CONFIRM=true
+                shift
+                ;;
+            --privileged)
+                PRIVILEGED_MODE=true
+                shift
+                ;;
+            --unprivileged)
+                PRIVILEGED_MODE=false
+                shift
+                ;;
+            -h | --help)
+                print_help
+                exit 0
+                ;;
+            *)
+                echo -e "${COLOR_ERROR}✖ Unknown option: $1${COLOR_RESET}"
+                print_help
+                exit 1
+                ;;
+        esac
+    done
+
     # Ensure local binary directory is on PATH
     export PATH="$HOME/.local/bin:$PATH"
-    export PIPX_VENV_DIR="$HOME/.local/venvs/pipx"
 
+    print_header "🔍 Detecting Linux Distribution"
     detect_distro
 
-    install_package "git" "git" "git"
-    install_package "python3" "python3" "python"
-    install_package "pip3" "python3-pip" "python-pip"
-    install_pipx
-    install_ansible
+    print_header "📦 Checking system packages"
+    ensure_system_package "curl"
+    ensure_system_package "git"
 
+    print_header "🔧 Checking mise installation"
+    ensure_mise
+    activate_mise
+
+    print_header "🧰 Checking mise packages"
+    MISE_PYTHON_COMPILE=false ensure_mise_package "python"
+    ensure_mise_package "pipx"
+    ensure_mise_package "ansible"
+    install_ansible_galaxy_collection
+
+    print_header "🚀 Running ansible-pull"
     run_ansible
 
-    echo "Deployment completed successfully."
+    echo -e "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
 }
 
-main
+main "$@"

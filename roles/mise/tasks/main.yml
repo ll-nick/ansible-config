@@ -1,0 +1,15 @@
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/bin"
+    state: directory
+
+- name: Install
+  ansible.builtin.shell: |
+    curl https://mise.jdx.dev/install.sh | sh
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/bin/mise"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: mise.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/_mise.bash"

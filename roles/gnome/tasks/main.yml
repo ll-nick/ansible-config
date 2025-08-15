@@ -1,10 +1,9 @@
-- name: Install psutil
-  become: true
-  tags: [never, privileged]
-  ansible.builtin.package:
-    name:
-      - python3-psutil
-    state: present
+- name: Ensure psutil is installed
+  ansible.builtin.shell: |
+    set -e
+    if ! python -c 'import psutil' 2>/dev/null; then
+      python -m pip install --upgrade psutil
+    fi
 
 - name: Ensure icons Directory at .icons
   ansible.builtin.file:

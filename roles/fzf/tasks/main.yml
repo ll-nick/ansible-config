@@ -1,20 +1,10 @@
-- name: Clone
-  git:
-    repo: "https://github.com/junegunn/fzf.git"
-    dest: "{{ ansible_env.HOME }}/.config/fzf/"
-
-- name: Check Install
-  stat:
-    path: "{{ ansible_env.HOME }}/.config/fzf/fzf.bash"
-  register: fzf_check
-
-- name: Run Install Script
-  shell:
-    cmd: "bash {{ ansible_env.HOME }}/.config/fzf/install --xdg --key-bindings --completion --no-update-rc"
-  when: not fzf_check.stat.exists
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global fzf
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/fzf"
 
 - name: Add bash config
   ansible.builtin.copy:
     src: fzf.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/fzf.bash"
-

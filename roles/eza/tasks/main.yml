@@ -1,0 +1,10 @@
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global eza
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/eza"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: eza.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/eza.bash"

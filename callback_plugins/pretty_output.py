@@ -1,5 +1,6 @@
 from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
+from ansible.utils.color import stringc
 
 SYMBOLS = {
     "ok": "✔",
@@ -56,9 +57,18 @@ class CallbackModule(CallbackBase):
             if msg:
                 formatted_msg = f"💬 {msg}"
                 border = "─" * (len(formatted_msg) + 3)
-                self._display.display(f" ┌{border}┐", color=C.COLOR_DEBUG)
-                self._display.display(f" │ {formatted_msg} │", color=C.COLOR_DEBUG)
-                self._display.display(f" └{border}┘", color=C.COLOR_DEBUG)
+                top = stringc(f" ┌{border}┐", C.COLOR_DEBUG)
+                middle = (
+                    stringc(" │ ", C.COLOR_DEBUG)
+                    + stringc(formatted_msg, C.COLOR_CONSOLE_PROMPT)
+                    + stringc(" │", C.COLOR_DEBUG)
+                )
+                bottom = stringc(f" └{border}┘", C.COLOR_DEBUG)
+
+                self._display.display(top)
+                self._display.display(middle)
+                self._display.display(bottom)
+
                 return  # Do not print as regular ok/changed task
 
         changed = result._result.get("changed", False)
