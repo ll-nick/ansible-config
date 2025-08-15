@@ -55,8 +55,6 @@ confirm() {
 }
 
 detect_distro() {
-    print_header "🔍 Detecting Linux Distribution"
-
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         DISTRO=$ID
@@ -69,8 +67,6 @@ detect_distro() {
 
 ensure_system_package() {
     PACKAGE=$1
-
-    print_header "📦 Checking system package: $PACKAGE"
 
     if command -v $PACKAGE > /dev/null 2>&1; then
         echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE is already installed.${COLOR_RESET}"
@@ -104,7 +100,6 @@ ensure_system_package() {
 }
 
 ensure_mise() {
-    print_header "🔧 Checking 'mise' installation"
 
     if command -v mise > /dev/null 2>&1; then
         echo -e "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}"
@@ -128,7 +123,6 @@ ensure_mise() {
 }
 
 activate_mise() {
-    print_header "🔥 Activating mise shims"
     eval "$($HOME/.local/bin/mise activate --shims)"
     echo -e "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}"
 }
@@ -136,8 +130,6 @@ activate_mise() {
 ensure_mise_package() {
     local PACKAGE=$1
     local MISE_DIR="$HOME/.local/share/mise/installs/$PACKAGE"
-
-    print_header "🧰 Checking mise package: $PACKAGE"
 
     if [ -d "$MISE_DIR" ]; then
         echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE is already installed via mise.${COLOR_RESET}"
@@ -162,14 +154,11 @@ ensure_mise_package() {
 }
 
 install_ansible_galaxy_collection() {
-    print_header "🌠 Installing Ansible Galaxy Collection"
     echo -e "  ${COLOR_INFO}⬇ Installing community.general collection...${COLOR_RESET}"
     ansible-galaxy collection install community.general
 }
 
 run_ansible() {
-    print_header "🚀 Running ansible-pull"
-
     if ! confirm "Do you wish to execute the playbook?"; then
         echo -e "  ${COLOR_WARN}⚠ Skipping ansible-pull execution.${COLOR_RESET}"
         exit 1
@@ -235,20 +224,24 @@ main() {
     # Ensure local binary directory is on PATH
     export PATH="$HOME/.local/bin:$PATH"
 
+    print_header "🔍 Detecting Linux Distribution"
     detect_distro
 
+    print_header "📦 Checking system packages"
     ensure_system_package "curl"
     ensure_system_package "git"
 
+    print_header "🔧 Checking mise installation"
     ensure_mise
     activate_mise
 
+    print_header "🧰 Checking mise packages"
     MISE_PYTHON_COMPILE=false ensure_mise_package "python"
     ensure_mise_package "pipx"
     ensure_mise_package "ansible"
-
     install_ansible_galaxy_collection
 
+    print_header "🚀 Running ansible-pull"
     run_ansible
 
     echo -e "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
