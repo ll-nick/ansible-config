@@ -30,9 +30,9 @@ print_header() {
     local top="╭$(printf '─%.0s' $(seq 1 $width))╮"
     local bottom="╰$(printf '─%.0s' $(seq 1 $width))╯"
 
-    echo -e "\n${COLOR_TITLE}${top}${COLOR_RESET}"
-    echo -e "${COLOR_TITLE}│${COLOR_RESET} ${title} ${COLOR_TITLE}│${COLOR_RESET}"
-    echo -e "${COLOR_TITLE}${bottom}${COLOR_RESET}"
+    printf "\n${COLOR_TITLE}%s${COLOR_RESET}\n" "$top"
+    printf "${COLOR_TITLE}│${COLOR_RESET} %s ${COLOR_TITLE}│${COLOR_RESET}\n" "$title"
+    printf "${COLOR_TITLE}%s${COLOR_RESET}\n" "$bottom"
 }
 
 confirm() {
@@ -58,9 +58,9 @@ detect_distro() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         DISTRO=$ID
-        echo -e "  ${COLOR_SUCCESS}✔ Detected distribution: $DISTRO${COLOR_RESET}"
+        printf "  ${COLOR_SUCCESS}✔ Detected distribution: %s${COLOR_RESET}\n" "$DISTRO"
     else
-        echo -e "  ${COLOR_ERROR}✖ Cannot determine the distribution. Exiting.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ Cannot determine the distribution. Exiting.${COLOR_RESET}\n"
         exit 1
     fi
 }
@@ -69,62 +69,59 @@ ensure_system_package() {
     PACKAGE=$1
 
     if command -v $PACKAGE > /dev/null 2>&1; then
-        echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE is already installed.${COLOR_RESET}"
+        printf "  ${COLOR_SUCCESS}✔ %s is already installed.${COLOR_RESET}\n" "$PACKAGE"
         return
     fi
 
-    echo -e "  ${COLOR_WARN}⚠ $PACKAGE is not installed.${COLOR_RESET}"
+    printf "  ${COLOR_WARN}⚠ %s is not installed.${COLOR_RESET}\n" "$PACKAGE"
     if ! confirm "Do you want to install $PACKAGE? This requires sudo."; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: $PACKAGE is required but not installed.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: %s is required but not installed.${COLOR_RESET}\n" "$PACKAGE"
         exit 1
     fi
 
-    echo -e "  ${COLOR_INFO}⬇ Installing $PACKAGE...${COLOR_RESET}"
+    printf "  ${COLOR_INFO}⬇ Installing %s...${COLOR_RESET}\n" "$PACKAGE"
     if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
         sudo apt-get update
         sudo apt-get install -y $PACKAGE
     elif [ "$DISTRO" = "arch" ]; then
         sudo pacman -Syu --noconfirm $PACKAGE
     else
-        echo -e "  ${COLOR_ERROR}✖ Unsupported distribution: $DISTRO${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ Unsupported distribution: %s${COLOR_RESET}\n" "$DISTRO"
         exit 1
     fi
 
-    # Verify install
     if ! command -v "$PACKAGE" > /dev/null 2>&1; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: Failed to install $PACKAGE.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: Failed to install %s.${COLOR_RESET}\n" "$PACKAGE"
         exit 1
     fi
 
-    echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE installed successfully.${COLOR_RESET}"
+    printf "  ${COLOR_SUCCESS}✔ %s installed successfully.${COLOR_RESET}\n" "$PACKAGE"
 }
 
 ensure_mise() {
-
     if command -v mise > /dev/null 2>&1; then
-        echo -e "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}"
+        printf "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}\n"
         return
     fi
 
-    echo -e "  ${COLOR_WARN}⚠ mise is not installed.${COLOR_RESET}"
+    printf "  ${COLOR_WARN}⚠ mise is not installed.${COLOR_RESET}\n"
     if ! confirm "Do you want to install mise?"; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: mise is required but not installed.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: mise is required but not installed.${COLOR_RESET}\n"
         exit 1
     fi
 
-    echo -e "  ${COLOR_INFO}⬇ Installing mise...${COLOR_RESET}"
+    printf "  ${COLOR_INFO}⬇ Installing mise...${COLOR_RESET}\n"
     curl https://mise.run | sh
 
-    # Verify install
     if [ ! -f "$HOME/.local/bin/mise" ]; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: mise installation failed.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: mise installation failed.${COLOR_RESET}\n"
         exit 1
     fi
 }
 
 activate_mise() {
     eval "$($HOME/.local/bin/mise activate --shims)"
-    echo -e "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}"
+    printf "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}\n"
 }
 
 ensure_mise_package() {
@@ -132,50 +129,49 @@ ensure_mise_package() {
     local MISE_DIR="$HOME/.local/share/mise/installs/$PACKAGE"
 
     if [ -d "$MISE_DIR" ]; then
-        echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE is already installed via mise.${COLOR_RESET}"
+        printf "  ${COLOR_SUCCESS}✔ %s is already installed via mise.${COLOR_RESET}\n" "$PACKAGE"
         return
     fi
 
-    echo -e "  ${COLOR_WARN}⚠ ${PACKAGE} is not installed via mise.${COLOR_RESET}"
+    printf "  ${COLOR_WARN}⚠ %s is not installed via mise.${COLOR_RESET}\n" "$PACKAGE"
     if ! confirm "Do you want to install $PACKAGE using mise?"; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: $PACKAGE is required but not installed.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: %s is required but not installed.${COLOR_RESET}\n" "$PACKAGE"
         exit 1
     fi
 
-    echo -e "  ${COLOR_INFO}⬇ Installing $PACKAGE via mise...${COLOR_RESET}"
+    printf "  ${COLOR_INFO}⬇ Installing %s via mise...${COLOR_RESET}\n" "$PACKAGE"
     mise use --global "$PACKAGE"
 
     if [ ! -d "$MISE_DIR" ]; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: Failed to install $PACKAGE via mise.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: Failed to install %s via mise.${COLOR_RESET}\n" "$PACKAGE"
         exit 1
     fi
 
-    echo -e "  ${COLOR_SUCCESS}✔ $PACKAGE installed successfully via mise.${COLOR_RESET}"
+    printf "  ${COLOR_SUCCESS}✔ %s installed successfully via mise.${COLOR_RESET}\n" "$PACKAGE"
 }
 
 install_ansible_galaxy_collection() {
     if ansible-galaxy collection list | grep -q 'community.general'; then
-        echo -e "  ${COLOR_SUCCESS}✔ community.general collection is already installed.${COLOR_RESET}"
+        printf "  ${COLOR_SUCCESS}✔ community.general collection is already installed.${COLOR_RESET}\n"
         return
     fi
 
-    echo -e "  ${COLOR_INFO}⬇ Installing community.general collection...${COLOR_RESET}"
+    printf "  ${COLOR_INFO}⬇ Installing community.general collection...${COLOR_RESET}\n"
     ansible-galaxy collection install community.general
 }
 
 run_ansible() {
     if ! confirm "Do you wish to execute the playbook?"; then
-        echo -e "  ${COLOR_WARN}⚠ Skipping ansible-pull execution.${COLOR_RESET}"
+        printf "  ${COLOR_WARN}⚠ Skipping ansible-pull execution.${COLOR_RESET}\n"
         exit 1
     fi
 
-    # Ask if the user wants to run it with sudo privileges
-    echo -e "\n  💬 The playbook installs many tools at the user level.\n\
+    printf "\n  💬 The playbook installs many tools at the user level.\n\
      Some require sudo for system-wide installation.\n\
      Running without sudo expects those packages pre-installed.\n"
 
     if [ "$NO_CONFIRM" = true ] && [ -z "$PRIVILEGED_MODE" ]; then
-        echo -e "  ${COLOR_ERROR}✖ ERROR: --no-confirm requires either --privileged or --unprivileged flag.${COLOR_RESET}"
+        printf "  ${COLOR_ERROR}✖ ERROR: --no-confirm requires either --privileged or --unprivileged flag.${COLOR_RESET}\n"
         exit 1
     fi
 
@@ -188,18 +184,17 @@ run_ansible() {
     fi
 
     if [ "$PRIVILEGED_MODE" = true ]; then
-        echo -e "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}"
+        printf "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}\n"
         ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
     else
-        echo -e "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}"
+        printf "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}\n"
         ansible-pull -U https://github.com/ll-nick/ansible-config.git
     fi
 
-    echo -e "  ${COLOR_SUCCESS}✔ ansible-pull execution completed.${COLOR_RESET}"
+    printf "  ${COLOR_SUCCESS}✔ ansible-pull execution completed.${COLOR_RESET}\n"
 }
 
 main() {
-    # Parse options
     while [ "$#" -gt 0 ]; do
         case "$1" in
             -y | --no-confirm)
@@ -219,14 +214,13 @@ main() {
                 exit 0
                 ;;
             *)
-                echo -e "${COLOR_ERROR}✖ Unknown option: $1${COLOR_RESET}"
+                printf "${COLOR_ERROR}✖ Unknown option: %s${COLOR_RESET}\n" "$1"
                 print_help
                 exit 1
                 ;;
         esac
     done
 
-    # Ensure local binary directory is on PATH
     export PATH="$HOME/.local/bin:$PATH"
 
     print_header "🔍 Detecting Linux Distribution"
@@ -249,7 +243,7 @@ main() {
     print_header "🚀 Running ansible-pull"
     run_ansible
 
-    echo -e "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
+    printf "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
 }
 
 main "$@"
