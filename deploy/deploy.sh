@@ -26,7 +26,7 @@ EOF
 
 print_header() {
     local title="$1"
-    local width=$((${#title} + 3))
+    local width=$((${#title} + 3)) # For some reason this works with piping this script to bash but not with sh
     local top="╭$(printf '─%.0s' $(seq 1 $width))╮"
     local bottom="╰$(printf '─%.0s' $(seq 1 $width))╯"
 
