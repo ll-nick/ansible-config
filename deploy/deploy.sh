@@ -3,6 +3,7 @@
 set -e
 
 NO_CONFIRM=false
+PRIVILEGED_MODE=""
 
 print_help() {
     cat << EOF
@@ -10,6 +11,8 @@ Usage: $(basename "$0") [OPTIONS]
 
 Options:
   -y, --no-confirm   Automatically answer yes to all prompts.
+  --privileged       Run ansible-pull with sudo privileges (non-interactive).
+  --unprivileged     Run ansible-pull without sudo privileges (non-interactive).
   -h, --help         Show this help message and exit.
 EOF
 }
@@ -133,7 +136,20 @@ run_ansible() {
     However, some dependencies require sudo privileges for system-wide installation.\n\
     Running the playbook without these privileges expects those packages to be pre-installed."
 
-    if confirm "Do you want to run ansible-pull with sudo privileges?"; then
+    if [ "$NO_CONFIRM" = true ] && [ -z "$PRIVILEGED_MODE" ]; then
+        echo "ERROR: --no-confirm requires either --privileged or --unprivileged flag."
+        exit 1
+    fi
+
+    if [ -z "$PRIVILEGED_MODE" ]; then
+        if confirm "Do you want to run ansible-pull with sudo privileges?"; then
+            PRIVILEGED_MODE=true
+        else
+            PRIVILEGED_MODE=false
+        fi
+    fi
+
+    if [ "$PRIVILEGED_MODE" = true ]; then
         echo "Running ansible-pull with sudo..."
         ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
     else
@@ -148,6 +164,14 @@ main() {
         case "$1" in
             -y | --no-confirm)
                 NO_CONFIRM=true
+                shift
+                ;;
+            --privileged)
+                PRIVILEGED_MODE=true
+                shift
+                ;;
+            --unprivileged)
+                PRIVILEGED_MODE=false
                 shift
                 ;;
             -h | --help)
