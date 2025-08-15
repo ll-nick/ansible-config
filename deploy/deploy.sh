@@ -154,6 +154,11 @@ ensure_mise_package() {
 }
 
 install_ansible_galaxy_collection() {
+    if ansible-galaxy collection list | grep -q 'community.general'; then
+        echo -e "  ${COLOR_SUCCESS}✔ community.general collection is already installed.${COLOR_RESET}"
+        return
+    fi
+
     echo -e "  ${COLOR_INFO}⬇ Installing community.general collection...${COLOR_RESET}"
     ansible-galaxy collection install community.general
 }
