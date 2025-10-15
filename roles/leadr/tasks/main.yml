@@ -1,40 +1,8 @@
-- name: Ensure ~/.local/bin exists
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/bin"
-    state: directory
-
-- name: Get latest release data
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/ll-nick/leadr/releases/latest
-  register: leadr_latest_release
-
-- name: Set latest version
-  set_fact:
-    leadr_latest_release_version: "{{ leadr_latest_release.json.tag_name | regex_replace('^v', '') }}"
-
-- name: Check if leadr is installed
-  ansible.builtin.shell: command -v leadr
-  register: leadr_installed
-  ignore_errors: true
-  changed_when: false
-  failed_when: false
-
-- name: Check installed version
-  when: leadr_installed.rc == 0
-  ansible.builtin.shell: leadr --version | awk '{print $2}'
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global ubi:ll-nick/leadr
   args:
-    executable: /bin/bash
-  ignore_errors: true
-  changed_when: false
-  failed_when: false
-  register: leadr_installed_version
-
-- name: Install latest if needed
-  when: leadr_installed.rc != 0 or (leadr_installed.rc == 0 and leadr_installed_version.stdout is version(leadr_latest_release_version, "!="))
-  ansible.builtin.get_url:
-    url: "https://github.com/ll-nick/leadr/releases/download/v{{ leadr_latest_release_version }}/leadr-v{{ leadr_latest_release_version }}-x86_64-unknown-linux-musl"
-    dest: "{{ ansible_env.HOME }}/.local/bin/leadr"
-    mode: '0755'
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/ubi-ll-nick-leadr"
 
 - name: Add bash config
   ansible.builtin.copy:
