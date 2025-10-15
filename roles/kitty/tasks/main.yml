@@ -1,82 +1,38 @@
-- name: Ensure .local/bin Directory
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/bin"
-    state: directory
+- name: Check if kitty exists in system PATH
+  ansible.builtin.command: "command -v kitty"
+  register: kitty_system_check
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
 
-- name: Get latest release data
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/kovidgoyal/kitty/releases/latest
-  register: kitty_latest_release
+- name: Check if kitty exists in user local/bin
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.local/bin/kitty"
+  register: kitty_local_check
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
 
-- name: Set latest version
+- name: Determine if kitty is installed
   set_fact:
-    kitty_latest_release_version: "{{ kitty_latest_release.json.tag_name | regex_replace('^v', '') }}"
+    kitty_installed: "{{ kitty_system_check.rc == 0 or kitty_local_check.stat.exists }}"
 
-- name: Check install
-  ansible.builtin.shell: "{{ ansible_env.HOME }}/.local/bin/kitty --version"
-  args:
-    executable: /bin/bash
-  ignore_errors: true
-  changed_when: false
-  failed_when: false
-  register: kitty_installed
+- name: Install kitty
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name: kitty
+    state: present
+  when:
+    - not kitty_installed
+    - ansible_distribution == "Archlinux"
 
-- name: Check installed version
-  when: kitty_installed.rc == 0 and kitty_installed.stdout != ''
-  ansible.builtin.shell: "{{ ansible_env.HOME }}/.local/bin/kitty --version | awk '{print $2}'"
-  args:
-    executable: /bin/bash
-  ignore_errors: true
-  changed_when: false
-  failed_when: false
-  register: kitty_installed_version
-
-- when: kitty_installed.rc != 0 or kitty_installed_version.stdout is version(kitty_latest_release_version, "!=")
-  block:
-    - name: Install
-      ansible.builtin.shell: curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
-      args:
-        executable: /bin/bash
-
-    - name: Create symbolic link for kitty
-      ansible.builtin.file:
-        src: "{{ ansible_env.HOME }}/.local/kitty.app/bin/kitty"
-        dest: "{{ ansible_env.HOME }}/.local/bin/kitty"
-        state: link
-
-    - name: Create symbolic link for kitten
-      ansible.builtin.file:
-        src: "{{ ansible_env.HOME }}/.local/kitty.app/bin/kitten"
-        dest: "{{ ansible_env.HOME }}/.local/bin/kitten"
-        state: link
-
-    - name: Copy kitty.desktop to appropriate location
-      ansible.builtin.copy:
-        src: "{{ ansible_env.HOME }}/.local/kitty.app/share/applications/kitty.desktop"
-        dest: "{{ ansible_env.HOME }}/.local/share/applications/kitty.desktop"
-
-    - name: Copy kitty-open.desktop to appropriate location
-      ansible.builtin.copy:
-        src: "{{ ansible_env.HOME }}/.local/kitty.app/share/applications/kitty-open.desktop"
-        dest: "{{ ansible_env.HOME }}/.local/share/applications/kitty-open.desktop"
-
-    - name: Update Icon path in .desktop files
-      ansible.builtin.shell:
-        cmd: "sed -i 's|Icon=kitty|Icon={{ ansible_env.HOME }}/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g' ~/.local/share/applications/kitty*.desktop"
-      args:
-        executable: /bin/bash
-
-    - name: Update Exec path in .desktop files
-      ansible.builtin.shell:
-        cmd: "sed -i 's|Exec=kitty|Exec={{ ansible_env.HOME }}/.local/kitty.app/bin/kitty|g' ~/.local/share/applications/kitty*.desktop"
-      args:
-        executable: /bin/bash
-
-    - name: Make xdg-terminal-exec use kitty
-      ansible.builtin.lineinfile:
-        path: "{{ ansible_env.HOME }}/.config/xdg-terminals.list"
-        line: 'kitty.desktop'
-        create: yes
+- name: Install kitty manually
+  ansible.builtin.include_tasks: install.yml
+  when:
+    - not kitty_installed
+    - ansible_distribution != "Archlinux"
+    - ansible_distribution != "NixOS"
 
 - name: Clone Config
   ansible.builtin.git:
