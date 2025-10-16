@@ -26,6 +26,11 @@
     key: "/org/gnome/desktop/input-sources/xkb-options"
     value: "['caps:escape_shifted_capslock']"
 
+- name: Rebind screen lock to Ctrl+Alt+L
+  community.general.dconf:
+    key: "/org/gnome/settings-daemon/plugins/media-keys/screensaver"
+    value: "['<Control><Alt>l']"
+
 # Cursor Theme
 - name: Ensure icons Directory at .icons
   ansible.builtin.file:
@@ -67,3 +72,56 @@
     key: "/org/gnome/desktop/background/picture-uri"
     value: "'https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-light.png?raw=true'"
 
+# PaperWM
+- name: Install GNOME Extension CLI
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global pipx:gnome-extensions-cli
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/pipx-gnome-extensions-cli"
+
+- name: Query installed GNOME extensions
+  ansible.builtin.command:
+    cmd: gext list --only-uuid --all
+  register: gext_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install PaperWM
+  ansible.builtin.command:
+    cmd: gext install "paperwm@paperwm.github.com"
+  when: "'paperwm@paperwm.github.com' not in gext_installed.stdout"
+
+- name: Query enabled GNOME extensions
+  ansible.builtin.command:
+    cmd: gext list --only-uuid
+  register: gext_enabled
+  changed_when: false
+  failed_when: false
+
+- name: Enable PaperWM
+  ansible.builtin.command:
+    cmd: gext enable "paperwm@paperwm.github.com"
+  when: "'paperwm@paperwm.github.com' not in gext_enabled.stdout"
+
+- name: Configure PaperWM keybindings
+  community.general.dconf:
+    key: "/org/gnome/shell/extensions/paperwm/keybindings"
+    value: >
+      {
+        'close-window': ['<Super>BackSpace', '<Super>x'],
+        'move-down': ['<Control><Super>Down', '<Shift><Super>j'],
+        'move-down-workspace': ['<Control><Super>Page_Down', '<Shift><Alt><Super>j'],
+        'move-left': ['<Control><Super>comma', '<Shift><Super>comma', '<Control><Super>Left', '<Shift><Super>h'],
+        'move-right': ['<Control><Super>period', '<Shift><Super>period', '<Control><Super>Right', '<Shift><Alt>l'],
+        'move-up': ['<Control><Super>Up', '<Shift><Super>k'],
+        'move-up-workspace': ['<Control><Super>Page_Up', '<Shift><Alt><Super>k'],
+        'new-window': ['<Super>Return'],
+        'switch-down': ['<Super>Down', '<Super>j'],
+        'switch-down-workspace': ['<Super>Page_Down', '<Alt><Super>j'],
+        'switch-left': ['<Super>Left', '<Super>h'],
+        'switch-next': ['<Super>n'],
+        'switch-previous': ['<Super>p'],
+        'switch-right': ['<Super>l'],
+        'switch-up': ['<Super>Up', '<Super>k'],
+        'switch-up-workspace': ['<Super>Page_Up', '<Alt><Super>k']
+      }
