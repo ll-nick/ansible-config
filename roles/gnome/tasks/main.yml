@@ -33,19 +33,13 @@
     key: "/org/gnome/desktop/interface/cursor-theme"
     value: "'catppuccin-mocha-blue-cursors'"
 
-- name: Ensure Picture Directory
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/misc/xdg-directories/pictures"
-    state: directory
+- name: Set Dark Mode Wallpaper
+  community.general.dconf:
+    key: "/org/gnome/desktop/background/picture-uri-dark"
+    value: "'https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-dark.png?raw=true'"
 
-- name: Download Wallpaper
-  ansible.builtin.get_url:
-    url: "https://github.com/zhichaoh/catppuccin-wallpapers/blob/main/landscapes/shaded_landscape.png?raw=true"
-    dest: "{{ ansible_env.HOME }}/misc/xdg-directories/pictures/wallpaper.png"
-    checksum: sha256:1199a43751f1234d3fb92ecf614fbf34de2c07334d3fdd355891044f51bddada
-
-- name: Set Wallpaper
+- name: Set Light Mode Wallpaper
   community.general.dconf:
     key: "/org/gnome/desktop/background/picture-uri"
-    value: "'file:///{{ ansible_env.HOME }}/misc/xdg-directories/pictures/wallpaper.png'"
+    value: "'https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-light.png?raw=true'"
 
