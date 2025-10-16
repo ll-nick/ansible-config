@@ -1,38 +1,42 @@
-- name: Check if kitty exists in system PATH
-  ansible.builtin.command: "command -v kitty"
-  register: kitty_system_check
-  changed_when: false
-  failed_when: false
-  ignore_errors: true
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global github:kovidgoyal/kitty
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty"
+  register: kitty_install
+  # kitty is best installed via nixpkgs on NixOS
+  when: ansible_distribution != "NixOS"
 
-- name: Check if kitty exists in user local/bin
-  ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.local/bin/kitty"
-  register: kitty_local_check
-  changed_when: false
-  failed_when: false
-  ignore_errors: true
+- name: Post-install tasks
+  when: kitty_install.changed and ansible_distribution != "NixOS"
+  block:
+  - name: Copy kitty.desktop to appropriate location
+    ansible.builtin.copy:
+      src: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/applications/kitty.desktop"
+      dest: "{{ ansible_env.HOME }}/.local/share/applications/kitty.desktop"
 
-- name: Determine if kitty is installed
-  set_fact:
-    kitty_installed: "{{ kitty_system_check.rc == 0 or kitty_local_check.stat.exists }}"
+  - name: Copy kitty-open.desktop to appropriate location
+    ansible.builtin.copy:
+      src: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/applications/kitty-open.desktop"
+      dest: "{{ ansible_env.HOME }}/.local/share/applications/kitty-open.desktop"
 
-- name: Install kitty
-  become: true
-  tags: [never, privileged]
-  ansible.builtin.package:
-    name: kitty
-    state: present
-  when:
-    - not kitty_installed
-    - ansible_distribution == "Archlinux"
+  - name: Update Icon path in .desktop files
+    ansible.builtin.shell:
+      cmd: "sed -i 's|Icon=kitty|Icon={{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/icons/hicolor/256x256/apps/kitty.png|g' ~/.local/share/applications/kitty*.desktop"
+    args:
+      executable: /bin/bash
 
-- name: Install kitty manually
-  ansible.builtin.include_tasks: install.yml
-  when:
-    - not kitty_installed
-    - ansible_distribution != "Archlinux"
-    - ansible_distribution != "NixOS"
+  - name: Update Exec path in .desktop files
+    ansible.builtin.shell:
+      cmd: "sed -i 's|Exec=kitty|Exec={{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/bin/kitty|g' ~/.local/share/applications/kitty*.desktop"
+    args:
+      executable: /bin/bash
+
+  - name: Make xdg-terminal-exec use kitty
+    ansible.builtin.lineinfile:
+      path: "{{ ansible_env.HOME }}/.config/xdg-terminals.list"
+      line: 'kitty.desktop'
+      create: yes
 
 - name: Clone Config
   ansible.builtin.git:

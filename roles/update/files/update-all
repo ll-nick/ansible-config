@@ -104,21 +104,6 @@ update_dotfiles() {
     fi
 }
 
-update_kitty() {
-    print_section "Updating Kitty 🐱"
-
-    KITTY_BIN="$HOME/.local/bin/kitty"
-
-    if [ -f "$KITTY_BIN" ]; then
-        if confirm_step "Reinstall/update kitty in user space?"; then
-            echo "Running kitty installer..."
-            curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
-        fi
-    else
-        echo "Kitty not installed in user space — nothing to do."
-    fi
-}
-
 update_tmux() {
     print_section "Updating Tmux Plugins 🔧"
     if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
@@ -203,7 +188,6 @@ update_all() {
 
     update_system
     update_dotfiles
-    update_kitty
     update_tmux
     update_neovim
     update_mise
