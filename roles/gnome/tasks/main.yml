@@ -4,6 +4,13 @@
     state: latest
     executable: "{{ ansible_env.HOME }}/.local/share/mise/shims/pip"
 
+# Dark Mode
+- name: Enable Dark Mode
+  community.general.dconf:
+    key: "/org/gnome/desktop/interface/color-scheme"
+    value: "'prefer-dark'"
+
+# Cursor Theme
 - name: Ensure icons Directory at .icons
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.icons"
@@ -33,6 +40,7 @@
     key: "/org/gnome/desktop/interface/cursor-theme"
     value: "'catppuccin-mocha-blue-cursors'"
 
+# Wallpaper
 - name: Set Dark Mode Wallpaper
   community.general.dconf:
     key: "/org/gnome/desktop/background/picture-uri-dark"
