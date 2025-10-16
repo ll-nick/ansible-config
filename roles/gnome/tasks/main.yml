@@ -1,9 +1,8 @@
-- name: Ensure psutil is installed
-  ansible.builtin.shell: |
-    set -e
-    if ! python -c 'import psutil' 2>/dev/null; then
-      python -m pip install --upgrade psutil
-    fi
+- name: Install psutil
+  ansible.builtin.pip:
+    name: psutil
+    state: latest
+    executable: "{{ ansible_env.HOME }}/.local/share/mise/shims/pip"
 
 - name: Ensure icons Directory at .icons
   ansible.builtin.file:
