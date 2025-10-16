@@ -70,8 +70,6 @@
 
     - role: gnome
       when: has_display
-    - role: keyboard
-      when: has_display
     - role: kitty
       when: has_display
     - role: nerdfont
