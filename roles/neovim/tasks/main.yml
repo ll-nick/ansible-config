@@ -17,17 +17,16 @@
 
 - name: Install for newer glibc versions
   ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global --pin neovim@{{ nvim_version }}
+    {{ ansible_env.HOME }}/.local/bin/mise use --global neovim
   args:
     creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/neovim"
   when: glibc_version is version('2.32', '>=')
 
 - name: Install for older glibc versions
-  ansible.builtin.unarchive:
-    src: "https://github.com/neovim/neovim-releases/releases/download/{{ nvim_version }}/nvim-linux-x86_64.tar.gz"
-    dest: "{{ ansible_env.HOME }}/.local/"
-    remote_src: yes
-    extra_opts: ['--strip-components=1']
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global github:neovim/neovim-releases
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-neovim-neovim-releases"
   when: glibc_version is version('2.32', '<')
 
 - name: Clone Config
