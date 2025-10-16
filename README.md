@@ -15,10 +15,15 @@ It is designed to install as many tools as possible on the user level and
 </details>
 
 ---
-Some dependencies require root privileges for system-wide installation which can be deployed using the `privileged` tag, see below.
+A very limited amount of tasks require root privileges for system-wide installation of basic dependencies which can be deployed using the `privileged` tag, see below.
 Running the playbook without these privileges expects those packages to be installed already.
 
-Another neat little feature is the custom stdout callback plugin, so the 
+The config is tested on
+- Arch Linux
+- NixOS[^1]
+- Ubuntu 24.04
+
+[^1]: kitty and tmux need to be installed via nixpkgs.
 
 ## 🚀 Usage
 
@@ -39,8 +44,8 @@ ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privile
 For first time usage, there is also a [bash script](deploy/deploy.sh) that can be used
  to interactively install the required dependencies (including ansible itself), then execute the playbook.
 
-During deployment, the `update-config` and `update-config-privileged` aliases are installed to update the configuration in the future.
-
+The ansible playbook mostly only installs packages initially, then installs the `update-all` script to `~/.local/bin/` which handles updating everything in one go.
+All tasks are idempotent though, so running the playbook again will not cause any harm.
 
 ## ♥️ Acknowledgements
 
