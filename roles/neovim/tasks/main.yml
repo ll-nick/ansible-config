@@ -19,7 +19,7 @@
   ansible.builtin.shell: |
     {{ ansible_env.HOME }}/.local/bin/mise use --global --pin neovim@{{ nvim_version }}
   args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/nvim"
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/neovim"
   when: glibc_version is version('2.32', '>=')
 
 - name: Install for older glibc versions
