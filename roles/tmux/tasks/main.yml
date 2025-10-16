@@ -6,19 +6,13 @@
       - xclip
     state: present
 
-- name: Check installed version
-  command: tmux -V
-  ignore_errors: true
-  changed_when: false
-  failed_when: false
-  register: tmux_installed_version
-
-- name: Download binary
-  when: tmux_installed_version.rc != 0 or tmux_installed_version.stdout.split()[1] is version(tmux_version, "!=")
-  ansible.builtin.get_url:
-    url: "https://github.com/pythops/tmux-linux-binary/releases/download/v{{ tmux_version }}/tmux-linux-x86_64"
-    dest: "{{ ansible_env.HOME }}/.local/bin/tmux"
-    mode: "0755"
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global ubi:pythops/tmux-linux-binary[rename_exe=tmux]
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/ubi-pythops-tmux-linux-binary"
+  # Due to glibc issues, tmux is best installed via nixpkgs on NixOS
+  when: ansible_distribution != "NixOS"
 
 - name: Clone Config
   ansible.builtin.git:
