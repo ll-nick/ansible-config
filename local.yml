@@ -64,6 +64,7 @@
     - role: neovim
     - role: nodejs
     - role: pipx
+    - role: ripgrep
     - role: starship
     - role: tmux
     - role: update
