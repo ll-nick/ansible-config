@@ -1,3 +1,20 @@
+- name: Check if 'packaging' module is available
+  ansible.builtin.shell: python -c 'import packaging'
+  register: packaging_check
+  failed_when: false
+  changed_when: false
+  when: ansible_distribution == "NixOS"
+
+- name: Ensure packaing is installed
+  ansible.builtin.shell: |
+    set -e
+    if ! python -c 'import packaging' 2>/dev/null; then
+      python -m pip install --upgrade packaging
+    fi
+  when:
+    - ansible_distribution == "NixOS"
+    - packaging_check.rc != 0
+ 
 - name: Install psutil
   ansible.builtin.pip:
     name: psutil
@@ -86,10 +103,21 @@
   changed_when: false
   failed_when: false
 
-- name: Install PaperWM
+- name: Install PaperWM (non-NixOS)
   ansible.builtin.command:
     cmd: gext install "paperwm@paperwm.github.com"
-  when: "'paperwm@paperwm.github.com' not in gext_installed.stdout"
+  when:
+    - "'paperwm@paperwm.github.com' not in gext_installed.stdout"
+    - ansible_distribution != "NixOS"
+
+- name: Install PaperWM (NixOS)
+  ansible.builtin.command:
+    cmd: gext install "paperwm@paperwm.github.com"
+  environment:
+      SSL_CERT_FILE: "/etc/ssl/certs/ca-bundle.crt"
+  when:
+    - "'paperwm@paperwm.github.com' not in gext_installed.stdout"
+    - ansible_distribution == "NixOS"
 
 - name: Query enabled GNOME extensions
   ansible.builtin.command:

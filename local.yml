@@ -70,6 +70,11 @@
     - role: update
     - role: zoxide
 
+    # TODO
+    # git config
+    # pip install packaging
+    # nixos specific paperwm install
+
     - role: gnome
       when: has_display
     - role: kitty
