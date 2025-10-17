@@ -1,0 +1,15 @@
+[includeIf "hasconfig:remote.*.url:git@gitlab.mrt.kit.edu:*/**"]
+  path = ~/.gitconfig-gitlab.kit.edu
+
+[includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
+  path = ~/.gitconfig-github.com
+
+[init]
+  defaultBranch = main
+
+[push]
+  autoSetupRemote = true
+
+[pull]
+  rebase = true
+

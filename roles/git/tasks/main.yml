@@ -1,0 +1,16 @@
+- name: Ensure git is installed
+  become: true
+  tags: [never, privileged]
+  ansible.builtin.package:
+    name: git
+    state: present
+
+- name: Add gitconfig
+  ansible.builtin.copy:
+    src: gitconfig
+    dest: "{{ ansible_env.HOME }}/.gitconfig"
+
+- name: Add GitHub specific config
+  ansible.builtin.copy:
+    src: gitconfig-github.com
+    dest: "{{ ansible_env.HOME }}/.gitconfig-github.com"
