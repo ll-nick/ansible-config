@@ -4,6 +4,26 @@
   args:
     creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/bat"
 
+- name: Ensure config directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/bat/themes"
+    state: directory
+
+- name: Add dark theme
+  ansible.builtin.copy:
+    src: "Catppuccin Mocha.tmTheme"
+    dest: "{{ ansible_env.HOME }}/.config/bat/themes/Catppuccin Mocha.tmTheme"
+
+- name: Add light theme
+  ansible.builtin.copy:
+    src: "Catppuccin Latte.tmTheme"
+    dest: "{{ ansible_env.HOME }}/.config/bat/themes/Catppuccin Latte.tmTheme"
+
+- name: Add config
+  ansible.builtin.copy:
+    src: config
+    dest: "{{ ansible_env.HOME }}/.config/bat/config"
+
 - name: Add bash config
   ansible.builtin.copy:
     src: bat.bash
