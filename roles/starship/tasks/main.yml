@@ -15,3 +15,8 @@
     src: prompt.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/prompt.bash"
 
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: starship.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/starship.nu"
+
