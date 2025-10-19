@@ -28,3 +28,9 @@
   ansible.builtin.copy:
     src: bat.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/bat.bash"
+
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: bat.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/bat.nu"
+
