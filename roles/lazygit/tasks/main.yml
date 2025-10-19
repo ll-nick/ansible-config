@@ -4,11 +4,6 @@
   args:
     creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/lazygit"
 
-- name: Add bash config
-  ansible.builtin.copy:
-    src: lazygit.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/lazygit.bash"
-
 - name: Ensure config directory
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.config/lazygit"
@@ -18,4 +13,14 @@
   ansible.builtin.copy:
     src: config.yml
     dest: "{{ ansible_env.HOME }}/.config/lazygit/config.yml"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: lazygit.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/lazygit.bash"
+
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: lazygit.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/lazygit.nu"
 
