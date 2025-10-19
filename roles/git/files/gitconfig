@@ -1,8 +1,8 @@
 [includeIf "hasconfig:remote.*.url:git@gitlab.mrt.kit.edu:*/**"]
-  path = ~/.gitconfig-gitlab.kit.edu
+  path = ~/.config/git/gitconfig-gitlab.kit.edu
 
 [includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
-  path = ~/.gitconfig-github.com
+  path = ~/.config/git/gitconfig-github.com
 
 [init]
   defaultBranch = main
@@ -12,4 +12,7 @@
 
 [pull]
   rebase = true
+
+[include]
+    path = ~/.config/git/delta.gitconfig
 

@@ -5,6 +5,11 @@
     name: git
     state: present
 
+- name: Ensure config directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/git"
+    state: directory
+
 - name: Add gitconfig
   ansible.builtin.copy:
     src: gitconfig
@@ -13,4 +18,15 @@
 - name: Add GitHub specific config
   ansible.builtin.copy:
     src: gitconfig-github.com
-    dest: "{{ ansible_env.HOME }}/.gitconfig-github.com"
+    dest: "{{ ansible_env.HOME }}/.config/git/gitconfig-github.com"
+
+- name: Install delta
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global delta
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/delta"
+
+- name: Add delta config
+  ansible.builtin.copy:
+    src: delta.gitconfig
+    dest: "{{ ansible_env.HOME }}/.config/git/delta.gitconfig"
