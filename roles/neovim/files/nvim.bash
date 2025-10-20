@@ -1,3 +1,2 @@
 export EDITOR=nvim
-alias nv=nvim
-
+alias v=nvim
