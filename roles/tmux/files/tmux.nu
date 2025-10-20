@@ -1,4 +1,2 @@
-def tm [] {
-    do { tmux attach } catch { tmux new -s main }
-}
+alias tm = tmux new -A -s main
 
