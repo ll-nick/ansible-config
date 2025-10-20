@@ -51,6 +51,7 @@
 
   roles:
     - role: bash
+    - role: nushell
 
     - role: mise
 
