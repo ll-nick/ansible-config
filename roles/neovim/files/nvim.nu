@@ -1,3 +1,3 @@
-$env.EDITOR = nvim
+$env.EDITOR = "nvim"
 alias v = nvim
 
