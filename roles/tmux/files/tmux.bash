@@ -1,2 +1,1 @@
-alias tm="tmux attach || tmux new -s main"
-
+alias tm="tmux new -A -s main"

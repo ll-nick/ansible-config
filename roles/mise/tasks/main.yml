@@ -13,3 +13,8 @@
   ansible.builtin.copy:
     src: mise.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/1_mise.bash"
+
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: mise.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/mise.nu"

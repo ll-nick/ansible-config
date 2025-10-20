@@ -1,0 +1,11 @@
+- name: Install
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global github:nushell/nushell
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-nushell-nushell"
+
+- name: Clone config
+  ansible.builtin.git:
+    repo: "{{ github_prefix }}ll-nick/nushell-config"
+    dest: "{{ ansible_env.HOME }}/.config/nushell"
+    force: "true"

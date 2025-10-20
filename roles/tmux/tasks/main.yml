@@ -36,6 +36,11 @@
     src: tmux.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/tmux.bash"
 
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: tmux.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/tmux.nu"
+
 - name: Check if systemd is available
   ansible.builtin.shell: command -v systemctl
   register: systemd_available

@@ -40,3 +40,8 @@
     src: nvim.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"
 
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: nvim.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/nvim.nu"
+
