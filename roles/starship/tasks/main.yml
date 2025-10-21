@@ -8,7 +8,7 @@
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/starship-config.git"
     dest: "{{ ansible_env.HOME }}/.config/starship"
-    force: "true"
+  ignore_errors: true
 
 - name: Add bash config
   ansible.builtin.copy:
