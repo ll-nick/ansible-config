@@ -9,3 +9,15 @@
     repo: "{{ github_prefix }}ll-nick/nushell-config"
     dest: "{{ ansible_env.HOME }}/.config/nushell"
   ignore_errors: true
+
+- name: Install carapace
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/mise use --global carapace
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/carapace"
+
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: carapace.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/carapace.nu"
+
