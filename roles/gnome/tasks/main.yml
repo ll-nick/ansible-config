@@ -3,7 +3,6 @@
   register: packaging_check
   failed_when: false
   changed_when: false
-  when: ansible_distribution == "NixOS"
 
 - name: Ensure packaing is installed
   ansible.builtin.shell: |
@@ -11,9 +10,7 @@
     if ! python -c 'import packaging' 2>/dev/null; then
       python -m pip install --upgrade packaging
     fi
-  when:
-    - ansible_distribution == "NixOS"
-    - packaging_check.rc != 0
+  when: packaging_check.rc != 0
  
 - name: Install psutil
   ansible.builtin.pip:
