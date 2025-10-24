@@ -13,16 +13,24 @@
   ansible.builtin.copy:
     src: "Catppuccin Mocha.tmTheme"
     dest: "{{ ansible_env.HOME }}/.config/bat/themes/Catppuccin Mocha.tmTheme"
+  register: mocha_theme
 
 - name: Add light theme
   ansible.builtin.copy:
     src: "Catppuccin Latte.tmTheme"
     dest: "{{ ansible_env.HOME }}/.config/bat/themes/Catppuccin Latte.tmTheme"
+  register: latte_theme
 
 - name: Add config
   ansible.builtin.copy:
     src: config
     dest: "{{ ansible_env.HOME }}/.config/bat/config"
+  register: bat_config
+
+- name: Rebuild bat cache
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/share/mise/shims/bat cache --build"
+  when: mocha_theme.changed or latte_theme.changed or bat_config.changed
 
 - name: Add bash config
   ansible.builtin.copy:
