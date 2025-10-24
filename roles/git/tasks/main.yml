@@ -20,6 +20,11 @@
     src: gitconfig-github.com
     dest: "{{ ansible_env.HOME }}/.config/git/gitconfig-github.com"
 
+- name: Add GitLab.com specific config
+  ansible.builtin.copy:
+    src: gitconfig-gitlab.com
+    dest: "{{ ansible_env.HOME }}/.config/git/gitconfig-gitlab.com"
+
 - name: Install delta
   ansible.builtin.shell: |
     {{ ansible_env.HOME }}/.local/bin/mise use --global delta

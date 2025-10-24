@@ -4,6 +4,9 @@
 [includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
   path = ~/.config/git/gitconfig-github.com
 
+[includeIf "hasconfig:remote.*.url:git@gitlab.com:*/**"]
+  path = ~/.config/git/gitconfig-gitlab.com
+
 [init]
   defaultBranch = main
 
