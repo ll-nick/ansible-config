@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # update-reminder: A script to run all kinds of updates
 #
