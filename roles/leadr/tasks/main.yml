@@ -4,14 +4,19 @@
   args:
     creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/ubi-ll-nick-leadr"
 
-- name: Add bash config
-  ansible.builtin.copy:
-    src: leadr.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/leadr.bash"
-
 - name: Clone config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/leadr-config"
     dest: "{{ ansible_env.HOME }}/.config/leadr"
   ignore_errors: true
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: leadr.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/leadr.bash"
+
+- name: Add nu config
+  ansible.builtin.copy:
+    src: leadr.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/leadr.nu"
 
