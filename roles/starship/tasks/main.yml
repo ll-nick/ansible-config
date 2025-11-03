@@ -19,6 +19,7 @@
   ansible.builtin.command:
     cmd: mise exec starship -- starship init nu
   register: starship_init
+  changed_when: false
 
 - name: Write nushell init file
   ansible.builtin.copy:

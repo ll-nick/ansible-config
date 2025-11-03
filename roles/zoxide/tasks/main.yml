@@ -13,6 +13,7 @@
   ansible.builtin.command:
     cmd: mise exec zoxide -- zoxide init --cmd cd nushell
   register: zoxide_init
+  changed_when: false
 
 - name: Write nushell init file
   ansible.builtin.copy:

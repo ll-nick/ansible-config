@@ -25,6 +25,7 @@
   ansible.builtin.command:
     cmd: mise exec carapace -- carapace _carapace nushell
   register: carapace_init
+  changed_when: false
 
 - name: Write carapace init file
   ansible.builtin.copy:

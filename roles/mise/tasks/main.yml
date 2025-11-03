@@ -18,6 +18,7 @@
   ansible.builtin.command:
     cmd: mise activate nu
   register: mise_init
+  changed_when: false
 
 - name: Write nushell init file
   ansible.builtin.copy:
