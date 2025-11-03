@@ -8,3 +8,8 @@
   ansible.builtin.copy:
     src: eza.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/eza.bash"
+
+- name: Add nu config
+  ansible.builtin.copy:
+    src: eza.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/eza.nu"
