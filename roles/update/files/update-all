@@ -187,10 +187,10 @@ update_all() {
     print_title
 
     update_system
+    update_mise
     update_dotfiles
     update_tmux
     update_neovim
-    update_mise
     update_pipx
     update_flatpak
 
