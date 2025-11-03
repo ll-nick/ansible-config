@@ -15,6 +15,17 @@
     src: prompt.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/prompt.bash"
 
+- name: Generate nushell init script
+  ansible.builtin.command:
+    cmd: mise exec starship -- starship init nu
+  register: starship_init
+
+- name: Write nushell init file
+  ansible.builtin.copy:
+    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/starship.nu"
+    content: "{{ starship_init.stdout }}"
+    mode: "0644"
+
 - name: Add nushell config
   ansible.builtin.copy:
     src: starship.nu

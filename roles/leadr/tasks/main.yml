@@ -15,8 +15,14 @@
     src: leadr.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/leadr.bash"
 
-- name: Add nu config
+- name: Generate init script
+  ansible.builtin.command:
+    cmd: mise exec ubi:ll-nick/leadr -- leadr --nu
+  register: leadr_init
+
+- name: Write init file
   ansible.builtin.copy:
-    src: leadr.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/leadr.nu"
+    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/leadr.nu"
+    content: "{{ leadr_init.stdout }}"
+    mode: "0644"
 

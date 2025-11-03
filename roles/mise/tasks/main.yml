@@ -14,7 +14,13 @@
     src: mise.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/1_mise.bash"
 
-- name: Add nushell config
+- name: Generate nushell init script
+  ansible.builtin.command:
+    cmd: mise activate nu
+  register: mise_init
+
+- name: Write nushell init file
   ansible.builtin.copy:
-    src: mise.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/mise.nu"
+    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/00_mise.nu"
+    content: "{{ mise_init.stdout }}"
+    mode: "0644"

@@ -9,8 +9,13 @@
     src: zoxide.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/zoxide.bash"
 
-- name: Add nushell config
-  ansible.builtin.copy:
-    src: zoxide.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/zoxide.nu"
+- name: Generate nushell init script
+  ansible.builtin.command:
+    cmd: mise exec zoxide -- zoxide init --cmd cd nushell
+  register: zoxide_init
 
+- name: Write nushell init file
+  ansible.builtin.copy:
+    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/zoxide.nu"
+    content: "{{ zoxide_init.stdout }}"
+    mode: "0644"

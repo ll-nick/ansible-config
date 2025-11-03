@@ -10,14 +10,25 @@
     dest: "{{ ansible_env.HOME }}/.config/nushell"
   ignore_errors: true
 
+- name: Ensure autoload directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload"
+    state: directory
+
 - name: Install carapace
   ansible.builtin.shell: |
     {{ ansible_env.HOME }}/.local/bin/mise use --global carapace
   args:
     creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/carapace"
 
-- name: Add nushell config
+- name: Generate carapace init script
+  ansible.builtin.command:
+    cmd: mise exec carapace -- carapace _carapace nushell
+  register: carapace_init
+
+- name: Write carapace init file
   ansible.builtin.copy:
-    src: carapace.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/carapace.nu"
+    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/carapace.nu"
+    content: "{{ carapace_init.stdout }}"
+    mode: "0644"
 
