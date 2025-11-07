@@ -1,10 +1,39 @@
 eval "$(fzf --bash)"
 
-# Catppuccin Mocha theme for fzf
-# See https://github.com/catppuccin/fzf/blob/main/themes/catppuccin-fzf-mocha.sh
-export FZF_DEFAULT_OPTS=" \
---color=bg+:#313244,bg:#1E1E2E,spinner:#F5E0DC,hl:#F38BA8 \
---color=fg:#CDD6F4,header:#F38BA8,info:#CBA6F7,pointer:#F5E0DC \
---color=marker:#B4BEFE,fg+:#CDD6F4,prompt:#CBA6F7,hl+:#F38BA8 \
---color=selected-bg:#45475A \
---color=border:#6C7086,label:#CDD6F4"
+export FZF_DEFAULT_OPTS="
+  # General
+  --border=none
+  --tabstop=4
+
+  # List section
+  --cycle
+  --list-label=' Results '
+  --list-border='rounded'
+  --pointer=' '
+  --marker=' '
+  --gutter=' '
+
+  # Input section
+  --input-border='rounded'
+  --info='inline-right'
+
+  # Preview section
+  --preview-label=' Preview '
+  --preview-window='right,border-rounded,'
+
+  # Footer section
+  --footer-border='rounded'
+
+  # Colors
+  --color=bg+:#313244,bg:#1E1E2E,spinner:#F5E0DC,hl:#F38BA8
+  --color=fg:#CDD6F4,header:#F38BA8,info:#CBA6F7,pointer:#F5E0DC
+  --color=marker:#B4BEFE,fg+:#CDD6F4,prompt:#CBA6F7,hl+:#F38BA8
+  --color=selected-bg:#45475A
+  --color=border:#89B4FA,label:#CDD6F4
+
+  # Keybindings
+  --bind='ctrl-d:preview-half-page-down'
+  --bind='ctrl-u:preview-half-page-up'
+  --bind='ctrl-r:change-preview-window(80%|40%)'
+  --bind='ctrl-t:toggle-preview'
+"
