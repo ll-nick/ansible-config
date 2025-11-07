@@ -57,6 +57,7 @@
 
     - role: bat
     - role: eza
+    - role: fd
     - role: fzf
     - role: git
     - role: lazygit
