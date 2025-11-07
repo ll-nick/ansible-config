@@ -8,3 +8,9 @@
   ansible.builtin.copy:
     src: fzf.bash
     dest: "{{ ansible_env.HOME }}/.config/bash/fzf.bash"
+
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: fzf.nu
+    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/fzf.nu"
+
