@@ -77,6 +77,34 @@ confirm_step() {
     return 0
 }
 
+update_nixos() {
+    print_section "Updating NixOS ❄️"
+
+    local flake_dir="$HOME/.config/nix"
+
+    if [ ! -d "$flake_dir" ]; then
+        echo "⚠️ Nix flake directory not found at $flake_dir - Skipping!"
+        return
+    fi
+
+    if confirm_step "Update Nix flake inputs and rebuild system?"; then
+        pushd "$flake_dir" || return
+
+        # Update flake inputs
+        nix flake update
+
+        # Rebuild and switch
+        sudo nixos-rebuild switch --flake "$flake_dir"
+
+        popd || return
+    fi
+
+    if confirm_step "Garbage collect old NixOS generations and store paths?"; then
+        sudo nix-collect-garbage --delete-older-than 7d
+        nix store gc
+    fi
+}
+
 update_system() {
     print_section "Updating System Packages 📦"
     if command -v pacman &> /dev/null; then
@@ -87,6 +115,8 @@ update_system() {
         if confirm_step "Proceed with update of system packages via apt?"; then
             sudo apt update && sudo apt upgrade -y
         fi
+    elif command -v nixos-rebuild &> /dev/null; then
+        update_nixos
     else
         echo "No Supported Package Manager Found!"
     fi
