@@ -8,9 +8,9 @@
 
 - name: Install
   ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global ubi:ll-nick/tmux-releases[rename_exe=tmux]
+    {{ ansible_env.HOME }}/.local/bin/mise use --global github:ll-nick/tmux-releases
   args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/ubi-ll-nick-tmux-releases"
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-ll-nick-tmux-releases"
 
 - name: Clone Config
   ansible.builtin.git:

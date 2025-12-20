@@ -1,8 +1,8 @@
 - name: Install
   ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global ubi:ll-nick/leadr
+    {{ ansible_env.HOME }}/.local/bin/mise use --global github:ll-nick/leadr
   args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/ubi-ll-nick-leadr"
+    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-ll-nick-tmux-releases"
 
 - name: Clone config
   ansible.builtin.git:
