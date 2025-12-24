@@ -131,6 +131,8 @@ update_mise() {
     fi
 
     if confirm_step "Update mise packages?"; then
+        export MISE_NODE_COMPILE=false
+        export MISE_PYTHON_COMPILE=false
         mise self-update
         mise upgrade
         eval "$(mise activate bash)"
