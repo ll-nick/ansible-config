@@ -133,6 +133,7 @@ update_mise() {
     if confirm_step "Update mise packages?"; then
         mise self-update
         mise upgrade
+        eval "$(mise activate bash)"
     fi
 }
 
