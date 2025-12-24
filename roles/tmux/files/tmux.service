@@ -5,6 +5,8 @@ After=graphical-session.target
 
 [Service]
 Type=forking
+Restart=no
+RemainAfterExit=yes
 
 ExecStop=bash -c "sed -i 's,/tmp.*nvim,nvim,' ~/.local/share/tmux/resurrect/last"
 ExecStart=bash -l -c "mise x -- tmux new-session -d -s restore '~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh'"
