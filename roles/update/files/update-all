@@ -186,20 +186,6 @@ update_neovim() {
     fi
 }
 
-update_pipx() {
-    print_section "Updating pipx Packages 🐍"
-
-    PATH="$HOME/.local/venvs/pipx/bin:$PATH"
-    if ! command -v pipx &> /dev/null; then
-        echo "⚠️ pipx not installed - Skipping!"
-        return
-    fi
-
-    if confirm_step "Update all pipx packages?"; then
-        pipx upgrade-all
-    fi
-}
-
 update_flatpak() {
     print_section "Updating Flatpak Packages 📦"
 
@@ -221,7 +207,6 @@ update_all() {
     update_dotfiles
     update_tmux
     update_neovim
-    update_pipx
     update_flatpak
 
     date +%s > "$UPDATE_TIMESTAMP"
