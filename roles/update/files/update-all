@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# update-reminder: A script to run all kinds of updates
+# update-all: A script to run all kinds of updates
 #
 # Usage:
-#   update-reminder [OPTIONS]
+#   update-all [OPTIONS]
 #
 # Options:
 #   --check        Notify if it's been more than REMINDER_DAYS since last update.
@@ -38,7 +38,7 @@ update_reminder() {
     fi
 
     notify-send "Update Reminder" \
-        "It's been $elapsed_days days since your last update! Consider running 'update-reminder' to stay up to date." \
+        "It's been $elapsed_days days since your last update! Consider running 'update-all' to stay up to date." \
         --icon=dialog-information
 }
 
