@@ -122,6 +122,20 @@ update_system() {
     fi
 }
 
+update_mise() {
+    print_section "Updating Mise Packages 📦"
+
+    if ! command -v mise &> /dev/null; then
+        echo "⚠️ mise not installed - Skipping!"
+        return
+    fi
+
+    if confirm_step "Update mise packages?"; then
+        mise self-update
+        mise upgrade
+    fi
+}
+
 update_dotfiles() {
     print_section "Updating Dotfiles 🛠️"
     if ! command -v ansible-pull &> /dev/null; then
@@ -169,20 +183,6 @@ update_neovim() {
 
     if confirm_step "Restore Neovim plugins from lazy-lock.json?"; then
         nvim --headless "+Lazy! restore" +qa
-    fi
-}
-
-update_mise() {
-    print_section "Updating Mise Packages 📦"
-
-    if ! command -v mise &> /dev/null; then
-        echo "⚠️ mise not installed - Skipping!"
-        return
-    fi
-
-    if confirm_step "Update mise packages?"; then
-        mise self-update
-        mise upgrade
     fi
 }
 
