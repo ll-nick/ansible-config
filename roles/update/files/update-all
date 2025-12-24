@@ -15,7 +15,8 @@
 #   script is run with the --check option, it will notify the user if it has
 #   been more than REMINDER_DAYS since the last update.
 
-UPDATE_TIMESTAMP="$HOME/.last_update_time"
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+UPDATE_TIMESTAMP="$DATA_HOME/update-all/last_update_time"
 REMINDER_DAYS=7
 NO_CONFIRM=false
 CHECK_REMINDER=false
@@ -212,6 +213,7 @@ update_all() {
     update_neovim
     update_flatpak
 
+    mkdir -p "$(dirname "$UPDATE_TIMESTAMP")"
     date +%s > "$UPDATE_TIMESTAMP"
     print_section "✅ All Updates Completed!"
 }
