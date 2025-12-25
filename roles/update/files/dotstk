@@ -162,17 +162,18 @@ def update_tmux [] {
 #     }
 # }
 #
-# # Update Flatpak Packages
-# def update_flatpak [] {
-#     print_section "Updating Flatpak Packages 📦"
-#     if !(which flatpak) { echo "⚠️ Flatpak not installed - Skipping!"; return }
-#
-#     if (confirm_step "Update all Flatpak packages?") {
-#         flatpak update -y
-#     }
-# }
-#
-# Update all
+def update_flatpak [] {
+    print_section "Updating Flatpak Packages 📦"
+    if (which flatpak | is-empty) {
+        print "⚠️ Flatpak not installed - Skipping!"
+        return
+    }
+
+    if (confirm_step "Update all Flatpak packages?") {
+        flatpak update -y
+    }
+}
+
 def update_all [] {
     print_title
     update_system
@@ -180,8 +181,8 @@ def update_all [] {
     update_dotfiles
     update_tmux
     # update_neovim
-    # update_flatpak
-    #
+    update_flatpak
+
     mkdir ($UPDATE_TIMESTAMP | path dirname)
     (date now | format date "%s") | save --force $UPDATE_TIMESTAMP
 
