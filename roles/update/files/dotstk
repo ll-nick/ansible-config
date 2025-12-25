@@ -113,16 +113,18 @@ def update_mise [] {
     }
 }
 
-# # Update dotfiles
-# def update_dotfiles [] {
-#     print_section "Updating Dotfiles 🛠️"
-#     if !(which ansible-pull) { echo "⚠️ Ansible-pull not installed - Skipping!"; return }
-#
-#     if (confirm_step "Update dotfiles via Ansible?") {
-#         ansible-pull -U https://github.com/ll-nick/ansible-config.git
-#     }
-# }
-#
+def update_dotfiles [] {
+    print_section "Updating Dotfiles 🛠️"
+    if (which ansible-pull | is-empty) {
+        print "⚠️ Ansible-pull not installed - Skipping!"
+        return
+    }
+
+    if (confirm_step "Update dotfiles via Ansible?") {
+        ansible-pull -U https://github.com/ll-nick/ansible-config.git
+    }
+}
+
 # # Update Tmux Plugins
 # def update_tmux [] {
 #     print_section "Updating Tmux Plugins 🔧"
@@ -171,7 +173,7 @@ def update_all [] {
     print_title
     update_system
     update_mise
-    # update_dotfiles
+    update_dotfiles
     # update_tmux
     # update_neovim
     # update_flatpak
