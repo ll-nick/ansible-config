@@ -24,14 +24,17 @@ def update-reminder [] {
 }
 
 def print-title [] {
-    let TITLE = "
- ██    ██ ██████  ██████   █████  ████████ ███████ ██████  
- ██    ██ ██   ██ ██   ██ ██   ██    ██    ██      ██   ██ 
- ██    ██ ██████  ██   ██ ███████    ██    █████   ██████  
- ██    ██ ██      ██   ██ ██   ██    ██    ██      ██   ██ 
-  ██████  ██      ██████  ██   ██    ██    ███████ ██   ██ 
-"
     print ($PEACH + $TITLE + $RESET)
+    let title = r#'
+         88                                           88         
+         88                ,d                  ,d     88         
+         88                88                  88     88         
+ ,adPPYb,88   ,adPPYba,  MM88MMM  ,adPPYba,  MM88MMM  88   ,d8   
+a8"    `Y88  a8"     "8a   88     I8[    ""    88     88 ,a8"    
+8b       88  8b       d8   88      `"Y8ba,     88     8888[      
+"8a,   ,d88  "8a,   ,a8"   88,    aa    ]8I    88,    88`"Yba,   
+ `"8bbdP"Y8   `"YbbdP"'    "Y888  `"YbbdP"'    "Y888  88   `Y8a  
+'#
 }
 
 def print-section [title:string] {
