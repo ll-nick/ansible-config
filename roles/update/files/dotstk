@@ -6,10 +6,11 @@ let REMINDER_TIME = 1wk
 let NO_CONFIRM = false
 let CHECK_REMINDER = false
 
-let PEACH = (ansi '#fab387')
-let BLUE = (ansi '#89b4fa')
-let GREEN = (ansi '#a6e3a1')
-let RESET = (ansi reset)
+let colors = {
+    peach: (ansi '#fab387')
+    blue: (ansi '#89b4fa')
+    green: (ansi '#a6e3a1')
+}
 
 def update-reminder [] {
     if not ($UPDATE_TIMESTAMP | path exists) { return }
@@ -24,7 +25,6 @@ def update-reminder [] {
 }
 
 def print-title [] {
-    print ($PEACH + $TITLE + $RESET)
     let title = r#'
          88                                           88         
          88                ,d                  ,d     88         
@@ -35,12 +35,13 @@ a8"    `Y88  a8"     "8a   88     I8[    ""    88     88 ,a8"
 "8a,   ,d88  "8a,   ,a8"   88,    aa    ]8I    88,    88`"Yba,   
  `"8bbdP"Y8   `"YbbdP"'    "Y888  `"YbbdP"'    "Y888  88   `Y8a  
 '#
+    print ($colors.peach + $title + (ansi reset))
 }
 
 def print-section [title:string] {
-    print $"\n($BLUE)###############################################($RESET)"
-    print $"($BLUE)#($RESET)  ($GREEN)($title)($RESET)"
-    print $"($BLUE)###############################################($RESET)\n"
+    print $"\n($colors.blue)###############################################(ansi reset)"
+    print $"($colors.blue)#(ansi reset)  ($colors.green)($title)(ansi reset)"
+    print $"($colors.blue)###############################################(ansi reset)\n"
 
 }
 
