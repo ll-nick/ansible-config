@@ -177,7 +177,6 @@ def update-flatpak [] {
 }
 
 def update-all [] {
-    print-title
     update-system
     update-mise
     update-dotfiles
@@ -198,8 +197,20 @@ def "main check" [
     check-update $reminder_time $notify
 }
 
-def "main update" [] {
-    update-all
+def "main update" [
+    component?: string
+] {
+    print-title
+
+    match $component {
+        "system" => update-system,
+        "mise" => update-mise,
+        "dotfiles" => update-dotfiles,
+        "tmux" => update-tmux,
+        "neovim" => update-neovim,
+        "flatpak" => update-flatpak,
+        _ => update-all
+    }
 }
 
 def main [] {}
