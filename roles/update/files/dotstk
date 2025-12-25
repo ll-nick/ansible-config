@@ -1,7 +1,5 @@
 #!/usr/bin/env nu
 
-let DATA_HOME = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
-let UPDATE_TIMESTAMP = $DATA_HOME | path join dotstk last_update_time.txt
 let NO_CONFIRM = false
 
 let colors = {
@@ -10,13 +8,18 @@ let colors = {
     green: (ansi '#a6e3a1')
 }
 
+def timestamp-file [] {
+    let data_home = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
+    $data_home | path join dotstk last_update_time.txt
+}
+
 def check-update [
     reminder_time: duration
     notify: bool
 ] {
-    if not ($UPDATE_TIMESTAMP | path exists) { return "Timestamp file not found. Run 'dotstk update' to create it." }
+    if not (timestamp-file | path exists) { return "Timestamp file not found. Run 'dotstk update' to create it." }
 
-    let last_update = open $UPDATE_TIMESTAMP | str trim | into datetime --format "%s"
+    let last_update = timestamp-file | open $in | str trim | into datetime --format "%s"
     let elapsed_time = (date now) - $last_update
 
     if $notify and ($elapsed_time >= $reminder_time) {
@@ -184,8 +187,8 @@ def update-all [] {
     update-neovim
     update-flatpak
 
-    mkdir ($UPDATE_TIMESTAMP | path dirname)
-    (date now | format date "%s") | save --force $UPDATE_TIMESTAMP
+    timestamp-file | mkdir ($in | path dirname)
+    date now | format date "%s" | save --force (timestamp-file)
 
     print-section "✅ All Updates Completed!"
 }
@@ -199,6 +202,7 @@ def "main check" [
 
 def "main update" [
     component?: string
+    --yes (-y)
 ] {
     print-title
 
