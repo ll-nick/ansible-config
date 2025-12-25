@@ -125,17 +125,21 @@ def update_dotfiles [] {
     }
 }
 
-# # Update Tmux Plugins
-# def update_tmux [] {
-#     print_section "Updating Tmux Plugins 🔧"
-#     let tpm_dir = $env.HOME + "/.config/tmux/plugins/tpm"
-#     if !(path $tpm_dir | exists) { echo "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"; return }
-#
-#     if (confirm_step "Update Tmux plugins?") {
-#         ($tpm_dir + "/bin/update_plugins") all
-#     }
-# }
-#
+def update_tmux [] {
+    print_section "Updating Tmux Plugins 🔧"
+
+    let tpm_dir = $env.HOME | path join .config tmux plugins tpm
+    if not ($tpm_dir | path exists) {
+        print "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"
+        return
+    }
+
+    if (confirm_step "Update Tmux plugins?") {
+        let update_command = $"($tpm_dir | path join bin update_plugins) all"
+        nu -c $update_command
+    }
+}
+
 # # Update Neovim Plugins
 # def update_neovim [] {
 #     print_section "Updating Neovim Plugins ✨"
@@ -174,7 +178,7 @@ def update_all [] {
     update_system
     update_mise
     update_dotfiles
-    # update_tmux
+    update_tmux
     # update_neovim
     # update_flatpak
     #
