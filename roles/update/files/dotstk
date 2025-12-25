@@ -12,13 +12,11 @@ let REMINDER_TIME = 1wk
 let NO_CONFIRM = false
 let CHECK_REMINDER = false
 
-# Colors
 let PEACH = (ansi '#fab387')
 let BLUE = (ansi '#89b4fa')
 let GREEN = (ansi '#a6e3a1')
 let RESET = (ansi reset)
 
-# Reminder Function
 def update_reminder [] {
     if not ($UPDATE_TIMESTAMP | path exists) { return }
 
@@ -140,28 +138,29 @@ def update_tmux [] {
     }
 }
 
-# # Update Neovim Plugins
-# def update_neovim [] {
-#     print_section "Updating Neovim Plugins ✨"
-#     if !(which nvim) { echo "⚠️ Neovim Not Found - Skipping!"; return }
-#
-#     if (confirm_step "Update Neovim plugins and commit lazy-lock.json?") {
-#         nvim --headless "+Lazy! sync" +qa
-#         cd ($env.HOME + "/.config/nvim") {
-#             git add lazy-lock.json
-#             git commit -m "Version bump"
-#             echo "\nChanges:"
-#             git diff --staged
-#             if (confirm_step "Push changes to remote?") { git push }
-#         }
-#         return
-#     }
-#
-#     if (confirm_step "Restore Neovim plugins from lazy-lock.json?") {
-#         nvim --headless "+Lazy! restore" +qa
-#     }
-# }
-#
+def update_neovim [] {
+    print_section "Updating Neovim Plugins ✨"
+    if (which nvim | is-empty) {
+        print "⚠️ Neovim Not Found - Skipping!"
+        return
+    }
+
+    if (confirm_step "Update Neovim plugins and commit lazy-lock.json?") {
+        nvim --headless "+Lazy! sync" +qa
+        cd ($env.HOME | path join .config nvim)
+        git add lazy-lock.json
+        git commit -m "Version bump"
+        print "\nChanges:"
+        git diff --staged
+        if (confirm_step "Push changes to remote?") { git push }
+        return
+    }
+
+    if (confirm_step "Restore Neovim plugins from lazy-lock.json?") {
+        nvim --headless "+Lazy! restore" +qa
+    }
+}
+
 def update_flatpak [] {
     print_section "Updating Flatpak Packages 📦"
     if (which flatpak | is-empty) {
@@ -180,7 +179,7 @@ def update_all [] {
     update_mise
     update_dotfiles
     update_tmux
-    # update_neovim
+    update_neovim
     update_flatpak
 
     mkdir ($UPDATE_TIMESTAMP | path dirname)
