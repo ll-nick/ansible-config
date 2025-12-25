@@ -1,12 +1,6 @@
 #!/usr/bin/env nu
 
-let DATA_HOME = (
-    if ($env.XDG_DATA_HOME? | is-not-empty) {
-        $env.XDG_DATA_HOME
-    } else {
-        $env.HOME | path join .local share
-    }
-)
+let DATA_HOME = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
 let UPDATE_TIMESTAMP = $DATA_HOME | path join dotstk last_update_time.txt
 let REMINDER_TIME = 1wk
 let NO_CONFIRM = false
@@ -17,7 +11,7 @@ let BLUE = (ansi '#89b4fa')
 let GREEN = (ansi '#a6e3a1')
 let RESET = (ansi reset)
 
-def update_reminder [] {
+def update-reminder [] {
     if not ($UPDATE_TIMESTAMP | path exists) { return }
 
     let last_update = open $UPDATE_TIMESTAMP | str trim | into datetime --format "%s"
@@ -29,8 +23,7 @@ def update_reminder [] {
     notify-send "System out of date" $"It's been ($elapsed_time | format duration day) days since your last update!\nConsider running 'dotstk update'."
 }
 
-# Print title
-def print_title [] {
+def print-title [] {
     let TITLE = "
  ██    ██ ██████  ██████   █████  ████████ ███████ ██████  
  ██    ██ ██   ██ ██   ██ ██   ██    ██    ██      ██   ██ 
@@ -41,14 +34,14 @@ def print_title [] {
     print ($PEACH + $TITLE + $RESET)
 }
 
-def print_section [title:string] {
+def print-section [title:string] {
     print $"\n($BLUE)###############################################($RESET)"
     print $"($BLUE)#($RESET)  ($GREEN)($title)($RESET)"
     print $"($BLUE)###############################################($RESET)\n"
 
 }
 
-def confirm_step [prompt_message:string] {
+def confirm-step [prompt_message:string] {
     if not $NO_CONFIRM {
         let response = (input $"($prompt_message) \(y/N\): " | str trim | str downcase)
         if $response =~ '^(y|yes)$' { return true }
@@ -58,52 +51,52 @@ def confirm_step [prompt_message:string] {
     return true
 }
 
-def update_nixos [] {
+def update-nixos [] {
     let flake_dir = $env.HOME | path join .config nix
     if not ($flake_dir | path exists) {
         print $"⚠️ Nix flake directory not found at ($flake_dir) - Skipping!"
         return
     }
 
-    if (confirm_step "Update Nix flake inputs and rebuild system?") {
+    if (confirm-step "Update Nix flake inputs and rebuild system?") {
         cd $flake_dir
         nix flake update
         sudo nixos-rebuild switch --flake $flake_dir
     }
 
-    if (confirm_step "Garbage collect old NixOS generations and store paths?") {
+    if (confirm-step "Garbage collect old NixOS generations and store paths?") {
         sudo nix-collect-garbage --delete-older-than 7d
         nix store gc
     }
 }
 
-def update_system [] {
-    print_section "Updating System Packages 📦"
+def update-system [] {
+    print-section "Updating System Packages 📦"
 
     if (which pacman | is-not-empty) {
-        if (confirm_step "Proceed with update via pacman?") {
+        if (confirm-step "Proceed with update via pacman?") {
             sudo pacman -Syu
         }
     } else if (which apt | is-not-empty) {
-        if (confirm_step "Proceed with update via apt?") {
+        if (confirm-step "Proceed with update via apt?") {
             sudo apt update
             sudo apt upgrade
         }
     } else if (which nixos-rebuild | is-not-empty) {
-        update_nixos
+        update-nixos
     } else {
         print "No supported package manager found!"
     }
 }
 
-def update_mise [] {
-    print_section "Updating Mise Packages 📦"
+def update-mise [] {
+    print-section "Updating Mise Packages 📦"
     if (which mise | is-empty) {
         print "⚠️ mise not installed - Skipping!"
         return
     }
 
-    if (confirm_step "Update mise packages?") {
+    if (confirm-step "Update mise packages?") {
         $env.MISE_NODE_COMPILE = false
         $env.MISE_PYTHON_COMPILE = false 
         mise self-update
@@ -111,20 +104,20 @@ def update_mise [] {
     }
 }
 
-def update_dotfiles [] {
-    print_section "Updating Dotfiles 🛠️"
+def update-dotfiles [] {
+    print-section "Updating Dotfiles 🛠️"
     if (which ansible-pull | is-empty) {
         print "⚠️ Ansible-pull not installed - Skipping!"
         return
     }
 
-    if (confirm_step "Update dotfiles via Ansible?") {
+    if (confirm-step "Update dotfiles via Ansible?") {
         ansible-pull -U https://github.com/ll-nick/ansible-config.git
     }
 }
 
-def update_tmux [] {
-    print_section "Updating Tmux Plugins 🔧"
+def update-tmux [] {
+    print-section "Updating Tmux Plugins 🔧"
 
     let tpm_dir = $env.HOME | path join .config tmux plugins tpm
     if not ($tpm_dir | path exists) {
@@ -132,68 +125,68 @@ def update_tmux [] {
         return
     }
 
-    if (confirm_step "Update Tmux plugins?") {
+    if (confirm-step "Update Tmux plugins?") {
         let update_command = $"($tpm_dir | path join bin update_plugins) all"
         nu -c $update_command
     }
 }
 
-def update_neovim [] {
-    print_section "Updating Neovim Plugins ✨"
+def update-neovim [] {
+    print-section "Updating Neovim Plugins ✨"
     if (which nvim | is-empty) {
         print "⚠️ Neovim Not Found - Skipping!"
         return
     }
 
-    if (confirm_step "Update Neovim plugins and commit lazy-lock.json?") {
+    if (confirm-step "Update Neovim plugins and commit lazy-lock.json?") {
         nvim --headless "+Lazy! sync" +qa
         cd ($env.HOME | path join .config nvim)
         git add lazy-lock.json
         git commit -m "Version bump"
         print "\nChanges:"
         git diff --staged
-        if (confirm_step "Push changes to remote?") { git push }
+        if (confirm-step "Push changes to remote?") { git push }
         return
     }
 
-    if (confirm_step "Restore Neovim plugins from lazy-lock.json?") {
+    if (confirm-step "Restore Neovim plugins from lazy-lock.json?") {
         nvim --headless "+Lazy! restore" +qa
     }
 }
 
-def update_flatpak [] {
-    print_section "Updating Flatpak Packages 📦"
+def update-flatpak [] {
+    print-section "Updating Flatpak Packages 📦"
     if (which flatpak | is-empty) {
         print "⚠️ Flatpak not installed - Skipping!"
         return
     }
 
-    if (confirm_step "Update all Flatpak packages?") {
+    if (confirm-step "Update all Flatpak packages?") {
         flatpak update -y
     }
 }
 
-def update_all [] {
-    print_title
-    update_system
-    update_mise
-    update_dotfiles
-    update_tmux
-    update_neovim
-    update_flatpak
+def update-all [] {
+    print-title
+    update-system
+    update-mise
+    update-dotfiles
+    update-tmux
+    update-neovim
+    update-flatpak
 
     mkdir ($UPDATE_TIMESTAMP | path dirname)
     (date now | format date "%s") | save --force $UPDATE_TIMESTAMP
 
-    print_section "✅ All Updates Completed!"
+    print-section "✅ All Updates Completed!"
 }
 
 def "main check" [] {
-    update_reminder
+    update-reminder
 }
 
 def "main update" [] {
-    update_all
+    update-all
 }
 
 def main [] {}
