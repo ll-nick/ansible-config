@@ -49,21 +49,6 @@ def print_section [title:string] {
     print $"($BLUE)###############################################($RESET)\n"
 
 }
-#
-# # Update Mise
-# def update_mise [] {
-#     print_section "Updating Mise Packages 📦"
-#     if !(which mise) { echo "⚠️ mise not installed - Skipping!"; return }
-#
-#     if (confirm_step "Update mise packages?") {
-#         env MISE_NODE_COMPILE=false MISE_PYTHON_COMPILE=false {
-#             mise self-update
-#             mise upgrade
-#         }
-#         eval (mise activate bash)
-#     }
-# }
-#
 
 def confirm_step [prompt_message:string] {
     if not $NO_CONFIRM {
@@ -110,6 +95,21 @@ def update_system [] {
         update_nixos
     } else {
         print "No supported package manager found!"
+    }
+}
+
+def update_mise [] {
+    print_section "Updating Mise Packages 📦"
+    if (which mise | is-empty) {
+        print "⚠️ mise not installed - Skipping!"
+        return
+    }
+
+    if (confirm_step "Update mise packages?") {
+        $env.MISE_NODE_COMPILE = false
+        $env.MISE_PYTHON_COMPILE = false 
+        mise self-update
+        mise upgrade
     }
 }
 
@@ -169,8 +169,8 @@ def update_system [] {
 # Update all
 def update_all [] {
     print_title
-    # update_mise
     update_system
+    update_mise
     # update_dotfiles
     # update_tmux
     # update_neovim
