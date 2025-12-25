@@ -43,59 +43,12 @@ def print_title [] {
     print ($PEACH + $TITLE + $RESET)
 }
 
-# # Section header
 def print_section [title:string] {
     print $"\n($BLUE)###############################################($RESET)"
     print $"($BLUE)#($RESET)  ($GREEN)($title)($RESET)"
     print $"($BLUE)###############################################($RESET)\n"
 
 }
-#
-# # Confirm step
-# def confirm_step [prompt_message:string] {
-#     if !$NO_CONFIRM {
-#         let response = (read -p "$prompt_message (y/N): " | str trim)
-#         if $response =~ '^(y|Y|yes|YES)$' { return true }
-#         echo "Skipping..."
-#         return false
-#     }
-#     return true
-# }
-#
-# # Update NixOS
-# def update_nixos [] {
-#     print_section "Updating NixOS ❄️"
-#     let flake_dir = $env.HOME + "/.config/nix"
-#
-#     if !(path $flake_dir | exists) { echo "⚠️ Nix flake directory not found at $flake_dir - Skipping!"; return }
-#
-#     if (confirm_step "Update Nix flake inputs and rebuild system?") {
-#         cd $flake_dir {
-#             nix flake update
-#             sudo nixos-rebuild switch --flake $flake_dir
-#         }
-#     }
-#
-#     if (confirm_step "Garbage collect old NixOS generations and store paths?") {
-#         sudo nix-collect-garbage --delete-older-than 7d
-#         nix store gc
-#     }
-# }
-#
-# # Update system packages
-# def update_system [] {
-#     print_section "Updating System Packages 📦"
-#
-#     if (which pacman) {
-#         if (confirm_step "Proceed with update via pacman?") { sudo pacman -Syu --noconfirm }
-#     } elif (which apt) {
-#         if (confirm_step "Proceed with update via apt?") { sudo apt update && sudo apt upgrade -y }
-#     } elif (which nixos-rebuild) {
-#         update_nixos
-#     } else {
-#         echo "No supported package manager found!"
-#     }
-# }
 #
 # # Update Mise
 # def update_mise [] {
@@ -111,6 +64,55 @@ def print_section [title:string] {
 #     }
 # }
 #
+
+def confirm_step [prompt_message:string] {
+    if not $NO_CONFIRM {
+        let response = (input $"($prompt_message) \(y/N\): " | str trim | str downcase)
+        if $response =~ '^(y|yes)$' { return true }
+        print "Skipping..."
+        return false
+    }
+    return true
+}
+
+def update_nixos [] {
+    let flake_dir = $env.HOME | path join .config nix
+    if not ($flake_dir | path exists) {
+        print $"⚠️ Nix flake directory not found at ($flake_dir) - Skipping!"
+        return
+    }
+
+    if (confirm_step "Update Nix flake inputs and rebuild system?") {
+        cd $flake_dir
+        nix flake update
+        sudo nixos-rebuild switch --flake $flake_dir
+    }
+
+    if (confirm_step "Garbage collect old NixOS generations and store paths?") {
+        sudo nix-collect-garbage --delete-older-than 7d
+        nix store gc
+    }
+}
+
+def update_system [] {
+    print_section "Updating System Packages 📦"
+
+    if (which pacman | is-not-empty) {
+        if (confirm_step "Proceed with update via pacman?") {
+            sudo pacman -Syu
+        }
+    } else if (which apt | is-not-empty) {
+        if (confirm_step "Proceed with update via apt?") {
+            sudo apt update
+            sudo apt upgrade
+        }
+    } else if (which nixos-rebuild | is-not-empty) {
+        update_nixos
+    } else {
+        print "No supported package manager found!"
+    }
+}
+
 # # Update dotfiles
 # def update_dotfiles [] {
 #     print_section "Updating Dotfiles 🛠️"
@@ -167,8 +169,8 @@ def print_section [title:string] {
 # Update all
 def update_all [] {
     print_title
-    # update_system
     # update_mise
+    update_system
     # update_dotfiles
     # update_tmux
     # update_neovim
