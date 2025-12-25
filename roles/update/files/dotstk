@@ -2,9 +2,7 @@
 
 let DATA_HOME = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
 let UPDATE_TIMESTAMP = $DATA_HOME | path join dotstk last_update_time.txt
-let REMINDER_TIME = 1wk
 let NO_CONFIRM = false
-let CHECK_REMINDER = false
 
 let colors = {
     peach: (ansi '#fab387')
@@ -12,16 +10,24 @@ let colors = {
     green: (ansi '#a6e3a1')
 }
 
-def update-reminder [] {
-    if not ($UPDATE_TIMESTAMP | path exists) { return }
+def check-update [
+    reminder_time: duration
+    notify: bool
+] {
+    if not ($UPDATE_TIMESTAMP | path exists) { return "Timestamp file not found. Run 'dotstk update' to create it." }
 
     let last_update = open $UPDATE_TIMESTAMP | str trim | into datetime --format "%s"
-    let current_time = date now
-    let elapsed_time = $current_time - $last_update
+    let elapsed_time = (date now) - $last_update
 
-    if $elapsed_time < $REMINDER_TIME { return }
+    if $notify and ($elapsed_time >= $reminder_time) {
+        if (which notify-send | is-empty) {
+            print "⚠️ notify-send not found - Cannot send notification!"
+        } else {
+            notify-send "System out of date" $"It's been ($elapsed_time | format duration day) days since your last update!\nConsider running 'dotstk update'."
+        }
+    }
 
-    notify-send "System out of date" $"It's been ($elapsed_time | format duration day) days since your last update!\nConsider running 'dotstk update'."
+    $"Last update was ($elapsed_time | format duration day) days ago."
 }
 
 def print-title [] {
@@ -185,8 +191,11 @@ def update-all [] {
     print-section "✅ All Updates Completed!"
 }
 
-def "main check" [] {
-    update-reminder
+def "main check" [
+    --reminder-time (-r): duration = 1wk
+    --notify (-n)
+] {
+    check-update $reminder_time $notify
 }
 
 def "main update" [] {
