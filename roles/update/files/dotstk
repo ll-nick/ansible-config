@@ -1,7 +1,5 @@
 #!/usr/bin/env nu
 
-let NO_CONFIRM = false
-
 let colors = {
     peach: (ansi '#fab387')
     blue: (ansi '#89b4fa')
@@ -54,145 +52,6 @@ def print-section [title:string] {
 
 }
 
-def confirm-step [prompt_message:string] {
-    if not $NO_CONFIRM {
-        let response = (input $"($prompt_message) \(y/N\): " | str trim | str downcase)
-        if $response =~ '^(y|yes)$' { return true }
-        print "Skipping..."
-        return false
-    }
-    return true
-}
-
-def update-nixos [] {
-    let flake_dir = $env.HOME | path join .config nix
-    if not ($flake_dir | path exists) {
-        print $"⚠️ Nix flake directory not found at ($flake_dir) - Skipping!"
-        return
-    }
-
-    if (confirm-step "Update Nix flake inputs and rebuild system?") {
-        cd $flake_dir
-        nix flake update
-        sudo nixos-rebuild switch --flake $flake_dir
-    }
-
-    if (confirm-step "Garbage collect old NixOS generations and store paths?") {
-        sudo nix-collect-garbage --delete-older-than 7d
-        nix store gc
-    }
-}
-
-def update-system [] {
-    print-section "Updating System Packages 📦"
-
-    if (which pacman | is-not-empty) {
-        if (confirm-step "Proceed with update via pacman?") {
-            sudo pacman -Syu
-        }
-    } else if (which apt | is-not-empty) {
-        if (confirm-step "Proceed with update via apt?") {
-            sudo apt update
-            sudo apt upgrade
-        }
-    } else if (which nixos-rebuild | is-not-empty) {
-        update-nixos
-    } else {
-        print "No supported package manager found!"
-    }
-}
-
-def update-mise [] {
-    print-section "Updating Mise Packages 📦"
-    if (which mise | is-empty) {
-        print "⚠️ mise not installed - Skipping!"
-        return
-    }
-
-    if (confirm-step "Update mise packages?") {
-        $env.MISE_NODE_COMPILE = false
-        $env.MISE_PYTHON_COMPILE = false 
-        mise self-update
-        mise upgrade
-    }
-}
-
-def update-dotfiles [] {
-    print-section "Updating Dotfiles 🛠️"
-    if (which ansible-pull | is-empty) {
-        print "⚠️ Ansible-pull not installed - Skipping!"
-        return
-    }
-
-    if (confirm-step "Update dotfiles via Ansible?") {
-        ansible-pull -U https://github.com/ll-nick/ansible-config.git
-    }
-}
-
-def update-tmux [] {
-    print-section "Updating Tmux Plugins 🔧"
-
-    let tpm_dir = $env.HOME | path join .config tmux plugins tpm
-    if not ($tpm_dir | path exists) {
-        print "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"
-        return
-    }
-
-    if (confirm-step "Update Tmux plugins?") {
-        let update_command = $"($tpm_dir | path join bin update_plugins) all"
-        nu -c $update_command
-    }
-}
-
-def update-neovim [] {
-    print-section "Updating Neovim Plugins ✨"
-    if (which nvim | is-empty) {
-        print "⚠️ Neovim Not Found - Skipping!"
-        return
-    }
-
-    if (confirm-step "Update Neovim plugins and commit lazy-lock.json?") {
-        nvim --headless "+Lazy! sync" +qa
-        cd ($env.HOME | path join .config nvim)
-        git add lazy-lock.json
-        git commit -m "Version bump"
-        print "\nChanges:"
-        git diff --staged
-        if (confirm-step "Push changes to remote?") { git push }
-        return
-    }
-
-    if (confirm-step "Restore Neovim plugins from lazy-lock.json?") {
-        nvim --headless "+Lazy! restore" +qa
-    }
-}
-
-def update-flatpak [] {
-    print-section "Updating Flatpak Packages 📦"
-    if (which flatpak | is-empty) {
-        print "⚠️ Flatpak not installed - Skipping!"
-        return
-    }
-
-    if (confirm-step "Update all Flatpak packages?") {
-        flatpak update -y
-    }
-}
-
-def update-all [] {
-    update-system
-    update-mise
-    update-dotfiles
-    update-tmux
-    update-neovim
-    update-flatpak
-
-    timestamp-file | mkdir ($in | path dirname)
-    date now | format date "%s" | save --force (timestamp-file)
-
-    print-section "✅ All Updates Completed!"
-}
-
 def "main check" [
     --reminder-time (-r): duration = 1wk
     --notify (-n)
@@ -204,6 +63,146 @@ def "main update" [
     component?: string
     --yes (-y)
 ] {
+
+    def confirm-step [prompt_message:string] {
+        if $yes {
+            return true
+        }
+
+        let response = (input $"($prompt_message) \(y/N\): " | str trim | str downcase)
+        if $response =~ '^(y|yes)$' { return true }
+        print "Skipping..."
+        return false
+    }
+
+    def update-nixos [] {
+        let flake_dir = $env.HOME | path join .config nix
+        if not ($flake_dir | path exists) {
+            print $"⚠️ Nix flake directory not found at ($flake_dir) - Skipping!"
+            return
+        }
+
+        if (confirm-step "Update Nix flake inputs and rebuild system?") {
+            cd $flake_dir
+            nix flake update
+            sudo nixos-rebuild switch --flake $flake_dir
+        }
+
+        if (confirm-step "Garbage collect old NixOS generations and store paths?") {
+            sudo nix-collect-garbage --delete-older-than 7d
+            nix store gc
+        }
+    }
+
+    def update-system [] {
+        print-section "Updating System Packages 📦"
+
+        if (which pacman | is-not-empty) {
+            if (confirm-step "Proceed with update via pacman?") {
+                sudo pacman -Syu
+            }
+        } else if (which apt | is-not-empty) {
+            if (confirm-step "Proceed with update via apt?") {
+                sudo apt update
+                sudo apt upgrade
+            }
+        } else if (which nixos-rebuild | is-not-empty) {
+            update-nixos
+        } else {
+            print "No supported package manager found!"
+        }
+    }
+
+    def update-mise [] {
+        print-section "Updating Mise Packages 📦"
+        if (which mise | is-empty) {
+            print "⚠️ mise not installed - Skipping!"
+            return
+        }
+
+        if (confirm-step "Update mise packages?") {
+            $env.MISE_NODE_COMPILE = false
+            $env.MISE_PYTHON_COMPILE = false 
+            mise self-update
+            mise upgrade
+        }
+    }
+
+    def update-dotfiles [] {
+        print-section "Updating Dotfiles 🛠️"
+        if (which ansible-pull | is-empty) {
+            print "⚠️ Ansible-pull not installed - Skipping!"
+            return
+        }
+
+        if (confirm-step "Update dotfiles via Ansible?") {
+            ansible-pull -U https://github.com/ll-nick/ansible-config.git
+        }
+    }
+
+    def update-tmux [] {
+        print-section "Updating Tmux Plugins 🔧"
+
+        let tpm_dir = $env.HOME | path join .config tmux plugins tpm
+        if not ($tpm_dir | path exists) {
+            print "⚠️ Tmux Plugin Manager (TPM) Not Found - Skipping!"
+            return
+        }
+
+        if (confirm-step "Update Tmux plugins?") {
+            let update_command = $"($tpm_dir | path join bin update_plugins) all"
+            nu -c $update_command
+        }
+    }
+
+    def update-neovim [] {
+        print-section "Updating Neovim Plugins ✨"
+        if (which nvim | is-empty) {
+            print "⚠️ Neovim Not Found - Skipping!"
+            return
+        }
+
+        if (confirm-step "Update Neovim plugins and commit lazy-lock.json?") {
+            nvim --headless "+Lazy! sync" +qa
+            cd ($env.HOME | path join .config nvim)
+            git add lazy-lock.json
+            git commit -m "Version bump"
+            print "\nChanges:"
+            git diff --staged
+            if (confirm-step "Push changes to remote?") { git push }
+            return
+        }
+
+        if (confirm-step "Restore Neovim plugins from lazy-lock.json?") {
+            nvim --headless "+Lazy! restore" +qa
+        }
+    }
+
+    def update-flatpak [] {
+        print-section "Updating Flatpak Packages 📦"
+        if (which flatpak | is-empty) {
+            print "⚠️ Flatpak not installed - Skipping!"
+            return
+        }
+
+        if (confirm-step "Update all Flatpak packages?") {
+            flatpak update -y
+        }
+    }
+
+    def update-all [] {
+        update-system
+        update-mise
+        update-dotfiles
+        update-tmux
+        update-neovim
+        update-flatpak
+
+        timestamp-file | mkdir ($in | path dirname)
+        date now | format date "%s" | save --force (timestamp-file)
+
+        print-section "✅ All Updates Completed!"
+    }
     print-title
 
     match $component {
