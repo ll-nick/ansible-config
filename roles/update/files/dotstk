@@ -63,7 +63,6 @@ def "main update" [
     component?: string
     --yes (-y)
 ] {
-
     def confirm-step [prompt_message:string] {
         if $yes {
             return true
@@ -99,12 +98,20 @@ def "main update" [
 
         if (which pacman | is-not-empty) {
             if (confirm-step "Proceed with update via pacman?") {
-                sudo pacman -Syu
+                if $yes {
+                    sudo pacman -Syu --no-confirm
+                } else {
+                    sudo pacman -Syu
+                }
             }
         } else if (which apt | is-not-empty) {
             if (confirm-step "Proceed with update via apt?") {
                 sudo apt update
-                sudo apt upgrade
+                if $yes {
+                    sudo apt upgrade --yes
+                } else {
+                    sudo apt upgrade
+                }
             }
         } else if (which nixos-rebuild | is-not-empty) {
             update-nixos
@@ -123,8 +130,13 @@ def "main update" [
         if (confirm-step "Update mise packages?") {
             $env.MISE_NODE_COMPILE = false
             $env.MISE_PYTHON_COMPILE = false 
-            mise self-update
-            mise upgrade
+            if $yes {
+                mise self-update --yes
+                mise upgrade --yes
+            } else {
+                mise self-update
+                mise upgrade
+            }
         }
     }
 
@@ -186,7 +198,11 @@ def "main update" [
         }
 
         if (confirm-step "Update all Flatpak packages?") {
-            flatpak update -y
+            if $yes {
+                flatpak update
+            } else {
+                flatpak update --yes
+            }
         }
     }
 
