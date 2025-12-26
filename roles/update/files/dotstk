@@ -222,13 +222,14 @@ def "main update" [
     print-title
 
     match $component {
+        null => update-all,
         "system" => update-system,
         "mise" => update-mise,
         "dotfiles" => update-dotfiles,
         "tmux" => update-tmux,
         "neovim" => update-neovim,
         "flatpak" => update-flatpak,
-        _ => update-all
+        _ => {print $"Unknown component: ($component). Valid options are: system, mise, dotfiles, tmux, neovim, flatpak."}
     }
 }
 
