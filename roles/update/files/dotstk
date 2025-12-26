@@ -52,17 +52,33 @@ def print-section [title:string] {
 
 }
 
+# Check when the system was last updated
+#
+# Can optionally send a desktop notification, if the last update was
+# longer ago than the specified reminder time.
 def "main check" [
-    --reminder-time (-r): duration = 1wk
-    --notify (-n)
-] {
+    --reminder-time (-r): duration = 1wk  # Time threshold before warning
+    --notify (-n)                         # Send a desktop notification
+]: nothing -> string {
     check-update $reminder_time $notify
 }
 
+
+# Update your system and development tools
+#
+# You one-stop shop for keeping your system and tools up to date.
+# Runs updates for the system package manager as well as:
+# - Packages installed via mise-en-place
+# - Dotfiles via Ansible
+# - Tmux plugins via Tmux Plugin Manager (TPM)
+# - Neovim plugins via Lazy.nvim
+# - Flatpak packages
+#
+# You may update a single component or run all updates at once.
 def "main update" [
-    component?: string
-    --yes (-y)
-] {
+    component?: string # If given, update only the specified component (system, mise, dotfiles, tmux, neovim, flatpak)
+    --yes (-y) # Assume yes for all prompts
+]: nothing -> nothing {
     def confirm-step [prompt_message:string] {
         if $yes {
             return true
@@ -233,7 +249,10 @@ def "main update" [
     }
 }
 
-def main [] {}
+# Keep you dotfile stack up to date!
+#
+# Refer to the subcommands on how to use this tool.
+def main []: nothing -> nothing {}
 
 # vim: set ft=nu
 
