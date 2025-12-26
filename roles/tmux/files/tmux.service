@@ -8,11 +8,11 @@ Type=forking
 Restart=no
 RemainAfterExit=yes
 
-ExecStart=bash -l -c "mise x -- tmux new-session -d -s restore '~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh'"
+ExecStart=/usr/bin/env bash -l -c "mise x -- tmux new-session -d -s restore '~/.config/tmux/plugins/tmux-resurrect/scripts/restore.sh'"
 
-ExecStop=bash -l -c "mise x -- ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh"
-ExecStop=bash -c "sed -i 's,/home/.*nvim,nvim,' ~/.local/share/tmux/resurrect/last"
-ExecStop=bash -l -c "mise x -- tmux kill-server"
+ExecStop=/usr/bin/env bash -l -c "mise x -- ~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh"
+ExecStop=/usr/bin/env bash -c "sed -i 's,/home/.*nvim,nvim,' ~/.local/share/tmux/resurrect/last"
+ExecStop=/usr/bin/env bash -l -c "mise x -- tmux kill-server"
 KillMode=control-group
 
 Restart=on-failure
