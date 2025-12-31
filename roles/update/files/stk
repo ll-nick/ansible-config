@@ -8,14 +8,14 @@ let colors = {
 
 def timestamp-file [] {
     let data_home = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
-    $data_home | path join dotstk last_update_time.txt
+    $data_home | path join stk last_update_time.txt
 }
 
 def check-update [
     reminder_time: duration
     notify: bool
 ] {
-    if not (timestamp-file | path exists) { return "Timestamp file not found. Run 'dotstk update' to create it." }
+    if not (timestamp-file | path exists) { return "Timestamp file not found. Run 'stk update' to create it." }
 
     let last_update = timestamp-file | open $in | str trim | into datetime --format "%s"
     let elapsed_time = (date now) - $last_update
@@ -235,7 +235,6 @@ def "main update" [
 
         print-section "✅ All Updates Completed!"
     }
-    print-title
 
     match $component {
         null => update-all,
