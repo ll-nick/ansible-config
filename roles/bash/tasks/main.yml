@@ -29,3 +29,9 @@
   ansible.builtin.copy:
     src: inputrc
     dest: "{{ ansible_env.HOME }}/.inputrc"
+
+- name: Add mise config
+  ansible.builtin.copy:
+    src: mise.bash
+    dest: "{{ ansible_env.HOME }}/.config/bash/1_mise.bash"
+

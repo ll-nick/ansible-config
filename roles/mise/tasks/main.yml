@@ -9,19 +9,3 @@
   args:
     creates: "{{ ansible_env.HOME }}/.local/bin/mise"
 
-- name: Add bash config
-  ansible.builtin.copy:
-    src: mise.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/1_mise.bash"
-
-- name: Generate nushell init script
-  ansible.builtin.command:
-    cmd: mise activate nu
-  register: mise_init
-  changed_when: false
-
-- name: Write nushell init file
-  ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/00_mise.nu"
-    content: "{{ mise_init.stdout }}"
-    mode: "0644"

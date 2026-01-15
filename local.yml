@@ -50,10 +50,10 @@
 
 
   roles:
+    - role: mise
+
     - role: bash
     - role: nushell
-
-    - role: mise
 
     - role: bat
     - role: eza
