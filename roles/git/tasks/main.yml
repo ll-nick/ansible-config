@@ -35,3 +35,26 @@
   ansible.builtin.copy:
     src: delta.gitconfig
     dest: "{{ ansible_env.HOME }}/.config/git/delta.gitconfig"
+
+- name: Check git version
+  ansible.builtin.command: git --version
+  register: git_output
+  changed_when: false
+
+- name: Parse git version
+  ansible.builtin.set_fact:
+    git_version: "{{ git_output.stdout.split()[2] }}"
+
+- name: Install version-dependent config (2.35+)
+  ansible.builtin.copy:
+    src: conflict-style-modern.gitconfig
+    dest: "{{ ansible_env.HOME }}/.config/git/conflict-style.gitconfig"
+  when: git_version is version('2.35', '>=')
+  ignore_errors: true
+
+- name: Install version-dependent config (below 2.35)
+  ansible.builtin.copy:
+    src: conflict-style.gitconfig
+    dest: "{{ ansible_env.HOME }}/.config/git/conflict-style.gitconfig"
+  when: git_version is version('2.35', '<')
+  ignore_errors: true
