@@ -1,0 +1,5 @@
+.cache
+.devcontainer
+*-raw-extract.tex
+*-tex-extract.tex
+

@@ -25,6 +25,11 @@
     src: gitconfig-gitlab.com
     dest: "{{ ansible_env.HOME }}/.config/git/gitconfig-gitlab.com"
 
+- name: Add global gitignore
+  ansible.builtin.copy:
+    src: gitignore
+    dest: "{{ ansible_env.HOME }}/.config/git/gitignore"
+
 - name: Install delta
   ansible.builtin.shell: |
     {{ ansible_env.HOME }}/.local/bin/mise use --global delta

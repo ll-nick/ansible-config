@@ -7,6 +7,9 @@
 [includeIf "hasconfig:remote.*.url:git@gitlab.com:*/**"]
   path = ~/.config/git/gitconfig-gitlab.com
 
+[core]
+  excludesFile = ~/.config/git/gitignore
+
 [init]
   defaultBranch = main
 
@@ -17,8 +20,8 @@
   rebase = true
 
 [include]
-    path = ~/.config/git/delta.gitconfig
+  path = ~/.config/git/delta.gitconfig
 
 [include]
-    path = ~/.config/git/conflict-style.gitconfig
+  path = ~/.config/git/conflict-style.gitconfig
 
