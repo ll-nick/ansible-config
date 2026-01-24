@@ -24,7 +24,7 @@ def check-update [
         if (which notify-send | is-empty) {
             print "⚠️ notify-send not found - Cannot send notification!"
         } else {
-            notify-send "System out of date" $"It's been ($elapsed_time | format duration day) days since your last update!\nConsider running 'dotstk update'."
+            notify-send "System out of date" $"It's been ($elapsed_time | format duration day) days since your last update!\nConsider running 'stk update'."
         }
     }
 
@@ -53,7 +53,8 @@ def "main check" [
 # Update your system and development tools
 #
 # You one-stop shop for keeping your system and tools up to date.
-# Runs updates for the system package manager as well as:
+# Runs updates for:
+# - System packages (apt, nix, pacman)
 # - Packages installed via mise-en-place
 # - Dotfiles via Ansible
 # - Tmux plugins via Tmux Plugin Manager (TPM)
@@ -145,7 +146,7 @@ def "main update" [
     def update-dotfiles [] {
         print-section "Updating Dotfiles 🛠️"
         if (which ansible-pull | is-empty) {
-            print "⚠️ Ansible-pull not installed - Skipping!"
+            print "⚠️ ansible-pull not installed - Skipping!"
             return
         }
 
