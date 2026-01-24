@@ -64,6 +64,7 @@ def "main check" [
 # You may update a single component or run all updates at once.
 def "main update" [
     component?: string # If given, update only the specified component (system, mise, dotfiles, tmux, neovim, flatpak)
+    --bump (-b) # Bump versions for version-locked components
     --yes (-y) # Assume yes for all prompts
 ]: nothing -> nothing {
     def confirm-step [prompt_message:string] {
@@ -84,9 +85,17 @@ def "main update" [
             return
         }
 
-        if (confirm-step "Update Nix flake inputs and rebuild system?") {
+        if ($bump) {
             cd $flake_dir
             nix flake update
+            git add flake.lock
+            git commit -m "Version bump"
+            print "\nChanges:"
+            git show
+            if (confirm-step "Bumped versions. Push lock file to remote?") { git push }
+        }
+
+        if (confirm-step "Rebuild system?") {
             sudo nixos-rebuild switch --flake $flake_dir
         }
 
@@ -177,14 +186,14 @@ def "main update" [
             return
         }
 
-        if (confirm-step "Update Neovim plugins and commit lazy-lock.json?") {
+        if ($bump) {
             nvim --headless "+Lazy! sync" +qa
             cd ($env.HOME | path join .config nvim)
             git add lazy-lock.json
             git commit -m "Version bump"
             print "\nChanges:"
-            git diff --staged
-            if (confirm-step "Push changes to remote?") { git push }
+            git show
+            if (confirm-step "Bumped versions. Push lock file to remote?") { git push }
             return
         }
 
