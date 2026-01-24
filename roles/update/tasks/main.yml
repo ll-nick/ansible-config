@@ -1,5 +1,5 @@
 - name: Install script
   ansible.builtin.copy:
-    src: update-all
-    dest: "{{ ansible_env.HOME }}/.local/bin/update-all"
+    src: stk
+    dest: "{{ ansible_env.HOME }}/.local/bin/stk"
     mode: "0755"
