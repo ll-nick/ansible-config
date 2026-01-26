@@ -175,7 +175,7 @@ def "main update" [
 
         if (confirm-step "Update Tmux plugins?") {
             let update_command = $"($tpm_dir | path join bin update_plugins) all"
-            nu -c $update_command
+            mise x -- nu -c $update_command
         }
     }
 
