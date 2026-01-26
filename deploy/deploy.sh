@@ -3,6 +3,7 @@
 set -e
 
 NO_CONFIRM=false
+PLAYBOOK_PATH=""
 PRIVILEGED_MODE=""
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
@@ -160,9 +161,22 @@ install_ansible_galaxy_collection() {
     ansible-galaxy collection install community.general
 }
 
+validate_playbook_path() {
+    if [ -z "$PLAYBOOK_PATH" ]; then
+        return
+    fi
+
+    print_header "📂 Checking playbook path"
+    if [ ! -e "$PLAYBOOK_PATH" ]; then
+        printf "  ${COLOR_ERROR}✖ Playbook path does not exist: %s${COLOR_RESET}\n" "$PLAYBOOK_PATH"
+        exit 1
+    fi
+    printf "  ${COLOR_SUCCESS}✔ Using local playbook: %s${COLOR_RESET}\n" "$PLAYBOOK_PATH"
+}
+
 run_ansible() {
     if ! confirm "Do you wish to execute the playbook?"; then
-        printf "  ${COLOR_WARN}⚠ Skipping ansible-pull execution.${COLOR_RESET}\n"
+        printf "  ${COLOR_WARN}⚠ Skipping Ansible execution.${COLOR_RESET}\n"
         exit 1
     fi
 
@@ -176,22 +190,28 @@ run_ansible() {
     fi
 
     if [ -z "$PRIVILEGED_MODE" ]; then
-        if confirm "Do you want to run ansible-pull with sudo privileges?"; then
+        if confirm "Do you want to run Ansible with sudo privileges?"; then
             PRIVILEGED_MODE=true
         else
             PRIVILEGED_MODE=false
         fi
     fi
 
+    PRIVILEGED_FLAGS=()
     if [ "$PRIVILEGED_MODE" = true ]; then
-        printf "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}\n"
-        ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
+        printf "  ${COLOR_INFO}⬆ Running Ansible with sudo privileges...${COLOR_RESET}\n"
+        PRIVILEGED_FLAGS+=(--tags all,privileged -K)
     else
-        printf "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}\n"
-        ansible-pull -U https://github.com/ll-nick/ansible-config.git
+        printf "  ${COLOR_INFO}⬇ Running Ansible without sudo privileges...${COLOR_RESET}\n"
     fi
 
-    printf "  ${COLOR_SUCCESS}✔ ansible-pull execution completed.${COLOR_RESET}\n"
+    if [ -n "$PLAYBOOK_PATH" ]; then
+        ansible-playbook "${PRIVILEGED_FLAGS[@]}" "$PLAYBOOK_PATH"
+    else
+        ansible-pull "${PRIVILEGED_FLAGS[@]}" -U https://github.com/ll-nick/ansible-config.git
+    fi
+
+    printf "  ${COLOR_SUCCESS}✔ Ansible execution completed.${COLOR_RESET}\n"
 }
 
 main() {
@@ -214,9 +234,13 @@ main() {
                 exit 0
                 ;;
             *)
-                printf "${COLOR_ERROR}✖ Unknown option: %s${COLOR_RESET}\n" "$1"
-                print_help
-                exit 1
+                if [ -z "$PLAYBOOK_PATH" ]; then
+                    PLAYBOOK_PATH="$1"
+                    shift
+                else
+                    printf "${COLOR_ERROR}✖ Unknown option or multiple paths provided: %s${COLOR_RESET}\n" "$1"
+                    exit 1
+                fi
                 ;;
         esac
     done
@@ -240,6 +264,7 @@ main() {
     ensure_mise_package "ansible"
     install_ansible_galaxy_collection
 
+    validate_playbook_path
     print_header "🚀 Running ansible-pull"
     run_ansible
 
