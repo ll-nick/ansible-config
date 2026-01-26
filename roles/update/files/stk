@@ -111,7 +111,7 @@ def "main update" [
         if (which pacman | is-not-empty) {
             if (confirm-step "Proceed with update via pacman?") {
                 if $yes {
-                    sudo pacman -Syu --no-confirm
+                    sudo pacman -Syu --noconfirm
                 } else {
                     sudo pacman -Syu
                 }
