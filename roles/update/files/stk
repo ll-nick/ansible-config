@@ -211,9 +211,9 @@ def "main update" [
 
         if (confirm-step "Update all Flatpak packages?") {
             if $yes {
-                flatpak update
+                flatpak update --assumeyes
             } else {
-                flatpak update --yes
+                flatpak update
             }
         }
     }
