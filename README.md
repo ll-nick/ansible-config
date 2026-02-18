@@ -23,7 +23,7 @@ The config is tested on
 - NixOS[^1]
 - Ubuntu 24.04
 
-[^1]: kitty and tmux need to be installed via nixpkgs.
+[^1]: kitty needs to be installed via nixpkgs.
 
 ## 🚀 Usage
 
@@ -43,9 +43,11 @@ ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privile
 
 For first time usage, there is also a [bash script](deploy/deploy.sh) that can be used
  to interactively install the required dependencies (including ansible itself), then execute the playbook.
+I host that script using the accompanying Docker file to set everything up in one go using `curl mydomain.com | bash`.
 
-The ansible playbook mostly only installs packages initially, then installs the `update-all` script to `~/.local/bin/` which handles updating everything in one go.
-All tasks are idempotent though, so running the playbook again will not cause any harm.
+The ansible playbook only installs packages initially, then sets up the `stk` command which handles updating everything in one go.
+Check `stk --help` for details.
+All tasks in the playbook are idempotent though, so running it again will not cause any harm.
 
 ## ♥️ Acknowledgements
 
