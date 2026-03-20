@@ -1,6 +1,6 @@
 - name: Install
   ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global github:kovidgoyal/kitty
+    {{ ansible_env.HOME }}/.local/bin/mise use --global 'github:kovidgoyal/kitty[asset_pattern="kitty*x86_64*.txz"]'
   args:
     creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty"
   register: kitty_install
