@@ -236,7 +236,7 @@ main() {
 
     print_header "🧰 Checking mise packages"
     MISE_PYTHON_COMPILE=false ensure_mise_package "python"
-    ensure_mise_package "pipx"
+    ensure_mise_package "uv"
     ensure_mise_package "ansible"
     install_ansible_galaxy_collection
 
