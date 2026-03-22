@@ -17,7 +17,7 @@
 
 - name: Generate init script
   ansible.builtin.command:
-    cmd: mise exec ubi:ll-nick/leadr -- leadr --nu
+    cmd: mise exec -- leadr --nu
   register: leadr_init
   changed_when: false
 

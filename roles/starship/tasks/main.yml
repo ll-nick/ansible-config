@@ -17,7 +17,7 @@
 
 - name: Generate nushell init script
   ansible.builtin.command:
-    cmd: mise exec starship -- starship init nu
+    cmd: mise exec -- starship init nu
   register: starship_init
   changed_when: false
 
