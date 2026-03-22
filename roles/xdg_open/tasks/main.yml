@@ -24,24 +24,16 @@
         src: "ssh_remote_xdg_open@.service.j2"
         dest: "{{ ansible_env.HOME }}/.config/systemd/user/ssh_remote_xdg_open@.service"
 
-    - name: Ensure ~/.ssh directory exists
-      ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.ssh"
-        state: directory
-        mode: "0700"
-
-    - name: Ensure ~/.ssh/config exists
-      ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.ssh/config"
-        state: touch
-        mode: "0600"
-
-    - name: Add RemoteForward entries to SSH config
-      ansible.builtin.blockinfile:
-        path: "{{ ansible_env.HOME }}/.ssh/config"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK xdg-open {{ item }}"
-        block: "{{ lookup('template', 'ssh_config_block.j2') }}"
-      loop: "{{ xdg_open_remote_hosts }}"
+    - name: Inject RemoteForward into SSH config
+      ansible.builtin.script:
+        cmd: >
+          inject_remote_forward.py
+          {{ xdg_open_port }}
+          /run/user/{{ ansible_facts['user_uid'] }}/ssh_remote_xdg_open.sock
+        executable: python3
+      register: inject_result
+      changed_when: inject_result.rc == 2
+      failed_when: inject_result.rc not in [0, 2]
 
 # ── REMOTE MACHINE (no display) ───────────────────────────────────────────────
 
