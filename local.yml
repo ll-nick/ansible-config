@@ -35,7 +35,7 @@
               }}
 
         - name: Check GitHub SSH access
-          shell: ssh -T git@github.com
+          ansible.builtin.command: ssh -T git@github.com
           register: github_ssh_test
           failed_when: false
           changed_when: false
