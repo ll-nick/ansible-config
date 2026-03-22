@@ -14,7 +14,7 @@ SYMBOLS = {
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = "stdout"
-    CALLBACK_NAME = "clean_localhost"
+    CALLBACK_NAME = "pretty_output"
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
