@@ -1,0 +1,6 @@
+[Unit]
+Description=Local "open URL" service instance
+
+[Service]
+ExecStart=/bin/sh -lc 'xargs -0 -n1 xdg-open'
+StandardInput=socket
