@@ -22,7 +22,7 @@
             has_display: >-
               {{
                 (ansible_facts['env']['DISPLAY'] is defined
-                 and ansible_facts['env']['DISPLAY'] is match('^:[0-9]+$'))
+                 and ansible_facts['env']['DISPLAY'] is match('^:[0-9]'))
                 or
                 (ansible_facts['env']['WAYLAND_DISPLAY'] is defined
                  and ansible_facts['env']['WAYLAND_DISPLAY'] | length > 0)
