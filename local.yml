@@ -70,6 +70,7 @@
     - role: tmux
     - role: update
     - role: uv
+    - role: xdg_open
     - role: zoxide
 
     - role: gnome
