@@ -1,12 +1,6 @@
 # ── LOCAL MACHINE (has display) ────────────────────────────────────────────────
 
-- name: Check if systemd is available
-  ansible.builtin.shell: command -v systemctl
-  register: systemd_available
-  ignore_errors: true
-  changed_when: false
-
-- when: has_display and systemd_available.rc == 0
+- when: has_display and ansible_service_mgr == "systemd"
   block:
     - name: Ensure systemd user service directory
       ansible.builtin.file:

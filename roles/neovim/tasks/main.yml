@@ -7,12 +7,12 @@
     state: present
 
 - name: Get glibc version
-  command: ldd --version
+  ansible.builtin.command: ldd --version
   register: ldd_output
   changed_when: false
 
 - name: Parse glibc version from ldd output
-  set_fact:
+  ansible.builtin.set_fact:
     glibc_version: "{{ ldd_output.stdout_lines[0].split()[-1] }}"
 
 - name: Install for newer glibc versions
