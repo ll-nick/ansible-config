@@ -1,0 +1,72 @@
+# ── LOCAL MACHINE (has display) ────────────────────────────────────────────────
+
+- name: Check if systemd is available
+  ansible.builtin.shell: command -v systemctl
+  register: systemd_available
+  ignore_errors: true
+  changed_when: false
+
+- when: has_display and systemd_available.rc == 0
+  block:
+    - name: Ensure systemd user service directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        state: directory
+
+    - name: Deploy socket unit
+      ansible.builtin.template:
+        src: ssh_remote_xdg_open.socket.j2
+        dest: "{{ ansible_env.HOME }}/.config/systemd/user/ssh_remote_xdg_open.socket"
+      notify: Reload and enable socket
+
+    - name: Deploy service unit
+      ansible.builtin.template:
+        src: "ssh_remote_xdg_open@.service.j2"
+        dest: "{{ ansible_env.HOME }}/.config/systemd/user/ssh_remote_xdg_open@.service"
+
+    - name: Ensure ~/.ssh directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.ssh"
+        state: directory
+        mode: "0700"
+
+    - name: Ensure ~/.ssh/config exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.ssh/config"
+        state: touch
+        mode: "0600"
+
+    - name: Add RemoteForward entries to SSH config
+      ansible.builtin.blockinfile:
+        path: "{{ ansible_env.HOME }}/.ssh/config"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK xdg-open {{ item }}"
+        block: "{{ lookup('template', 'ssh_config_block.j2') }}"
+      loop: "{{ xdg_open_remote_hosts }}"
+
+# ── REMOTE MACHINE (no display) ───────────────────────────────────────────────
+
+- when: not has_display
+  block:
+    - name: Find real xdg-open before installing shim
+      ansible.builtin.shell: |
+        for p in /usr/bin/xdg-open /usr/local/bin/xdg-open; do
+          [ -x "$p" ] && echo "$p" && break
+        done
+      register: real_xdg_open_result
+      changed_when: false
+
+    - name: Set real_xdg_open_path fact
+      ansible.builtin.set_fact:
+        real_xdg_open_path: "{{ real_xdg_open_result.stdout | trim }}"
+
+    - name: Ensure ~/.local/bin exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.local/bin"
+        state: directory
+
+    - name: Deploy xdg-open shim
+      ansible.builtin.template:
+        src: xdg_open_shim.py.j2
+        dest: "{{ ansible_env.HOME }}/.local/bin/xdg-open"
+        mode: "0755"
+      when: real_xdg_open_path | length > 0

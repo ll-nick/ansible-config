@@ -1,0 +1,7 @@
+- name: Reload and enable socket
+  ansible.builtin.systemd:
+    name: ssh_remote_xdg_open.socket
+    state: started
+    enabled: true
+    daemon_reload: true
+    scope: user
