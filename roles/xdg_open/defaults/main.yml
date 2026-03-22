@@ -1,0 +1,2 @@
+xdg_open_port: 19999
+xdg_open_remote_hosts: ["mrtknecht1", "mrtknecht2", "mrtknecht3", "mrtknecht4", "mrtknecht5", "mrtknecht6", "mrtknecht7", "serverus"]
