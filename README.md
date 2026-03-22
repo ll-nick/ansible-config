@@ -41,6 +41,8 @@ To also deploy tasks that require root privileges, use:
 ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged --ask-become-pass
 ```
 
+To run individual roles, specify the role name as a tag (e.g. `--tags neovim`).
+
 For first time usage, there is also a [bash script](deploy/deploy.sh) that can be used
  to interactively install the required dependencies (including ansible itself), then execute the playbook.
 I host that script using the accompanying Docker file to set everything up in one go using `curl mydomain.com | bash`.
