@@ -39,13 +39,7 @@
     src: tmux.nu
     dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/tmux.nu"
 
-- name: Check if systemd is available
-  ansible.builtin.shell: command -v systemctl
-  register: systemd_available
-  ignore_errors: true
-  changed_when: false
-
-- when: systemd_available.rc == 0
+- when: ansible_service_mgr == "systemd"
   block:
     - name: Ensure systemd user service directory
       ansible.builtin.file:
