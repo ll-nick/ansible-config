@@ -1,0 +1,10 @@
+[Unit]
+Description=Local "open URL" socket for ssh-remote-xdg-open
+
+[Socket]
+ListenStream=/run/user/{{ ansible_facts['user_uid'] }}/ssh_remote_xdg_open.sock
+SocketMode=0600
+Accept=yes
+
+[Install]
+WantedBy=default.target

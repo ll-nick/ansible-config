@@ -1,0 +1,6 @@
+[Unit]
+Description=Local "open URL" service instance
+
+[Service]
+ExecStart=/bin/bash -c 'IFS= read -r -d "" url && {{ xdg_open_open_cmd }} "$url"'
+StandardInput=socket

@@ -1,0 +1,2 @@
+xdg_open_port: 19999
+xdg_open_open_cmd: "flatpak run org.mozilla.firefox"
