@@ -2,5 +2,5 @@
 Description=Local "open URL" service instance
 
 [Service]
-ExecStart=/bin/sh -lc 'xargs -0 -n1 xdg-open'
+ExecStart=/bin/bash -c 'IFS= read -r -d "" url && {{ xdg_open_open_cmd }} "$url"'
 StandardInput=socket
