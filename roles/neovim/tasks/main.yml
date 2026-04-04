@@ -15,19 +15,22 @@
   ansible.builtin.set_fact:
     glibc_version: "{{ ldd_output.stdout_lines[0].split()[-1] }}"
 
-- name: Install for newer glibc versions
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global neovim
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/neovim"
+- name: Copy mise config for newer glibc versions
+  ansible.builtin.copy:
+    src: mise-new-glibc.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/neovim.toml"
   when: glibc_version is version('2.32', '>=')
 
-- name: Install for older glibc versions
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global github:neovim/neovim-releases
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-neovim-neovim-releases"
+- name: Copy mise config for older glibc versions
+  ansible.builtin.copy:
+    src: mise-old-glibc.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/neovim.toml"
   when: glibc_version is version('2.32', '<')
+
+- name: Install
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
 
 - name: Clone Config
   ansible.builtin.git:

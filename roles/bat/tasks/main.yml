@@ -1,8 +1,12 @@
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/bat.toml"
+
 - name: Install
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global bat
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/bat"
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
 
 - name: Ensure config directory
   ansible.builtin.file:

@@ -1,8 +1,12 @@
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/leadr.toml"
+
 - name: Install
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global github:ll-nick/leadr
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-ll-nick-leadr"
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
 
 - name: Clone config
   ansible.builtin.git:

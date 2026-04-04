@@ -103,11 +103,15 @@
     value: "'file:///{{ ansible_env.HOME }}/Pictures/wallpaper-dark.png'"
 
 # PaperWM
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/gnome.toml"
+
 - name: Install GNOME Extension CLI
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global pipx:gnome-extensions-cli
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/pipx-gnome-extensions-cli"
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
 
 - name: Query installed GNOME extensions
   ansible.builtin.command:

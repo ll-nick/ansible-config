@@ -9,3 +9,8 @@
   args:
     creates: "{{ ansible_env.HOME }}/.local/bin/mise"
 
+- name: Ensure conf.d directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/mise/conf.d"
+    state: directory
+

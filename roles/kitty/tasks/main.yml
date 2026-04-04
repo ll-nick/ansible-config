@@ -1,14 +1,23 @@
-- name: Install
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global 'github:kovidgoyal/kitty[asset_pattern="kitty*x86_64*.txz"]'
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty"
-  register: kitty_install
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/kitty.toml"
   # kitty is best installed via nixpkgs on NixOS
   when: ansible_distribution != "NixOS"
 
+- name: Install
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
+  when: ansible_distribution != "NixOS"
+
+- name: Check if kitty desktop files are set up
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.local/share/applications/kitty.desktop"
+  register: kitty_desktop
+
 - name: Post-install tasks
-  when: kitty_install.changed and ansible_distribution != "NixOS"
+  when: not kitty_desktop.stat.exists and ansible_distribution != "NixOS"
   block:
   - name: Copy kitty.desktop to appropriate location
     ansible.builtin.copy:

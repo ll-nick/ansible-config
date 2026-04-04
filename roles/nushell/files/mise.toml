@@ -1,0 +1,3 @@
+[tools]
+"github:nushell/nushell" = "latest"
+carapace = "latest"

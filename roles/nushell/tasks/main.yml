@@ -1,8 +1,12 @@
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/nushell.toml"
+
 - name: Install
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global github:nushell/nushell
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-nushell-nushell"
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
 
 - name: Clone config
   ansible.builtin.git:
@@ -14,12 +18,6 @@
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload"
     state: directory
-
-- name: Install carapace
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global carapace
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/carapace"
 
 - name: Generate carapace init script
   ansible.builtin.command:

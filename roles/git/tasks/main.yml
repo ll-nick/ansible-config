@@ -30,11 +30,15 @@
     src: gitignore
     dest: "{{ ansible_env.HOME }}/.config/git/gitignore"
 
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/git.toml"
+
 - name: Install delta
-  ansible.builtin.shell: |
-    {{ ansible_env.HOME }}/.local/bin/mise use --global delta
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/mise/installs/delta"
+  ansible.builtin.command:
+    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+  changed_when: false
 
 - name: Add delta config
   ansible.builtin.copy:
