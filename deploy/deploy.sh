@@ -124,30 +124,41 @@ activate_mise() {
     printf "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}\n"
 }
 
-ensure_mise_package() {
-    local PACKAGE=$1
-    local MISE_DIR="$HOME/.local/share/mise/installs/$PACKAGE"
+ensure_mise_packages() {
+    local CONF_D="$HOME/.config/mise/conf.d"
 
-    if [ -d "$MISE_DIR" ]; then
-        printf "  ${COLOR_SUCCESS}✔ %s is already installed via mise.${COLOR_RESET}\n" "$PACKAGE"
+    if [ -d "$HOME/.local/share/mise/installs/python" ] &&
+        [ -d "$HOME/.local/share/mise/installs/uv" ] &&
+        [ -d "$HOME/.local/share/mise/installs/ansible" ]; then
+        printf "  ${COLOR_SUCCESS}✔ Required tools are already installed via mise.${COLOR_RESET}\n"
         return
     fi
 
-    printf "  ${COLOR_WARN}⚠ %s is not installed via mise.${COLOR_RESET}\n" "$PACKAGE"
-    if ! confirm "Do you want to install $PACKAGE using mise?"; then
-        printf "  ${COLOR_ERROR}✖ ERROR: %s is required but not installed.${COLOR_RESET}\n" "$PACKAGE"
+    if ! confirm "Do you want to install required tools (python, uv, ansible) using mise?"; then
+        printf "  ${COLOR_ERROR}✖ ERROR: Required tools are not installed.${COLOR_RESET}\n"
         exit 1
     fi
 
-    printf "  ${COLOR_INFO}⬇ Installing %s via mise...${COLOR_RESET}\n" "$PACKAGE"
-    mise use --global "$PACKAGE"
+    mkdir -p "$CONF_D"
 
-    if [ ! -d "$MISE_DIR" ]; then
-        printf "  ${COLOR_ERROR}✖ ERROR: Failed to install %s via mise.${COLOR_RESET}\n" "$PACKAGE"
-        exit 1
-    fi
+    cat > "$CONF_D/python.toml" << 'EOF'
+[tools]
+python = { version = "latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
+EOF
 
-    printf "  ${COLOR_SUCCESS}✔ %s installed successfully via mise.${COLOR_RESET}\n" "$PACKAGE"
+    cat > "$CONF_D/uv.toml" << 'EOF'
+[tools]
+uv = "latest"
+EOF
+
+    cat > "$CONF_D/ansible.toml" << 'EOF'
+[tools]
+ansible = "latest"
+EOF
+
+    printf "  ${COLOR_INFO}⬇ Installing required tools via mise...${COLOR_RESET}\n"
+    mise install
+    printf "  ${COLOR_SUCCESS}✔ Required tools installed.${COLOR_RESET}\n"
 }
 
 install_ansible_galaxy_collection() {
@@ -235,9 +246,7 @@ main() {
     activate_mise
 
     print_header "🧰 Checking mise packages"
-    MISE_PYTHON_COMPILE=false ensure_mise_package "python"
-    ensure_mise_package "uv"
-    ensure_mise_package "ansible"
+    ensure_mise_packages
     install_ansible_galaxy_collection
 
     print_header "🚀 Running ansible-pull"
