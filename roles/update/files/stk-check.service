@@ -1,0 +1,10 @@
+[Unit]
+Description=Check if system components are up to date
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env bash -l -c "mise x -- ~/.local/bin/stk check --notify"
+
+[Install]
+WantedBy=graphical-session.target

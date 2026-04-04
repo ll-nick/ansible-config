@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily check if system components are up to date
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
