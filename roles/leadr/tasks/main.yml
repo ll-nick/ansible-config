@@ -31,3 +31,8 @@
     content: "{{ leadr_init.stdout }}"
     mode: "0644"
 
+- name: Write nushell env file
+  ansible.builtin.copy:
+    src: leadr_env.nu
+    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/leadr_env.nu"
+
