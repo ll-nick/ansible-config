@@ -58,7 +58,7 @@ def "main check" [
 # - Packages installed via mise-en-place
 # - Dotfiles via Ansible
 # - Tmux plugins via Tmux Plugin Manager (TPM)
-# - Neovim plugins via Lazy.nvim
+# - Neovim plugins via vim.pack
 # - Flatpak packages
 #
 # You may update a single component or run all updates at once.
@@ -187,9 +187,9 @@ def "main update" [
         }
 
         if ($bump) {
-            nvim --headless "+Lazy! sync" +qa
+            nvim --headless -c "lua vim.pack.update(nil, { force = true })" -c "qa"
             cd ($env.HOME | path join .config nvim)
-            git add lazy-lock.json
+            git add nvim-pack-lock.json
             git commit -m "Version bump"
             print "\nChanges:"
             git show
@@ -197,8 +197,8 @@ def "main update" [
             return
         }
 
-        if (confirm-step "Restore Neovim plugins from lazy-lock.json?") {
-            nvim --headless "+Lazy! restore" +qa
+        if (confirm-step "Restore Neovim plugins from lockfile?") {
+            nvim --headless -c "lua vim.pack.update(nil, { target = 'lockfile', force = true })" -c "qa"
         }
     }
 
