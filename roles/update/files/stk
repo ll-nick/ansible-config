@@ -6,29 +6,54 @@ let colors = {
     green: (ansi '#a6e3a1')
 }
 
-def timestamp-file [] {
+def component-timestamp-file [component: string] {
     let data_home = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
-    $data_home | path join stk last_update_time.txt
+    $data_home | path join stk timestamps $"($component).txt"
+}
+
+def save-timestamp [component: string] {
+    let f = component-timestamp-file $component
+    $f | path dirname | mkdir $in
+    date now | format date "%s" | save --force $f
 }
 
 def check-update [
     reminder_time: duration
     notify: bool
 ] {
-    if not (timestamp-file | path exists) { return "Timestamp file not found. Run 'stk update' to create it." }
+    let components = ["system", "mise", "dotfiles", "tmux", "neovim", "flatpak"]
 
-    let last_update = timestamp-file | open $in | str trim | into datetime --format "%s"
-    let elapsed_time = (date now) - $last_update
-
-    if $notify and ($elapsed_time >= $reminder_time) {
-        if (which notify-send | is-empty) {
-            print "⚠️ notify-send not found - Cannot send notification!"
+    let rows = $components | each {|c|
+        let f = component-timestamp-file $c
+        if ($f | path exists) {
+            let last_update = open $f | str trim | into datetime --format "%s"
+            let elapsed = (date now) - $last_update
+            let elapsed_str = if $elapsed >= 1day {
+                let days = $elapsed / 1day | math floor | into int
+                if $days == 1 { "1 day ago" } else { $"($days) days ago" }
+            } else {
+                let hours = $elapsed / 1hr | math floor | into int
+                if $hours == 1 { "1 hour ago" } else { $"($hours) hours ago" }
+            }
+            {component: $c, last_updated: $elapsed_str, stale: ($elapsed >= $reminder_time)}
         } else {
-            notify-send "System out of date" $"It's been ($elapsed_time | format duration day) days since your last update!\nConsider running 'stk update'."
+            {component: $c, last_updated: "never", stale: true}
         }
     }
 
-    $"Last update was ($elapsed_time | format duration day) days ago."
+    $rows | select component last_updated | print
+
+    if $notify {
+        let stale = $rows | where stale | get component
+        if ($stale | is-not-empty) {
+            if (which notify-send | is-empty) {
+                print "⚠️ notify-send not found - Cannot send notification!"
+            } else {
+                let stale_list = $stale | str join ", "
+                notify-send "System out of date" $"($stale_list) haven't been updated recently. Consider running 'stk update'."
+            }
+        }
+    }
 }
 
 def print-section [title:string] {
@@ -38,14 +63,15 @@ def print-section [title:string] {
 
 }
 
-# Check when the system was last updated
+# Check when each component was last updated
 #
-# Can optionally send a desktop notification, if the last update was
-# longer ago than the specified reminder time.
+# Prints a table showing how long ago each component was updated.
+# Can optionally send a desktop notification if at least one component
+# hasn't been updated in too long.
 def "main check" [
     --reminder-time (-r): duration = 1wk  # Time threshold before warning
     --notify (-n)                         # Send a desktop notification
-]: nothing -> string {
+]: nothing -> nothing {
     check-update $reminder_time $notify
 }
 
@@ -97,6 +123,7 @@ def "main update" [
 
         if (confirm-step "Rebuild system?") {
             sudo nixos-rebuild switch --flake $flake_dir
+            save-timestamp "system"
         }
 
         if (confirm-step "Garbage collect old NixOS generations and store paths?") {
@@ -115,6 +142,7 @@ def "main update" [
                 } else {
                     sudo pacman -Syu
                 }
+                save-timestamp "system"
             }
         } else if (which apt | is-not-empty) {
             if (confirm-step "Proceed with update via apt?") {
@@ -124,6 +152,7 @@ def "main update" [
                 } else {
                     sudo apt upgrade
                 }
+                save-timestamp "system"
             }
         } else if (which nixos-rebuild | is-not-empty) {
             update-nixos
@@ -141,7 +170,7 @@ def "main update" [
 
         if (confirm-step "Update mise packages?") {
             $env.MISE_NODE_COMPILE = false
-            $env.MISE_PYTHON_COMPILE = false 
+            $env.MISE_PYTHON_COMPILE = false
             if $yes {
                 mise self-update --yes
                 mise upgrade --yes
@@ -149,6 +178,7 @@ def "main update" [
                 mise self-update
                 mise upgrade
             }
+            save-timestamp "mise"
         }
     }
 
@@ -161,6 +191,7 @@ def "main update" [
 
         if (confirm-step "Update dotfiles via Ansible?") {
             ansible-pull -U https://github.com/ll-nick/ansible-config.git
+            save-timestamp "dotfiles"
         }
     }
 
@@ -176,6 +207,7 @@ def "main update" [
         if (confirm-step "Update Tmux plugins?") {
             let update_command = $"($tpm_dir | path join bin update_plugins) all"
             mise x -- nu -c $update_command
+            save-timestamp "tmux"
         }
     }
 
@@ -188,6 +220,7 @@ def "main update" [
 
         if ($bump) {
             nvim --headless -c "lua vim.pack.update(nil, { force = true })" -c "qa"
+            save-timestamp "neovim"
             cd ($env.HOME | path join .config nvim)
             git add nvim-pack-lock.json
             git commit -m "Version bump"
@@ -199,6 +232,7 @@ def "main update" [
 
         if (confirm-step "Restore Neovim plugins from lockfile?") {
             nvim --headless -c "lua vim.pack.update(nil, { target = 'lockfile', force = true })" -c "qa"
+            save-timestamp "neovim"
         }
     }
 
@@ -215,6 +249,7 @@ def "main update" [
             } else {
                 flatpak update
             }
+            save-timestamp "flatpak"
         }
     }
 
@@ -225,9 +260,6 @@ def "main update" [
         update-tmux
         update-neovim
         update-flatpak
-
-        timestamp-file | mkdir ($in | path dirname)
-        date now | format date "%s" | save --force (timestamp-file)
 
         print-section "✅ All Updates Completed!"
     }
@@ -250,4 +282,3 @@ def "main update" [
 def main []: nothing -> nothing {}
 
 # vim: set ft=nu
-
