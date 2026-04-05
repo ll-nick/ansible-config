@@ -4,6 +4,7 @@ set -e
 
 NO_CONFIRM=false
 PRIVILEGED_MODE=""
+PLAYBOOK_PATH=""
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
 COLOR_INFO='\033[0;36m'    # Cyan
@@ -17,10 +18,11 @@ print_help() {
 Usage: $(basename "$0") [OPTIONS]
 
 Options:
-  -y, --no-confirm   Automatically answer yes to all prompts.
-  --privileged       Run ansible-pull with sudo privileges (non-interactive).
-  --unprivileged     Run ansible-pull without sudo privileges (non-interactive).
-  -h, --help         Show this help message and exit.
+  -y, --no-confirm          Automatically answer yes to all prompts.
+  --privileged              Run ansible with sudo privileges (non-interactive).
+  --unprivileged            Run ansible without sudo privileges (non-interactive).
+  --playbook-path <dir>     Run ansible-playbook from a local directory instead of ansible-pull.
+  -h, --help                Show this help message and exit.
 EOF
 }
 
@@ -164,7 +166,7 @@ install_ansible_galaxy_collection() {
 
 run_ansible() {
     if ! confirm "Do you wish to execute the playbook?"; then
-        printf "  ${COLOR_WARN}⚠ Skipping ansible-pull execution.${COLOR_RESET}\n"
+        printf "  ${COLOR_WARN}⚠ Skipping ansible execution.${COLOR_RESET}\n"
         exit 1
     fi
 
@@ -178,22 +180,36 @@ run_ansible() {
     fi
 
     if [ -z "$PRIVILEGED_MODE" ]; then
-        if confirm "Do you want to run ansible-pull with sudo privileges?"; then
+        if confirm "Do you want to run ansible with sudo privileges?"; then
             PRIVILEGED_MODE=true
         else
             PRIVILEGED_MODE=false
         fi
     fi
 
-    if [ "$PRIVILEGED_MODE" = true ]; then
-        printf "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}\n"
-        ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
+    if [ -n "$PLAYBOOK_PATH" ]; then
+        printf "  ${COLOR_INFO}📂 Running ansible-playbook from local path: %s${COLOR_RESET}\n" "$PLAYBOOK_PATH"
+        cd "$PLAYBOOK_PATH"
+        if [ "$PRIVILEGED_MODE" = true ]; then
+            if [ -n "${ANSIBLE_BECOME_PASS+x}" ]; then
+                ansible-playbook local.yml --tags all,privileged
+            else
+                ansible-playbook local.yml --tags all,privileged -K
+            fi
+        else
+            ansible-playbook local.yml
+        fi
     else
-        printf "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}\n"
-        ansible-pull -U https://github.com/ll-nick/ansible-config.git
+        if [ "$PRIVILEGED_MODE" = true ]; then
+            printf "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}\n"
+            ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
+        else
+            printf "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}\n"
+            ansible-pull -U https://github.com/ll-nick/ansible-config.git
+        fi
     fi
 
-    printf "  ${COLOR_SUCCESS}✔ ansible-pull execution completed.${COLOR_RESET}\n"
+    printf "  ${COLOR_SUCCESS}✔ Ansible execution completed.${COLOR_RESET}\n"
 }
 
 main() {
@@ -210,6 +226,14 @@ main() {
             --unprivileged)
                 PRIVILEGED_MODE=false
                 shift
+                ;;
+            --playbook-path)
+                if [ -z "$2" ]; then
+                    printf "${COLOR_ERROR}✖ --playbook-path requires a directory argument.${COLOR_RESET}\n"
+                    exit 1
+                fi
+                PLAYBOOK_PATH="$2"
+                shift 2
                 ;;
             -h | --help)
                 print_help
@@ -240,7 +264,7 @@ main() {
     ensure_mise_packages
     install_ansible_galaxy_collection
 
-    print_header "🚀 Running ansible-pull"
+    print_header "🚀 Running ansible"
     run_ansible
 
     printf "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
