@@ -128,35 +128,26 @@ ensure_mise_packages() {
     local CONF_D="$HOME/.config/mise/conf.d"
 
     if [ -d "$HOME/.local/share/mise/installs/python" ] &&
-        [ -d "$HOME/.local/share/mise/installs/uv" ] &&
-        [ -d "$HOME/.local/share/mise/installs/ansible" ]; then
+        command -v ansible > /dev/null 2>&1; then
         printf "  ${COLOR_SUCCESS}✔ Required tools are already installed via mise.${COLOR_RESET}\n"
         return
     fi
 
-    if ! confirm "Do you want to install required tools (python, uv, ansible) using mise?"; then
+    if ! confirm "Do you want to install required tools (python, pipx, ansible) using mise?"; then
         printf "  ${COLOR_ERROR}✖ ERROR: Required tools are not installed.${COLOR_RESET}\n"
         exit 1
     fi
 
     mkdir -p "$CONF_D"
 
-    cat > "$CONF_D/python.toml" << 'EOF'
-[tools]
-python = { version = "latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
-EOF
-
-    cat > "$CONF_D/uv.toml" << 'EOF'
-[tools]
-uv = "latest"
-EOF
-
     cat > "$CONF_D/ansible.toml" << 'EOF'
 [tools]
+python = { version = "latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
+pipx = "latest"
 ansible = "latest"
 EOF
 
-    printf "  ${COLOR_INFO}⬇ Installing required tools via mise...${COLOR_RESET}\n"
+    printf "  ${COLOR_INFO}⬇ Installing mise packages...${COLOR_RESET}\n"
     mise install
     printf "  ${COLOR_SUCCESS}✔ Required tools installed.${COLOR_RESET}\n"
 }
