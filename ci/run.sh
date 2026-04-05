@@ -38,7 +38,7 @@ ci_verify() {
         "$IMAGE" \
         bash -c '
             export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
-            for tool in mise bat eza fd fzf rg starship zoxide; do
+            for tool in mise bat delta eza fd fzf lazygit leadr node nvim nu rg starship stk tmux uv zoxide; do
                 command -v "$tool" || { echo "MISSING binary: $tool"; exit 1; }
             done
             for config in \
