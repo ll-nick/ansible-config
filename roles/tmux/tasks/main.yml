@@ -43,7 +43,7 @@
     src: tmux.nu
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell/autoload/tmux.nu"
 
-- when: ansible_service_mgr == "systemd"
+- when: ansible_facts['service_mgr'] == "systemd"
   block:
     - name: Ensure systemd user service directory
       ansible.builtin.file:
