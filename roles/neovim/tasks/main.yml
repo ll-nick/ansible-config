@@ -18,33 +18,33 @@
 - name: Copy mise config for newer glibc versions
   ansible.builtin.copy:
     src: mise-new-glibc.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/neovim.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/neovim.toml"
   when: glibc_version is version('2.32', '>=')
 
 - name: Copy mise config for older glibc versions
   ansible.builtin.copy:
     src: mise-old-glibc.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/neovim.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/neovim.toml"
   when: glibc_version is version('2.32', '<')
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Clone Config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/neovim-config.git"
-    dest: "{{ ansible_env.HOME }}/.config/nvim"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
   ignore_errors: true
 
 - name: Add bash config
   ansible.builtin.copy:
     src: nvim.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/nvim.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/nvim.bash"
 
 - name: Add nushell config
   ansible.builtin.copy:
     src: nvim.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/nvim.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell/autoload/nvim.nu"
 

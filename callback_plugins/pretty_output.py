@@ -89,6 +89,20 @@ class CallbackModule(CallbackBase):
                 f"    → Task failed without error message.", color=C.COLOR_ERROR
             )
 
+    def v2_playbook_on_warning(self, warning):
+        formatted_msg = f"⚠ {warning}"
+        border = "─" * (len(formatted_msg) + 3)
+        top = stringc(f" ┌{border}┐", C.COLOR_WARN)
+        middle = (
+            stringc(" │ ", C.COLOR_WARN)
+            + stringc(formatted_msg, C.COLOR_CONSOLE_PROMPT)
+            + stringc(" │", C.COLOR_WARN)
+        )
+        bottom = stringc(f" └{border}┘", C.COLOR_WARN)
+        self._display.display(top)
+        self._display.display(middle)
+        self._display.display(bottom)
+
     def v2_runner_on_skipped(self, result):
         self.task_counts["skipped"] += 1
         self._print_task_line("skipped", C.COLOR_SKIP)

@@ -7,43 +7,43 @@
 
 - name: Ensure config directory
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/git"
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/git"
     state: directory
 
 - name: Add gitconfig
   ansible.builtin.copy:
     src: gitconfig
-    dest: "{{ ansible_env.HOME }}/.gitconfig"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.gitconfig"
 
 - name: Add GitHub specific config
   ansible.builtin.copy:
     src: gitconfig-github.com
-    dest: "{{ ansible_env.HOME }}/.config/git/gitconfig-github.com"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/gitconfig-github.com"
 
 - name: Add GitLab.com specific config
   ansible.builtin.copy:
     src: gitconfig-gitlab.com
-    dest: "{{ ansible_env.HOME }}/.config/git/gitconfig-gitlab.com"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/gitconfig-gitlab.com"
 
 - name: Add global gitignore
   ansible.builtin.copy:
     src: gitignore
-    dest: "{{ ansible_env.HOME }}/.config/git/gitignore"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/gitignore"
 
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/git.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/git.toml"
 
 - name: Install delta
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Add delta config
   ansible.builtin.copy:
     src: delta.gitconfig
-    dest: "{{ ansible_env.HOME }}/.config/git/delta.gitconfig"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/delta.gitconfig"
 
 - name: Check git version
   ansible.builtin.command: git --version
@@ -57,13 +57,13 @@
 - name: Install version-dependent config (2.35+)
   ansible.builtin.copy:
     src: conflict-style-modern.gitconfig
-    dest: "{{ ansible_env.HOME }}/.config/git/conflict-style.gitconfig"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/conflict-style.gitconfig"
   when: git_version is version('2.35', '>=')
   ignore_errors: true
 
 - name: Install version-dependent config (below 2.35)
   ansible.builtin.copy:
     src: conflict-style.gitconfig
-    dest: "{{ ansible_env.HOME }}/.config/git/conflict-style.gitconfig"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/conflict-style.gitconfig"
   when: git_version is version('2.35', '<')
   ignore_errors: true

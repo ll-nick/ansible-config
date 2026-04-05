@@ -1,16 +1,16 @@
 - name: Ensure ~/.local/bin exists
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/bin"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
     state: directory
 
 - name: Install
   ansible.builtin.shell: |
     curl https://mise.jdx.dev/install.sh | sh
   args:
-    creates: "{{ ansible_env.HOME }}/.local/bin/mise"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise"
 
 - name: Ensure conf.d directory exists
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/mise/conf.d"
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d"
     state: directory
 

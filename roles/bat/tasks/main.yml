@@ -1,48 +1,48 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/bat.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/bat.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Ensure config directory
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/bat/themes"
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/bat/themes"
     state: directory
 
 - name: Add dark theme
   ansible.builtin.copy:
     src: "Catppuccin Mocha.tmTheme"
-    dest: "{{ ansible_env.HOME }}/.config/bat/themes/Catppuccin Mocha.tmTheme"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bat/themes/Catppuccin Mocha.tmTheme"
   register: mocha_theme
 
 - name: Add light theme
   ansible.builtin.copy:
     src: "Catppuccin Latte.tmTheme"
-    dest: "{{ ansible_env.HOME }}/.config/bat/themes/Catppuccin Latte.tmTheme"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bat/themes/Catppuccin Latte.tmTheme"
   register: latte_theme
 
 - name: Add config
   ansible.builtin.copy:
     src: config
-    dest: "{{ ansible_env.HOME }}/.config/bat/config"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bat/config"
   register: bat_config
 
 - name: Rebuild bat cache
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/share/mise/shims/bat cache --build"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims/bat cache --build"
   when: mocha_theme.changed or latte_theme.changed or bat_config.changed
 
 - name: Add bash config
   ansible.builtin.copy:
     src: bat.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/bat.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/bat.bash"
 
 - name: Add nushell config
   ansible.builtin.copy:
     src: bat.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/bat.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell/autoload/bat.nu"
 

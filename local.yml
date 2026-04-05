@@ -106,5 +106,5 @@
       tags: nerdfont
 
     - role: mrt
-      when: "'mrt' in ansible_hostname"
+      when: "'mrt' in ansible_facts['hostname']"
       tags: mrt

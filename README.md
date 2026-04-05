@@ -18,10 +18,10 @@ It is designed to install as many tools as possible on the user level and
 A very limited amount of tasks require root privileges for system-wide installation of basic dependencies which can be deployed using the `privileged` tag, see below.
 Running the playbook without these privileges expects those packages to be installed already.
 
-The config is tested on
+The config [continuously tested on the latest Ubuntu](https://github.com/ll-nick/ansible-config/actions/workflows/ci.yml).
+It is also known to work on the following distributions:
 - Arch Linux
 - NixOS[^1]
-- Ubuntu 24.04
 
 [^1]: kitty needs to be installed via nixpkgs.
 

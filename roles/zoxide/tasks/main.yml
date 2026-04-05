@@ -1,17 +1,17 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/zoxide.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/zoxide.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Add bash config
   ansible.builtin.copy:
     src: zoxide.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/zoxide.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/zoxide.bash"
 
 - name: Generate nushell init script
   ansible.builtin.command:
@@ -21,6 +21,6 @@
 
 - name: Write nushell init file
   ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/zoxide.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/zoxide.nu"
     content: "{{ zoxide_init.stdout }}"
     mode: "0644"

@@ -1,9 +1,9 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/ripgrep.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/ripgrep.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
