@@ -38,6 +38,7 @@
         for p in /usr/bin/xdg-open /usr/local/bin/xdg-open; do
           [ -x "$p" ] && echo "$p" && break
         done
+        true
       register: real_xdg_open_result
       changed_when: false
 
