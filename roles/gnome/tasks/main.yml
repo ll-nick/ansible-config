@@ -16,7 +16,7 @@
   ansible.builtin.pip:
     name: psutil
     state: latest
-    executable: "{{ ansible_env.HOME }}/.local/share/mise/shims/pip"
+    executable: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims/pip"
 
 # Dark Mode
 - name: Enable Dark Mode
@@ -48,27 +48,27 @@
 # Cursor Theme
 - name: Ensure icons Directory at .icons
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.icons"
+    path: "{{ ansible_facts['env']['HOME'] }}/.icons"
     state: directory
 - name: Download Cursor Theme to .icons
   ansible.builtin.unarchive:
     src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
-    dest: "{{ ansible_env.HOME }}/.icons/"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.icons/"
     remote_src: yes
-    creates: "{{ ansible_env.HOME }}/.icons/catppuccin-mocha-blue-cursors"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.icons/catppuccin-mocha-blue-cursors"
 
   # It appears that some applications only respect the cursor theme in .local/share/icons while others only respect it in .icons
   # So we'll copy the theme to both locations to ensure it works everywhere
 - name: Ensure icons Directory at .local/share/icons
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/share/icons"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/icons"
     state: directory
 - name: Download Cursor Theme to .local/share/icons
   ansible.builtin.unarchive:
     src: https://github.com/catppuccin/cursors/releases/download/v2.0.0/catppuccin-mocha-blue-cursors.zip
-    dest: "{{ ansible_env.HOME }}/.local/share/icons/"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/icons/"
     remote_src: yes
-    creates: "{{ ansible_env.HOME }}/.local/share/icons/catppuccin-mocha-blue-cursors"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.local/share/icons/catppuccin-mocha-blue-cursors"
 
 - name: Set Icon Theme
   community.general.dconf:
@@ -77,40 +77,40 @@
 
 - name: Ensure Picture Directory
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/Pictures"
+    path: "{{ ansible_facts['env']['HOME'] }}/Pictures"
     state: directory
 
 - name: Download Light Mode Wallpaper
   ansible.builtin.get_url:
     url: "https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-light.png?raw=true"
-    dest: "{{ ansible_env.HOME }}/Pictures/wallpaper-light.png"
+    dest: "{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-light.png"
     checksum: sha256:4e6924667214a986274a61f84b8b202f776d758d51dfbc256fe9ab4954e66e9a
 
 - name: Download Dark Mode Wallpaper
   ansible.builtin.get_url:
     url: "https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-dark.png?raw=true"
-    dest: "{{ ansible_env.HOME }}/Pictures/wallpaper-dark.png"
+    dest: "{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-dark.png"
     checksum: sha256:1199a43751f1234d3fb92ecf614fbf34de2c07334d3fdd355891044f51bddada
 
 - name: Set Wallpaper
   community.general.dconf:
     key: "/org/gnome/desktop/background/picture-uri"
-    value: "'file:///{{ ansible_env.HOME }}/Pictures/wallpaper-light.png'"
+    value: "'file:///{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-light.png'"
 
 - name: Set Dark Mode Wallpaper
   community.general.dconf:
     key: "/org/gnome/desktop/background/picture-uri-dark"
-    value: "'file:///{{ ansible_env.HOME }}/Pictures/wallpaper-dark.png'"
+    value: "'file:///{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-dark.png'"
 
 # PaperWM
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/gnome.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/gnome.toml"
 
 - name: Install GNOME Extension CLI
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Query installed GNOME extensions

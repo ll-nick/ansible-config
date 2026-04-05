@@ -1,6 +1,6 @@
 - name: Ensure Fonts Directory
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/share/fonts"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/fonts"
     state: directory
 
 - name: Install fontconfig
@@ -47,6 +47,6 @@
     - name: Download and Extract
       ansible.builtin.unarchive:
         src: "https://github.com/ryanoasis/nerd-fonts/releases/download/v{{ nerdfont_version }}/JetBrainsMono.zip"
-        dest: "{{ ansible_env.HOME }}/.local/share/fonts/"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/fonts/"
         remote_src: yes
 

@@ -1,22 +1,22 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/nushell.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/nushell.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Clone config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/nushell-config"
-    dest: "{{ ansible_env.HOME }}/.config/nushell"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell"
   ignore_errors: true
 
 - name: Ensure autoload directory
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload"
     state: directory
 
 - name: Generate carapace init script
@@ -27,7 +27,7 @@
 
 - name: Write carapace init file
   ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/carapace.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/carapace.nu"
     content: "{{ carapace_init.stdout }}"
     mode: "0644"
 
@@ -39,6 +39,6 @@
 
 - name: Write mise init file
   ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/00_mise.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/00_mise.nu"
     content: "{{ mise_init.stdout }}"
     mode: "0644"

@@ -1,23 +1,23 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/leadr.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/leadr.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Clone config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/leadr-config"
-    dest: "{{ ansible_env.HOME }}/.config/leadr"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/leadr"
   ignore_errors: true
 
 - name: Add bash config
   ansible.builtin.copy:
     src: leadr.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/leadr.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/leadr.bash"
 
 - name: Generate init script
   ansible.builtin.command:
@@ -27,12 +27,12 @@
 
 - name: Write init file
   ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/leadr.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/leadr.nu"
     content: "{{ leadr_init.stdout }}"
     mode: "0644"
 
 - name: Write nushell env file
   ansible.builtin.copy:
     src: leadr_env.nu
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/leadr_env.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/leadr_env.nu"
 

@@ -1,23 +1,23 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/starship.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/starship.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Clone Config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/starship-config.git"
-    dest: "{{ ansible_env.HOME }}/.config/starship"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/starship"
   ignore_errors: true
 
 - name: Add bash config
   ansible.builtin.copy:
     src: prompt.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/prompt.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/prompt.bash"
 
 - name: Generate nushell init script
   ansible.builtin.command:
@@ -27,12 +27,12 @@
 
 - name: Write nushell init file
   ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/.local/share/nushell/vendor/autoload/starship.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/starship.nu"
     content: "{{ starship_init.stdout }}"
     mode: "0644"
 
 - name: Add nushell config
   ansible.builtin.copy:
     src: starship.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/starship.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell/autoload/starship.nu"
 

@@ -4,19 +4,19 @@
   block:
     - name: Ensure systemd user service directory
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
         state: directory
 
     - name: Deploy socket unit
       ansible.builtin.template:
         src: ssh_remote_xdg_open.socket.j2
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/ssh_remote_xdg_open.socket"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/ssh_remote_xdg_open.socket"
       notify: Reload and enable socket
 
     - name: Deploy service unit
       ansible.builtin.template:
         src: "ssh_remote_xdg_open@.service.j2"
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/ssh_remote_xdg_open@.service"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/ssh_remote_xdg_open@.service"
 
     - name: Inject RemoteForward into SSH config
       ansible.builtin.script:
@@ -48,12 +48,12 @@
 
     - name: Ensure ~/.local/bin exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.local/bin"
+        path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
         state: directory
 
     - name: Deploy xdg-open shim
       ansible.builtin.template:
         src: xdg_open_shim.py.j2
-        dest: "{{ ansible_env.HOME }}/.local/bin/xdg-open"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/xdg-open"
         mode: "0755"
       when: real_xdg_open_path | length > 0

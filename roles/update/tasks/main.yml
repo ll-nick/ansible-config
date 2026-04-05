@@ -1,25 +1,25 @@
 - name: Install script
   ansible.builtin.copy:
     src: stk
-    dest: "{{ ansible_env.HOME }}/.local/bin/stk"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/stk"
     mode: "0755"
 
 - when: has_display and ansible_service_mgr == "systemd"
   block:
     - name: Ensure systemd user service directory
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
         state: directory
 
     - name: Install stk-check service
       ansible.builtin.copy:
         src: stk-check.service
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/stk-check.service"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/stk-check.service"
 
     - name: Install stk-check timer
       ansible.builtin.copy:
         src: stk-check.timer
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/stk-check.timer"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/stk-check.timer"
 
     - name: Enable stk-check timer
       ansible.builtin.systemd:

@@ -1,20 +1,20 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/fzf.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/fzf.toml"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
 
 - name: Add bash config
   ansible.builtin.copy:
     src: fzf.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/fzf.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/fzf.bash"
 
 - name: Add nushell config
   ansible.builtin.copy:
     src: fzf.nu
-    dest: "{{ ansible_env.HOME }}/.config/nushell/autoload/fzf.nu"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell/autoload/fzf.nu"
 

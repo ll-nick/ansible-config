@@ -1,19 +1,19 @@
 - name: Copy mise config
   ansible.builtin.copy:
     src: mise.toml
-    dest: "{{ ansible_env.HOME }}/.config/mise/conf.d/kitty.toml"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/kitty.toml"
   # kitty is best installed via nixpkgs on NixOS
   when: ansible_distribution != "NixOS"
 
 - name: Install
   ansible.builtin.command:
-    cmd: "{{ ansible_env.HOME }}/.local/bin/mise install"
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
   changed_when: false
   when: ansible_distribution != "NixOS"
 
 - name: Check if kitty desktop files are set up
   ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.local/share/applications/kitty.desktop"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/applications/kitty.desktop"
   register: kitty_desktop
 
 - name: Post-install tasks
@@ -21,35 +21,35 @@
   block:
   - name: Copy kitty.desktop to appropriate location
     ansible.builtin.copy:
-      src: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/applications/kitty.desktop"
-      dest: "{{ ansible_env.HOME }}/.local/share/applications/kitty.desktop"
+      src: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/applications/kitty.desktop"
+      dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/applications/kitty.desktop"
 
   - name: Copy kitty-open.desktop to appropriate location
     ansible.builtin.copy:
-      src: "{{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/applications/kitty-open.desktop"
-      dest: "{{ ansible_env.HOME }}/.local/share/applications/kitty-open.desktop"
+      src: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/applications/kitty-open.desktop"
+      dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/applications/kitty-open.desktop"
 
   - name: Update Icon path in .desktop files
     ansible.builtin.shell:
-      cmd: "sed -i 's|Icon=kitty|Icon={{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/icons/hicolor/256x256/apps/kitty.png|g' ~/.local/share/applications/kitty*.desktop"
+      cmd: "sed -i 's|Icon=kitty|Icon={{ ansible_facts['env']['HOME'] }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/share/icons/hicolor/256x256/apps/kitty.png|g' ~/.local/share/applications/kitty*.desktop"
     args:
       executable: /bin/bash
 
   - name: Update Exec path in .desktop files
     ansible.builtin.shell:
-      cmd: "sed -i 's|Exec=kitty|Exec={{ ansible_env.HOME }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/bin/kitty|g' ~/.local/share/applications/kitty*.desktop"
+      cmd: "sed -i 's|Exec=kitty|Exec={{ ansible_facts['env']['HOME'] }}/.local/share/mise/installs/github-kovidgoyal-kitty/latest/bin/kitty|g' ~/.local/share/applications/kitty*.desktop"
     args:
       executable: /bin/bash
 
   - name: Make xdg-terminal-exec use kitty
     ansible.builtin.lineinfile:
-      path: "{{ ansible_env.HOME }}/.config/xdg-terminals.list"
+      path: "{{ ansible_facts['env']['HOME'] }}/.config/xdg-terminals.list"
       line: 'kitty.desktop'
       create: yes
 
 - name: Clone Config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/kitty-config.git"
-    dest: "{{ ansible_env.HOME }}/.config/kitty"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/kitty"
   ignore_errors: true
 

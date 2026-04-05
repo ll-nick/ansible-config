@@ -1,37 +1,37 @@
 - name: Clone config
   ansible.builtin.git:
     repo: "{{ github_prefix }}ll-nick/bash-config"
-    dest: "{{ ansible_env.HOME }}/.config/bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash"
   ignore_errors: true
 
 - name: Create bashrc symlink
   ansible.builtin.file:
-    src:  "{{ ansible_env.HOME }}/.config/bash/.bashrc"
-    dest: "{{ ansible_env.HOME }}/.bashrc"
+    src:  "{{ ansible_facts['env']['HOME'] }}/.config/bash/.bashrc"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.bashrc"
     state: link
     force: true
 
 - name: Create .profile symlink
   ansible.builtin.file:
-    src:  "{{ ansible_env.HOME }}/.config/bash/.bash_profile"
-    dest: "{{ ansible_env.HOME }}/.profile"
+    src:  "{{ ansible_facts['env']['HOME'] }}/.config/bash/.bash_profile"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.profile"
     state: link
     force: true
 
 - name: Create .bash_profile symlink
   ansible.builtin.file:
-    src:  "{{ ansible_env.HOME }}/.config/bash/.bash_profile"
-    dest: "{{ ansible_env.HOME }}/.bash_profile"
+    src:  "{{ ansible_facts['env']['HOME'] }}/.config/bash/.bash_profile"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.bash_profile"
     state: link
     force: true
 
 - name: Add inputrc
   ansible.builtin.copy:
     src: inputrc
-    dest: "{{ ansible_env.HOME }}/.inputrc"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.inputrc"
 
 - name: Add mise config
   ansible.builtin.copy:
     src: mise.bash
-    dest: "{{ ansible_env.HOME }}/.config/bash/1_mise.bash"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/1_mise.bash"
 
