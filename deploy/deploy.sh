@@ -124,7 +124,7 @@ ensure_mise() {
 }
 
 activate_mise() {
-    eval "$($HOME/.local/bin/mise activate --shims)"
+    eval "$($HOME/.local/bin/mise activate bash --shims)"
     printf "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}\n"
 }
 
