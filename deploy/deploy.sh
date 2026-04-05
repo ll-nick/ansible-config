@@ -28,7 +28,9 @@ EOF
 
 print_header() {
     local title="$1"
-    local width=$((${#title} + 3)) # For some reason this works with piping this script to bash but not with sh
+    local char_count
+    char_count=$(printf '%s' "$title" | LC_ALL=C.UTF-8 wc -m)
+    local width=$((char_count + 3))
     local top="╭$(printf '─%.0s' $(seq 1 $width))╮"
     local bottom="╰$(printf '─%.0s' $(seq 1 $width))╯"
 
