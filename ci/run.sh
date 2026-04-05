@@ -57,13 +57,12 @@ ci_idempotency() {
         -v "$CACHE_DIR:/root" \
         -e ANSIBLE_BECOME_PASS="" \
         -e DEBIAN_FRONTEND=noninteractive \
-        -e ANSIBLE_STDOUT_CALLBACK=default \
         "$IMAGE" \
         bash -c '
             export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
             cd /workspace
             ansible-playbook local.yml 2>&1 | tee /tmp/idempotency.txt
-            grep -E "changed=0\s" /tmp/idempotency.txt \
+            grep -qE "✱ Changed +\| +0" /tmp/idempotency.txt \
                 || { echo "FAIL: playbook is not idempotent"; exit 1; }
             echo "Idempotency check passed."
         '
