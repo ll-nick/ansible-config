@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage:
-#   ci/run.sh [build|deploy|verify|idempotency|all] [cache-dir]
+#   ci/run.sh [build|deploy|verify|idempotency|all|shell] [cache-dir]
 #
 # Defaults: command=all, cache-dir=~/.cache/ansible-ci-home
 #
@@ -51,6 +51,17 @@ ci_verify() {
         '
 }
 
+ci_shell() {
+    mkdir -p "$CACHE_DIR"
+    docker run -it --rm \
+        -v "$WORKSPACE:/workspace:ro" \
+        -v "$CACHE_DIR:/root" \
+        -e ANSIBLE_BECOME_PASS="" \
+        -e DEBIAN_FRONTEND=noninteractive \
+        "$IMAGE" \
+        bash
+}
+
 ci_idempotency() {
     docker run --rm \
         -v "$WORKSPACE:/workspace:ro" \
@@ -73,6 +84,7 @@ case "$COMMAND" in
     deploy) ci_deploy ;;
     verify) ci_verify ;;
     idempotency) ci_idempotency ;;
+    shell) ci_shell ;;
     all)
         ci_build
         ci_deploy
@@ -81,7 +93,7 @@ case "$COMMAND" in
         ;;
     *)
         printf "Unknown command: %s\n" "$COMMAND"
-        printf "Usage: %s [build|deploy|verify|idempotency|all] [cache-dir]\n" "$0"
+        printf "Usage: %s [build|deploy|verify|idempotency|all|shell] [cache-dir]\n" "$0"
         exit 1
         ;;
 esac
