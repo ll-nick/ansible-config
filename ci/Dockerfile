@@ -6,5 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY . /workspace
 
-RUN ANSIBLE_BECOME_PASS="" DEBIAN_FRONTEND=noninteractive \
+RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
+    ANSIBLE_BECOME_PASS="" DEBIAN_FRONTEND=noninteractive \
     bash /workspace/deploy/deploy.sh --no-confirm --privileged --playbook-path /workspace

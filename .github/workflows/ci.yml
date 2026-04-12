@@ -15,9 +15,13 @@ jobs:
 
       - name: Build CI image
         run: ci/run.sh build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify installed tools and configs
         run: ci/run.sh verify
 
       - name: Idempotency check
         run: ci/run.sh idempotency
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

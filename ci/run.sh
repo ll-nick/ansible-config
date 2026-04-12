@@ -15,7 +15,9 @@ WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
 IMAGE="ansible-ci"
 
 ci_build() {
-    docker build --no-cache -f "$WORKSPACE/ci/Dockerfile" -t "$IMAGE" "$WORKSPACE"
+    docker build --no-cache \
+        ${GITHUB_TOKEN:+--secret id=github_token,env=GITHUB_TOKEN} \
+        -f "$WORKSPACE/ci/Dockerfile" -t "$IMAGE" "$WORKSPACE"
 }
 
 ci_verify() {
@@ -40,6 +42,7 @@ ci_idempotency() {
     docker run --rm \
         -e ANSIBLE_BECOME_PASS="" \
         -e DEBIAN_FRONTEND=noninteractive \
+        ${GITHUB_TOKEN:+-e GITHUB_TOKEN} \
         "$IMAGE" \
         bash -c '
             export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
