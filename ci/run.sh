@@ -1,40 +1,25 @@
 #!/usr/bin/env bash
 # Usage:
-#   ci/run.sh [build|deploy|verify|idempotency|all|shell] [cache-dir]
+#   ci/run.sh [build|verify|idempotency|all|shell]
 #
-# Defaults: command=all, cache-dir=~/.cache/ansible-ci-home
+# Defaults: command=all
 #
 # Examples:
-#   ci/run.sh                          # full local run
-#   ci/run.sh deploy ~/.cache/ci       # deploy only, custom cache
-#   ci/run.sh build                    # rebuild image only
+#   ci/run.sh          # full local run
+#   ci/run.sh shell    # drop into a shell in the built image
 
 set -e
 
 COMMAND="${1:-all}"
-CACHE_DIR="${2:-$HOME/.cache/ansible-ci-home}"
 WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
 IMAGE="ansible-ci"
 
 ci_build() {
-    docker build -f "$WORKSPACE/ci/Dockerfile" -t "$IMAGE" "$WORKSPACE"
-}
-
-ci_deploy() {
-    mkdir -p "$CACHE_DIR"
-    docker run --rm \
-        -v "$WORKSPACE:/workspace:ro" \
-        -v "$CACHE_DIR:/root" \
-        -e ANSIBLE_BECOME_PASS="" \
-        -e DEBIAN_FRONTEND=noninteractive \
-        "$IMAGE" \
-        bash /workspace/deploy/deploy.sh --no-confirm --privileged --playbook-path /workspace
+    docker build --no-cache -f "$WORKSPACE/ci/Dockerfile" -t "$IMAGE" "$WORKSPACE"
 }
 
 ci_verify() {
     docker run --rm \
-        -v "$WORKSPACE:/workspace:ro" \
-        -v "$CACHE_DIR:/root" \
         "$IMAGE" \
         bash -c '
             export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
@@ -51,49 +36,42 @@ ci_verify() {
         '
 }
 
-ci_shell() {
-    mkdir -p "$CACHE_DIR"
-    docker run -it --rm \
-        -v "$WORKSPACE:/workspace:ro" \
-        -v "$CACHE_DIR:/root" \
-        -e ANSIBLE_BECOME_PASS="" \
-        -e DEBIAN_FRONTEND=noninteractive \
-        "$IMAGE" \
-        bash
-}
-
 ci_idempotency() {
     docker run --rm \
-        -v "$WORKSPACE:/workspace:ro" \
-        -v "$CACHE_DIR:/root" \
         -e ANSIBLE_BECOME_PASS="" \
         -e DEBIAN_FRONTEND=noninteractive \
         "$IMAGE" \
         bash -c '
             export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
             cd /workspace
-            ansible-playbook local.yml 2>&1 | tee /tmp/idempotency.txt
+            ansible-playbook local.yml -e "{\"run_privileged\": true}" 2>&1 | tee /tmp/idempotency.txt
             grep -qE "✱ Changed +\| +0" /tmp/idempotency.txt \
                 || { echo "FAIL: playbook is not idempotent"; exit 1; }
             echo "Idempotency check passed."
         '
 }
 
+ci_shell() {
+    docker run -it --rm \
+        -e ANSIBLE_BECOME_PASS="" \
+        -e DEBIAN_FRONTEND=noninteractive \
+        "$IMAGE" \
+        bash
+}
+
 case "$COMMAND" in
     build) ci_build ;;
-    deploy) ci_deploy ;;
     verify) ci_verify ;;
     idempotency) ci_idempotency ;;
     shell) ci_shell ;;
     all)
         ci_build
-        ci_deploy
         ci_verify
         ci_idempotency
         ;;
     *)
         printf "Unknown command: %s\n" "$COMMAND"
-        printf "Usage: %s [build|deploy|verify|idempotency|all|shell] [cache-dir]\n" "$0"
+        printf "Usage: %s [build|verify|idempotency|all|shell]\n" "$0"
         exit 1
         ;;
 esac
