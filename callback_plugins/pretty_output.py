@@ -82,9 +82,18 @@ class CallbackModule(CallbackBase):
         self._print_task_line("failed", C.COLOR_ERROR)
 
         msg = result._result.get("msg", None)
+        stderr = result._result.get("stderr", "").strip()
+        stdout = result._result.get("stdout", "").strip()
+
         if msg:
             self._display.display(f"    → {msg}", color=C.COLOR_ERROR)
-        else:
+        if stderr:
+            for line in stderr.splitlines():
+                self._display.display(f"    → {line}", color=C.COLOR_ERROR)
+        if stdout:
+            for line in stdout.splitlines():
+                self._display.display(f"    → {line}")
+        if not msg and not stderr and not stdout:
             self._display.display(
                 f"    → Task failed without error message.", color=C.COLOR_ERROR
             )
@@ -110,6 +119,10 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_unreachable(self, result):
         self.task_counts["unreachable"] += 1
         self._print_task_line("unreachable", C.COLOR_UNREACHABLE)
+
+        msg = result._result.get("msg", None)
+        if msg:
+            self._display.display(f"    → {msg}", color=C.COLOR_UNREACHABLE)
 
     def v2_playbook_on_stats(self, stats):
         # Prepare data with symbols in the Status column
