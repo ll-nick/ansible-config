@@ -43,10 +43,18 @@
 
 - name: Install plugins
   ansible.builtin.shell: >-
-    {{ ansible_facts['env']['HOME'] }}/.local/bin/mise exec -- 
+    {{ ansible_facts['env']['HOME'] }}/.local/bin/mise exec --
     nvim --headless
     -c "lua vim.pack.update(nil, { target = 'lockfile', force = true })"
     -c qa
+  when: nvim_config.changed
+  changed_when: false
+
+- name: Run post-install hooks
+  ansible.builtin.shell: >-
+    {{ ansible_facts['env']['HOME'] }}/.local/bin/mise exec --
+    nvim --headless
+    -c "lua require('post-install').run()"
   when: nvim_config.changed
   changed_when: false
 

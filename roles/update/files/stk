@@ -220,6 +220,7 @@ def "main update" [
 
         if ($bump) {
             nvim --headless -c "lua vim.pack.update(nil, { force = true })" -c "qa"
+            nvim --headless -c "lua require('post-install').run()"
             save-timestamp "neovim"
             cd ($env.HOME | path join .config nvim)
             git add nvim-pack-lock.json
@@ -232,6 +233,7 @@ def "main update" [
 
         if (confirm-step "Restore Neovim plugins from lockfile?") {
             nvim --headless -c "lua vim.pack.update(nil, { target = 'lockfile', force = true })" -c "qa"
+            nvim --headless -c "lua require('post-install').run()"
             save-timestamp "neovim"
         }
     }
