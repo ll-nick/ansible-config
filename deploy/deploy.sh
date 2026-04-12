@@ -3,8 +3,9 @@
 set -e
 
 NO_CONFIRM=false
-PRIVILEGED_MODE=""
+PRIVILEGED=false
 PLAYBOOK_PATH=""
+TAGS=""
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
 COLOR_INFO='\033[0;36m'    # Cyan
@@ -19,9 +20,9 @@ Usage: $(basename "$0") [OPTIONS]
 
 Options:
   -y, --no-confirm          Automatically answer yes to all prompts.
-  --privileged              Run ansible with sudo privileges (non-interactive).
-  --unprivileged            Run ansible without sudo privileges (non-interactive).
+  --privileged              Also run privileged tasks (requires sudo).
   --playbook-path <dir>     Run ansible-playbook from a local directory instead of ansible-pull.
+  --tags <tags>             Limit execution to roles/tasks with the given tags (comma-separated).
   -h, --help                Show this help message and exit.
 EOF
 }
@@ -176,39 +177,24 @@ run_ansible() {
      Some require sudo for system-wide installation.\n\
      Running without sudo expects those packages pre-installed.\n"
 
-    if [ "$NO_CONFIRM" = true ] && [ -z "$PRIVILEGED_MODE" ]; then
-        printf "  ${COLOR_ERROR}✖ ERROR: --no-confirm requires either --privileged or --unprivileged flag.${COLOR_RESET}\n"
-        exit 1
-    fi
-
-    if [ -z "$PRIVILEGED_MODE" ]; then
-        if confirm "Do you want to run ansible with sudo privileges?"; then
-            PRIVILEGED_MODE=true
-        else
-            PRIVILEGED_MODE=false
+    if [ "$NO_CONFIRM" = false ] && [ "$PRIVILEGED" = false ]; then
+        if confirm "Do you want to also run privileged tasks (requires sudo)?"; then
+            PRIVILEGED=true
         fi
     fi
+
+    ANSIBLE_FLAGS=()
+
+    [ -n "$TAGS" ] && ANSIBLE_FLAGS+=(--tags "$TAGS")
+    [ "$PRIVILEGED" = true ] && ANSIBLE_FLAGS+=(-e '{"run_privileged": true}')
+    [ "$PRIVILEGED" = true ] && [ -z "${ANSIBLE_BECOME_PASS+x}" ] && ANSIBLE_FLAGS+=(-K)
 
     if [ -n "$PLAYBOOK_PATH" ]; then
         printf "  ${COLOR_INFO}📂 Running ansible-playbook from local path: %s${COLOR_RESET}\n" "$PLAYBOOK_PATH"
         cd "$PLAYBOOK_PATH"
-        if [ "$PRIVILEGED_MODE" = true ]; then
-            if [ -n "${ANSIBLE_BECOME_PASS+x}" ]; then
-                ansible-playbook local.yml --tags all,privileged
-            else
-                ansible-playbook local.yml --tags all,privileged -K
-            fi
-        else
-            ansible-playbook local.yml
-        fi
+        ansible-playbook local.yml "${ANSIBLE_FLAGS[@]}"
     else
-        if [ "$PRIVILEGED_MODE" = true ]; then
-            printf "  ${COLOR_INFO}⬆ Running ansible-pull with sudo privileges...${COLOR_RESET}\n"
-            ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged -K
-        else
-            printf "  ${COLOR_INFO}⬇ Running ansible-pull without sudo privileges...${COLOR_RESET}\n"
-            ansible-pull -U https://github.com/ll-nick/ansible-config.git
-        fi
+        ansible-pull -U https://github.com/ll-nick/ansible-config.git "${ANSIBLE_FLAGS[@]}"
     fi
 
     printf "  ${COLOR_SUCCESS}✔ Ansible execution completed.${COLOR_RESET}\n"
@@ -222,11 +208,7 @@ main() {
                 shift
                 ;;
             --privileged)
-                PRIVILEGED_MODE=true
-                shift
-                ;;
-            --unprivileged)
-                PRIVILEGED_MODE=false
+                PRIVILEGED=true
                 shift
                 ;;
             --playbook-path)
@@ -235,6 +217,14 @@ main() {
                     exit 1
                 fi
                 PLAYBOOK_PATH="$2"
+                shift 2
+                ;;
+            --tags)
+                if [ -z "$2" ]; then
+                    printf "${COLOR_ERROR}✖ --tags requires a comma-separated list of tags.${COLOR_RESET}\n"
+                    exit 1
+                fi
+                TAGS="$2"
                 shift 2
                 ;;
             -h | --help)
