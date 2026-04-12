@@ -37,6 +37,16 @@
     repo: "{{ github_prefix }}ll-nick/neovim-config.git"
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
   ignore_errors: true
+  register: nvim_config
+
+- name: Install plugins
+  ansible.builtin.shell: >-
+    {{ ansible_facts['env']['HOME'] }}/.local/bin/mise exec -- 
+    nvim --headless
+    -c "lua vim.pack.update(nil, { target = 'lockfile', force = true })"
+    -c qa
+  when: nvim_config.changed
+  changed_when: false
 
 - name: Add bash config
   ansible.builtin.copy:
