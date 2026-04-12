@@ -1,8 +1,10 @@
-- name: Install Debian dependencies
+- name: Install build dependencies
   become: true
   when: run_privileged
   ansible.builtin.package:
     name:
+      - gcc
+      - make
       - unzip # clangd
     state: present
 
