@@ -1,20 +1,22 @@
-- hosts: local
-  become: true
-  tags: [never, privileged]
-  pre_tasks:
-    - name: Pre-Run // Update pacman cache
-      pacman: update_cache=yes
-      changed_when: False
-      when: ansible_distribution == "Archlinux"
-
-    - name: Pre-Run // Update apt cache
-      apt: update_cache=yes
-      changed_when: False
-      when: ansible_distribution in ["Debian", "Ubuntu"]
-
 - name: Full setup
   hosts: local
   pre_tasks:
+    - name: Pre-Run // Update pacman cache
+      become: true
+      pacman: update_cache=yes
+      changed_when: false
+      when:
+        - run_privileged
+        - ansible_distribution == "Archlinux"
+
+    - name: Pre-Run // Update apt cache
+      become: true
+      apt: update_cache=yes
+      changed_when: false
+      when:
+        - run_privileged
+        - ansible_distribution in ["Debian", "Ubuntu"]
+
     - tags: always
       block:
         - name: Check if host has a display

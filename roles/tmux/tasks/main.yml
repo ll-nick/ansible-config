@@ -1,6 +1,6 @@
 - name: Install dependencies
   become: true
-  tags: [never, privileged]
+  when: run_privileged
   ansible.builtin.package:
     name:
       - xclip
