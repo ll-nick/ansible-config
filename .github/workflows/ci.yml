@@ -16,11 +16,8 @@ jobs:
       - name: Build CI image
         run: ci/run.sh build
 
-      - name: Run deploy (first pass)
-        run: ci/run.sh deploy /tmp/ci-home
-
       - name: Verify installed tools and configs
-        run: ci/run.sh verify /tmp/ci-home
+        run: ci/run.sh verify
 
-      - name: Idempotency check (second pass)
-        run: ci/run.sh idempotency /tmp/ci-home
+      - name: Idempotency check
+        run: ci/run.sh idempotency
