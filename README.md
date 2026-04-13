@@ -15,15 +15,16 @@ It is designed to install as many tools as possible on the user level and
 </details>
 
 ---
-A very limited amount of tasks require root privileges for system-wide installation of basic dependencies which can be deployed using the `privileged` tag, see below.
+A very limited amount of tasks require root privileges for system-wide installation of basic dependencies which can be deployed using the `privileged` mode, see below.
 Running the playbook without these privileges expects those packages to be installed already.
 
-The config [continuously tested on the latest Ubuntu](https://github.com/ll-nick/ansible-config/actions/workflows/ci.yml).
+The config is [continuously tested on the latest Ubuntu](https://github.com/ll-nick/ansible-config/actions/workflows/ci.yml).
 It is also known to work on the following distributions:
 - Arch Linux
-- NixOS[^1]
+- NixOS[^1][^2]
 
 [^1]: kitty needs to be installed via nixpkgs.
+[^2]: On NixOS, the `--privileged` mode is not supported.
 
 ## 🚀 Usage
 
@@ -38,14 +39,26 @@ ansible-pull -U https://github.com/ll-nick/ansible-config.git
 To also deploy tasks that require root privileges, use:
 
 ```bash
-ansible-pull -U https://github.com/ll-nick/ansible-config.git --tags all,privileged --ask-become-pass
+ansible-pull -U https://github.com/ll-nick/ansible-config.git -e run_privileged=true --ask-become-pass
 ```
 
 To run individual roles, specify the role name as a tag (e.g. `--tags neovim`).
 
 For first time usage, there is also a [bash script](deploy/deploy.sh) that can be used
- to interactively install the required dependencies (including ansible itself), then execute the playbook.
-I host that script using the accompanying Docker file to set everything up in one go using `curl mydomain.com | bash`.
+to interactively install the required dependencies (including ansible itself), then execute the playbook.
+
+```bash
+bash deploy/deploy.sh [OPTIONS]
+
+Options:
+  -y, --no-confirm          Automatically answer yes to all prompts.
+  --privileged              Also run privileged tasks (requires sudo).
+  --playbook-path <dir>     Run ansible-playbook from a local directory instead of ansible-pull.
+  --tags <tags>             Limit execution to roles/tasks with the given tags (comma-separated).
+```
+
+`curl https://raw.githubusercontent.com/ll-nick/ansible-config/refs/heads/main/deploy/deploy.sh | sh` will get you up and running in one go.  
+I host that script using the accompanying Docker file to set everything up in one go using `curl mydomain.com | sh`.
 
 The ansible playbook only installs packages initially, then sets up the `stk` command which handles updating everything in one go.
 Check `stk --help` for details.
