@@ -1,7 +1,23 @@
-keybinding:
-  commits:
-    moveDownCommit: <c-d>
-    moveUpCommit: <c-u>
+customCommands:
+  - key: '<c-P>'
+    description: "Push to a specific remote repository"
+    context: 'global'
+    loadingText: 'Pushing ...'
+    prompts:
+      - type: 'menuFromCommand'
+        title: 'Which remote repository to push to?'
+        command: bash -c "git remote --verbose | grep '/.* (push)'"
+        filter: '(?P<remote>.*)\s+(?P<url>.*) \(push\)'
+        valueFormat: '{{ .remote }}'
+        labelFormat: '{{ .remote | bold | cyan }} {{ .url }}'
+      - type: 'menu'
+        title: 'How to push?'
+        options:
+          - value: 'push'
+          - value: 'push --force-with-lease'
+          - value: 'push --force'
+    command: "git {{index .PromptResponses 1}} {{index .PromptResponses 0}}"
+
 git:
   pagers:
     - pager: delta --dark --paging=never
@@ -37,3 +53,7 @@ gui:
   authorColors:
     '*': '#b4befe'
 
+keybinding:
+  commits:
+    moveDownCommit: <c-d>
+    moveUpCommit: <c-u>
