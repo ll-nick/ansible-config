@@ -86,11 +86,17 @@
     dest: "{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-light.png"
     checksum: sha256:4e6924667214a986274a61f84b8b202f776d758d51dfbc256fe9ab4954e66e9a
 
+# - name: Download Dark Mode Wallpaper
+#   ansible.builtin.get_url:
+#     url: "https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-dark.png?raw=true"
+#     dest: "{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-dark.png"
+#     checksum: sha256:1199a43751f1234d3fb92ecf614fbf34de2c07334d3fdd355891044f51bddada
+
 - name: Download Dark Mode Wallpaper
   ansible.builtin.get_url:
-    url: "https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-dark.png?raw=true"
+    url: "https://github.com/ll-nick/ansible-config/blob/main/roles/gnome/files/wallpaper-dark-2.png?raw=true"
     dest: "{{ ansible_facts['env']['HOME'] }}/Pictures/wallpaper-dark.png"
-    checksum: sha256:1199a43751f1234d3fb92ecf614fbf34de2c07334d3fdd355891044f51bddada
+    checksum: sha256:7586585ec19476b0f51ee8f40e90dd5f2f55219cec44df5ef0d9e05d4a082290
 
 - name: Set Wallpaper
   community.general.dconf:
