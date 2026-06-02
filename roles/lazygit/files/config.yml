@@ -1,5 +1,5 @@
 customCommands:
-  - key: '<c-P>'
+  - key: '<alt+p>'
     description: "Push to a specific remote repository"
     context: 'global'
     loadingText: 'Pushing ...'
