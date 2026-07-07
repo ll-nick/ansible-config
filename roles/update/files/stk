@@ -98,7 +98,7 @@ def "main update" [
             return true
         }
 
-        let response = (input $"($prompt_message) \(y/N\): " | str trim | str downcase)
+        let response = (input $"($prompt_message) \(y/N\): " | str trim | str lowercase)
         if $response =~ '^(y|yes)$' { return true }
         print "Skipping..."
         return false
