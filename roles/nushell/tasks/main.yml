@@ -37,8 +37,12 @@
   register: mise_init
   changed_when: false
 
+# mise activate embeds a snapshot of currently-known mise env vars, which grows as
+# other roles register mise conf.d files, so the exact content isn't stable across
+# runs. Harmless: mise's own shell hooks reconcile the real env on every prompt.
 - name: Write mise init file
   ansible.builtin.copy:
     dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nushell/vendor/autoload/00_mise.nu"
     content: "{{ mise_init.stdout }}"
     mode: "0644"
+  changed_when: false
