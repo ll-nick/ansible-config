@@ -117,7 +117,7 @@ def "main update" [
             git add flake.lock
             git commit -m "Version bump"
             print "\nChanges:"
-            git show
+            git --no-pager show
             if (confirm-step "Bumped versions. Push lock file to remote?") { git push }
         }
 
@@ -226,7 +226,7 @@ def "main update" [
             git add nvim-pack-lock.json
             git commit -m "Version bump"
             print "\nChanges:"
-            git show
+            git --no-pager show
             if (confirm-step "Bumped versions. Push lock file to remote?") { git push }
             return
         }
