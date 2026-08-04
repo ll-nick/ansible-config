@@ -24,7 +24,7 @@ ci_verify() {
     docker run --rm \
         "$IMAGE" \
         bash -c '
-            export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+            eval "$(~/.local/bin/mise activate bash --shims)"
             for tool in mise bat delta eza fd fzf lazygit leadr node nvim nu rg starship stk tmux uv zoxide; do
                 command -v "$tool" || { echo "MISSING binary: $tool"; exit 1; }
             done
@@ -45,7 +45,7 @@ ci_idempotency() {
         ${GITHUB_TOKEN:+-e GITHUB_TOKEN} \
         "$IMAGE" \
         bash -c '
-            export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+            eval "$(~/.local/bin/mise activate bash --shims)"
             cd /workspace
             ansible-playbook local.yml -e "{\"run_privileged\": true}" 2>&1 | tee /tmp/idempotency.txt
             grep -qE "✱ Changed +\| +0" /tmp/idempotency.txt \
