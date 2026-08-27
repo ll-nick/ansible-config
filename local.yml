@@ -64,6 +64,8 @@
 
     - role: bat
       tags: bat
+    - role: claude
+      tags: claude
     - role: eza
       tags: eza
     - role: fd
