@@ -1,3 +1,3 @@
-alias ls="eza --icons"
-alias ll="eza --long --all --git --icons"
-alias lt="eza --tree --level=2 --color=always --group-directories-first --icons"
+alias ls="eza --icons=auto"
+alias ll="eza --long --all --git --icons=auto"
+alias lt="eza --tree --level=2 --group-directories-first --icons=auto"
