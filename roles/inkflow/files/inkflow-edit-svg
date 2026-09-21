@@ -1,0 +1,8 @@
+#!/bin/sh
+if gdbus call --session --dest org.inkscape.Inkscape \
+    --object-path /org/inkscape/Inkscape \
+    --method org.freedesktop.Application.ActivateAction \
+    "file-open-window" "[<'$1'>]" "{}" >/dev/null 2>&1; then
+    exit 0
+fi
+exec inkscape "$1"

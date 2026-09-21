@@ -1,0 +1,30 @@
+- name: Copy mise config
+  ansible.builtin.copy:
+    src: mise.toml
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/inkflow.toml"
+
+- name: Install
+  ansible.builtin.command:
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
+  changed_when: false
+
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+    state: directory
+
+- name: Add Inkscape editor script
+  ansible.builtin.copy:
+    src: inkflow-edit-svg
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/inkflow-edit-svg"
+    mode: "0755"
+
+- name: Add bash config
+  ansible.builtin.copy:
+    src: inkflow.bash
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/inkflow.bash"
+
+- name: Add nushell config
+  ansible.builtin.copy:
+    src: inkflow.nu
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nushell/autoload/inkflow.nu"

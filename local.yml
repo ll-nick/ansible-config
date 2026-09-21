@@ -36,6 +36,15 @@
                 else "Host does not have a display"
               }}
 
+        - name: Check if Inkscape is available
+          ansible.builtin.command: which inkscape
+          register: inkscape_check
+          failed_when: false
+          changed_when: false
+        - name: Set Inkscape availability fact
+          set_fact:
+            inkscape_available: "{{ inkscape_check.rc == 0 }}"
+
         - name: Check GitHub SSH access
           ansible.builtin.command: ssh -T git@github.com
           register: github_ssh_test
@@ -102,6 +111,9 @@
     - role: gnome
       when: has_display
       tags: gnome
+    - role: inkflow
+      when: has_display and inkscape_available
+      tags: inkflow
     - role: kitty
       when: has_display
       tags: kitty
