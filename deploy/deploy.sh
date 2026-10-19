@@ -145,9 +145,10 @@ ensure_mise_packages() {
 
     mkdir -p "$CONF_D"
 
+    # Inlined because this script may run via curl without the repo; keep in sync with roles/ansible/files/mise.toml
     cat > "$CONF_D/ansible.toml" << 'EOF'
 [tools]
-python = { version = "latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
+python = { version = "sub-0.1:latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
 pipx = "latest"
 ansible = "latest"
 EOF
