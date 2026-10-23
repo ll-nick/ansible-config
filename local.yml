@@ -65,6 +65,8 @@
   roles:
     - role: mise
       tags: mise
+    - role: ansible
+      tags: ansible
 
     - role: bash
       tags: bash

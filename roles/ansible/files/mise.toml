@@ -1,0 +1,4 @@
+[tools]
+python = { version = "sub-0.1:latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
+pipx = "latest"
+ansible = "latest"
