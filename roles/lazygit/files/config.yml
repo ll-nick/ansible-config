@@ -34,7 +34,7 @@ gui:
     optionsTextColor:
       - '#89b4fa'
     selectedLineBgColor:
-      - '#313244'
+      - '#89b4fa'
     inactiveViewSelectedLineBgColor:
       - '#6c7086'
     cherryPickedCommitFgColor:
