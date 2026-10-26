@@ -138,18 +138,24 @@ ensure_mise_packages() {
         return
     fi
 
-    if ! confirm "Do you want to install required tools (python, pipx, ansible) using mise?"; then
+    if ! confirm "Do you want to install required tools (uv, python, ansible) using mise?"; then
         printf "  ${COLOR_ERROR}✖ ERROR: Required tools are not installed.${COLOR_RESET}\n"
         exit 1
     fi
 
     mkdir -p "$CONF_D"
 
-    # Inlined because this script may run via curl without the repo; keep in sync with roles/ansible/files/mise.toml
+    # Inlined because this script may run via curl without the repo; keep in sync with roles/{uv,python,ansible}/files/mise.toml
+    cat > "$CONF_D/uv.toml" << 'EOF'
+[tools]
+uv = "latest"
+EOF
+    cat > "$CONF_D/python.toml" << 'EOF'
+[tools]
+python = { version = "latest", minimum_release_age = "60d", install_env = { MISE_PYTHON_COMPILE = "false" } }
+EOF
     cat > "$CONF_D/ansible.toml" << 'EOF'
 [tools]
-python = { version = "sub-0.1:latest", install_env = { MISE_PYTHON_COMPILE = "false" } }
-pipx = "latest"
 ansible = "latest"
 EOF
 
