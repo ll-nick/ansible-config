@@ -3,3 +3,10 @@
     src: joy.bash
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/joy.bash"
 
+- name: Silence the setup hint of the shared dotfiles
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.dotfiles"
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+
