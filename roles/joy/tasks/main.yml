@@ -1,0 +1,5 @@
+- name: Add bash config
+  ansible.builtin.copy:
+    src: joy.bash
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/bash/joy.bash"
+

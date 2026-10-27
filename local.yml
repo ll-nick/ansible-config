@@ -36,6 +36,10 @@
                 else "Host does not have a display"
               }}
 
+        - name: Check if host is the research vehicle Joy
+          set_fact:
+            is_joy: "{{ ansible_facts['hostname'] == 'mrtjoy' }}"
+
         - name: Check if Inkscape is available
           ansible.builtin.command: which inkscape
           register: inkscape_check
@@ -123,3 +127,6 @@
       when: has_display
       tags: nerdfont
 
+    - role: joy
+      when: is_joy
+      tags: joy
