@@ -10,3 +10,8 @@
     modification_time: preserve
     access_time: preserve
 
+- name: Add machine-local git config
+  ansible.builtin.copy:
+    src: joy.gitconfig
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/local.gitconfig"
+
