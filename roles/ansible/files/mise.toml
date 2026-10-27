@@ -1,2 +1,2 @@
 [tools]
-ansible ={ version = "latest", with = ["psutil"], uvx_args = "--managed-python" }
+ansible = { version = "latest", python = "3.14", with = ["psutil"] }
