@@ -15,3 +15,12 @@
     src: joy.gitconfig
     dest: "{{ ansible_facts['env']['HOME'] }}/.config/git/local.gitconfig"
 
+- name: Ensure stk config directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/stk"
+    state: directory
+
+- name: Skip system updates in stk
+  ansible.builtin.copy:
+    src: stk-skip
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/stk/skip"
