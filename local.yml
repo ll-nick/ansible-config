@@ -65,8 +65,6 @@
   roles:
     - role: mise
       tags: mise
-    - role: python
-      tags: python
     - role: ansible
       tags: ansible
 

@@ -1,2 +1,0 @@
-[tools]
-python = { version = "latest", minimum_release_age = "60d", install_env = { MISE_PYTHON_COMPILE = "false" } }
