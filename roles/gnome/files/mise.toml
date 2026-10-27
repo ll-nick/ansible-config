@@ -1,2 +1,2 @@
 [tools]
-"pipx:gnome-extensions-cli" = "latest"
+"pipx:gnome-extensions-cli" = { version = "latest", uvx_args = "--managed-python" }

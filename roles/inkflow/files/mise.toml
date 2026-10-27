@@ -1,2 +1,2 @@
 [tools]
-"pipx:inkflow" = "latest"
+"pipx:inkflow" = { version = "latest", uvx_args = "--managed-python" }

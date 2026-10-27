@@ -151,7 +151,7 @@ uv = "latest"
 EOF
     cat > "$CONF_D/ansible.toml" << 'EOF'
 [tools]
-"pypi:ansible" = { version = "latest", with = ["psutil"], uvx_args = "--managed-python" }
+ansible ={ version = "latest", with = ["psutil"], uvx_args = "--managed-python" }
 EOF
 
     printf "  ${COLOR_INFO}⬇ Installing mise packages...${COLOR_RESET}\n"
