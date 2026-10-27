@@ -1,0 +1,6 @@
+[safe]
+  # The Autoware workspaces are shared across accounts
+  directory = /storage1/autoware_workspaces/*
+
+[credential]
+  helper = cache --timeout=7200

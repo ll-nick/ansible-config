@@ -1,6 +1,9 @@
 [includeIf "hasconfig:remote.*.url:git@gitlab.mrt.kit.edu:*/**"]
   path = ~/.config/git/gitconfig-gitlab.kit.edu
 
+[includeIf "hasconfig:remote.*.url:https://gitlab.mrt.kit.edu/**"]
+  path = ~/.config/git/gitconfig-gitlab.kit.edu
+
 [includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
   path = ~/.config/git/gitconfig-github.com
 
@@ -24,4 +27,8 @@
 
 [include]
   path = ~/.config/git/conflict-style.gitconfig
+
+# Machine-specific settings
+[include]
+  path = ~/.config/git/local.gitconfig
 

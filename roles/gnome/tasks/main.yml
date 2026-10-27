@@ -134,25 +134,59 @@
     cmd: gext enable "paperwm@paperwm.github.com"
   when: "'paperwm@paperwm.github.com' not in gext_enabled.stdout"
 
-- name: Configure PaperWM keybindings
+# TODO: Remove once it has been deployed on all hosts
+- name: Remove stale PaperWM keybindings key
   community.general.dconf:
     key: "/org/gnome/shell/extensions/paperwm/keybindings"
-    value: >
-      {
-        'close-window': ['<Super>BackSpace', '<Super>x'],
-        'move-down': ['<Control><Super>Down', '<Shift><Super>j'],
-        'move-down-workspace': ['<Control><Super>Page_Down', '<Shift><Alt><Super>j'],
-        'move-left': ['<Control><Super>comma', '<Shift><Super>comma', '<Control><Super>Left', '<Shift><Super>h'],
-        'move-right': ['<Control><Super>period', '<Shift><Super>period', '<Control><Super>Right', '<Shift><Alt>l'],
-        'move-up': ['<Control><Super>Up', '<Shift><Super>k'],
-        'move-up-workspace': ['<Control><Super>Page_Up', '<Shift><Alt><Super>k'],
-        'new-window': ['<Super>Return'],
-        'switch-down': ['<Super>Down', '<Super>j'],
-        'switch-down-workspace': ['<Super>Page_Down', '<Alt><Super>j'],
-        'switch-left': ['<Super>Left', '<Super>h'],
-        'switch-next': ['<Super>n'],
-        'switch-previous': ['<Super>p'],
-        'switch-right': ['<Super>l'],
-        'switch-up': ['<Super>Up', '<Super>k'],
-        'switch-up-workspace': ['<Super>Page_Up', '<Alt><Super>k']
-      }
+    state: absent
+
+- name: Configure PaperWM keybindings
+  community.general.dconf:
+    key: "/org/gnome/shell/extensions/paperwm/keybindings/{{ item.action }}"
+    value: "{{ item.bindings }}"
+  loop:
+    - { action: close-window, bindings: "['<Super>BackSpace', '<Super>x']" }
+    - { action: move-down, bindings: "['<Control><Super>Down', '<Shift><Super>j']" }
+    - { action: move-down-workspace, bindings: "['<Control><Super>Page_Down', '<Shift><Alt><Super>j']" }
+    - { action: move-left, bindings: "['<Control><Super>comma', '<Shift><Super>comma', '<Control><Super>Left', '<Shift><Super>h']" }
+    - { action: move-monitor-left, bindings: "['<Shift><Alt><Super>h']" }
+    - { action: move-monitor-right, bindings: "['<Shift><Alt><Super>l']" }
+    - { action: move-right, bindings: "['<Control><Super>period', '<Shift><Super>period', '<Control><Super>Right', '<Shift><Super>l']" }
+    - { action: move-up, bindings: "['<Control><Super>Up', '<Shift><Super>k']" }
+    - { action: move-up-workspace, bindings: "['<Control><Super>Page_Up', '<Shift><Alt><Super>k']" }
+    - { action: new-window, bindings: "['<Super>Return']" }
+    - { action: switch-down, bindings: "['<Super>Down', '<Super>j']" }
+    - { action: switch-down-workspace, bindings: "['<Super>Page_Down', '<Alt><Super>j']" }
+    - { action: switch-left, bindings: "['<Super>Left', '<Super>h']" }
+    - { action: switch-monitor-left, bindings: "['<Alt><Super>h']" }
+    - { action: switch-monitor-right, bindings: "['<Alt><Super>l']" }
+    - { action: switch-right, bindings: "['<Super>l']" }
+    - { action: switch-up, bindings: "['<Super>Up', '<Super>k']" }
+    - { action: switch-up-workspace, bindings: "['<Super>Page_Up', '<Alt><Super>k']" }
+    - { action: toggle-scratch, bindings: "['<Shift><Alt><Super>Escape']" }
+    - { action: toggle-scratch-layer, bindings: "['<Alt><Super>Escape']" }
+  loop_control:
+    label: "{{ item.action }}"
+
+# Lets others who use this account switch to plain GNOME and back
+- name: Add PaperWM toggle script
+  ansible.builtin.copy:
+    src: paperwm-toggle
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/paperwm-toggle"
+    mode: "0755"
+
+- name: Register custom keybindings
+  community.general.dconf:
+    key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+    value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/paperwm-toggle/']"
+
+- name: Bind PaperWM toggle to Super+Alt+P
+  community.general.dconf:
+    key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/paperwm-toggle/{{ item.key }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: name, value: "'Toggle PaperWM'" }
+    - { key: command, value: "'{{ ansible_facts['env']['HOME'] }}/.local/bin/paperwm-toggle'" }
+    - { key: binding, value: "'<Super><Alt>p'" }
+  loop_control:
+    label: "{{ item.key }}"

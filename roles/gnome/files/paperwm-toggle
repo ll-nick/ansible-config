@@ -1,0 +1,7 @@
+#!/bin/sh
+uuid=paperwm@paperwm.github.com
+if gnome-extensions list --enabled | grep -qx "$uuid"; then
+    gnome-extensions disable "$uuid"
+else
+    gnome-extensions enable "$uuid"
+fi

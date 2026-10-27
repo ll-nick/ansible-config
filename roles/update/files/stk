@@ -6,6 +6,18 @@ let colors = {
     green: (ansi '#a6e3a1')
 }
 
+const components = ["system", "mise", "dotfiles", "tmux", "neovim", "flatpak"]
+
+# Components not to update on this machine, one per line in ~/.config/stk/skip
+def skipped-components []: nothing -> list<string> {
+    let f = $env.HOME | path join .config stk skip
+    if ($f | path exists) {
+        open --raw $f | lines | str trim | where {|c| $c != "" }
+    } else {
+        []
+    }
+}
+
 def component-timestamp-file [component: string] {
     let data_home = $env.XDG_DATA_HOME? | default ($env.HOME | path join .local share)
     $data_home | path join stk timestamps $"($component).txt"
@@ -21,9 +33,8 @@ def check-update [
     reminder_time: duration
     notify: bool
 ] {
-    let components = ["system", "mise", "dotfiles", "tmux", "neovim", "flatpak"]
-
-    let rows = $components | each {|c|
+    let skipped = skipped-components
+    let rows = $components | where {|c| $c not-in $skipped } | each {|c|
         let f = component-timestamp-file $c
         if ($f | path exists) {
             let last_update = open $f | str trim | into datetime --format "%s"
@@ -255,26 +266,34 @@ def "main update" [
         }
     }
 
+    def update-component [component: string] {
+        if $component in (skipped-components) {
+            print $"⏭️ ($component) is disabled on this machine \(~/.config/stk/skip\) - Skipping!"
+            return
+        }
+
+        match $component {
+            "system" => update-system,
+            "mise" => update-mise,
+            "dotfiles" => update-dotfiles,
+            "tmux" => update-tmux,
+            "neovim" => update-neovim,
+            "flatpak" => update-flatpak,
+            _ => {print $"Unknown component: ($component). Valid options are: ($components | str join ', ')."}
+        }
+    }
+
     def update-all [] {
-        update-system
-        update-mise
-        update-dotfiles
-        update-tmux
-        update-neovim
-        update-flatpak
+        for component in $components {
+            update-component $component
+        }
 
         print-section "✅ All Updates Completed!"
     }
 
     match $component {
         null => update-all,
-        "system" => update-system,
-        "mise" => update-mise,
-        "dotfiles" => update-dotfiles,
-        "tmux" => update-tmux,
-        "neovim" => update-neovim,
-        "flatpak" => update-flatpak,
-        _ => {print $"Unknown component: ($component). Valid options are: system, mise, dotfiles, tmux, neovim, flatpak."}
+        _ => (update-component $component)
     }
 }
 
