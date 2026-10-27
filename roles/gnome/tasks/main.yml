@@ -168,3 +168,25 @@
   loop_control:
     label: "{{ item.action }}"
 
+# Lets others who use this account switch to plain GNOME and back
+- name: Add PaperWM toggle script
+  ansible.builtin.copy:
+    src: paperwm-toggle
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/paperwm-toggle"
+    mode: "0755"
+
+- name: Register custom keybindings
+  community.general.dconf:
+    key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+    value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/paperwm-toggle/']"
+
+- name: Bind PaperWM toggle to Super+Alt+P
+  community.general.dconf:
+    key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/paperwm-toggle/{{ item.key }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: name, value: "'Toggle PaperWM'" }
+    - { key: command, value: "'{{ ansible_facts['env']['HOME'] }}/.local/bin/paperwm-toggle'" }
+    - { key: binding, value: "'<Super><Alt>p'" }
+  loop_control:
+    label: "{{ item.key }}"
