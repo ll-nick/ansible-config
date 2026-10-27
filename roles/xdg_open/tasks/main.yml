@@ -24,7 +24,7 @@
           inject_remote_forward.py
           {{ xdg_open_port }}
           /run/user/{{ ansible_facts['user_uid'] }}/ssh_remote_xdg_open.sock
-        executable: python3
+        executable: "{{ ansible_playbook_python }}"
       register: inject_result
       changed_when: inject_result.rc == 2
       failed_when: inject_result.rc not in [0, 2]
