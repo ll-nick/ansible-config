@@ -123,6 +123,3 @@
       when: has_display
       tags: nerdfont
 
-    - role: mrt
-      when: "'mrt' in ansible_facts['hostname']"
-      tags: mrt
