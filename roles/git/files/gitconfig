@@ -28,3 +28,7 @@
 [include]
   path = ~/.config/git/conflict-style.gitconfig
 
+# Machine-specific settings
+[include]
+  path = ~/.config/git/local.gitconfig
+
