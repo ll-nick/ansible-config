@@ -6,12 +6,40 @@ readme = "README.md"
 requires-python = ">=3.14"
 authors = [{ name = "ll-nick" }]
 dependencies = [
-    "pyinfra>=3.10.0",
+  "pyinfra>=3.10.0",
 ]
 
 [project.scripts]
 devstack = "devstack:main"
 
+[dependency-groups]
+dev = [
+  "basedpyright>=1.40.2",
+  "poethepoet>=0.49.0",
+  "ruff>=0.17.3",
+]
+
 [build-system]
 requires = ["uv_build>=0.13.5,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.poe.tasks]
+lint = "ruff check --fix"
+lint-check = "ruff check"
+format = "ruff format"
+format-check = "ruff format --check"
+typecheck = "basedpyright"
+lint-lock = "uv lock --check"
+fix = ["lint", "format"]
+check = ["lint-check", "format-check", "typecheck", "lint-lock"]
+
+[tool.pyright]
+include = ["src"]
+reportUnusedCallResult = "none"
+reportMissingTypeStubs = "none"
+
+[tool.ruff]
+include = ["src/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
