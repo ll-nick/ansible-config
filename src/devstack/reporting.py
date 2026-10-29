@@ -38,6 +38,7 @@ class OperationResult:
     description: OperationDescription
     changed: bool
     duration_seconds: float
+    ignored_error_output: str | None = None
 
 
 @dataclass(frozen=True)

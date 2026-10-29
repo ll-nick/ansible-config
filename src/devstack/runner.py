@@ -85,6 +85,7 @@ class ReportingCallbacks(BaseStateCallback):
             description=describe_operation(state, op_hash),
             changed=changed,
             duration_seconds=duration_seconds,
+            ignored_error_output=ignored_error_output(state, op_hash),
         )
         self.results.append(result)
         self._reporter.operation_finished(result)
@@ -93,6 +94,14 @@ class ReportingCallbacks(BaseStateCallback):
 def describe_operation(state: State, op_hash: str) -> OperationDescription:
     pyinfra_name = sorted(state.get_op_meta(op_hash).names)[0]
     return OperationDescription.from_pyinfra_name(pyinfra_name)
+
+
+def ignored_error_output(state: State, op_hash: str) -> str | None:
+    for host in state.inventory.get_active_hosts():
+        operation_meta = state.get_op_data_for_host(host, op_hash).operation_meta
+        if operation_meta.did_error():
+            return operation_meta.stderr.strip() or operation_meta.stdout.strip()
+    return None
 
 
 def describe_error(error: Exception) -> str:

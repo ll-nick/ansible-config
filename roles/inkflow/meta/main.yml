@@ -1,5 +1,3 @@
 dependencies:
   - role: mise
-  - role: bash
-  - role: nushell
   - role: neovim

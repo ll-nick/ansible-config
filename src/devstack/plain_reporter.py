@@ -65,11 +65,17 @@ class PlainReporter:
         self._header_printed = False
 
     def operation_finished(self, result: OperationResult) -> None:
+        operation_name = result.description.operation_name
+        if result.ignored_error_output is not None:
+            self._print_header_once()
+            self._print(f"  ! {operation_name} (error ignored)")
+            for line in result.ignored_error_output.splitlines():
+                self._print(f"      {line}")
+            return
         if not result.changed and self._verbosity < 1:
             return
         self._print_header_once()
         marker = "*" if result.changed else "="
-        operation_name = result.description.operation_name
         self._print(f"  {marker} {operation_name} ({result.duration_seconds:.1f}s)")
 
     def component_finished(self, result: ComponentResult) -> None:
@@ -101,8 +107,14 @@ class PlainReporter:
             self._print(f"Failed: {', '.join(failed_names)}")
         if skipped_names:
             self._print(f"Skipped: {', '.join(skipped_names)}")
+        ignored_error_count = sum(
+            operation.ignored_error_output is not None
+            for operation in operation_results
+        )
         timing = f"{duration_seconds:.1f}s"
-        if changed_count == 0 and not failed_names:
+        if ignored_error_count:
+            self._print(f"Warnings: {ignored_error_count} ignored errors")
+        if changed_count == 0 and not failed_names and not ignored_error_count:
             self._print(
                 f"Everything up to date ({len(operation_results)} operations, {timing})"
             )

@@ -72,11 +72,6 @@
     - role: ansible
       tags: ansible
 
-    - role: bash
-      tags: bash
-    - role: nushell
-      tags: nushell
-
     - role: claude
       tags: claude
     - role: eza

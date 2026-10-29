@@ -1,4 +1,2 @@
 dependencies:
   - role: mise
-  - role: bash
-  - role: nushell
