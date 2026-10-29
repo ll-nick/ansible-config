@@ -1,11 +1,13 @@
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TextIO
 
 from devstack.reporting import (
     ComponentOutcome,
     ComponentPlan,
     ComponentResult,
+    OperationDescription,
     OperationResult,
     PlannedChange,
 )
@@ -20,16 +22,26 @@ CHANGE_MARKERS = {
 class PlainReporter:
     _verbosity: int
     _output: TextIO
-    _current_component_name: str | None
-    _header_printed: bool
+    _name_width: int
+    _log_path: Path | None
 
-    def __init__(self, verbosity: int, output: TextIO = sys.stdout) -> None:
+    def __init__(
+        self,
+        verbosity: int,
+        output: TextIO = sys.stdout,
+        log_path: Path | None = None,
+    ) -> None:
         self._verbosity = verbosity
         self._output = output
-        self._current_component_name = None
-        self._header_printed = False
+        self._name_width = 0
+        self._log_path = log_path
 
-    def plan(self, component_plans: Sequence[ComponentPlan]) -> None:
+    def run_started(self, component_names: Sequence[str]) -> None:
+        self._name_width = max((len(name) for name in component_names), default=0)
+
+    def plan(self, component_plans: Sequence[ComponentPlan], visible: bool) -> None:
+        if not visible:
+            return
         will_change_count = 0
         conditional_count = 0
         unchanged_count = 0
@@ -60,39 +72,44 @@ class PlainReporter:
     def confirm(self) -> bool:
         return input("Apply? [y/N] ").strip().lower() in {"y", "yes"}
 
-    def component_started(self, component_name: str) -> None:
-        self._current_component_name = component_name
-        self._header_printed = False
+    def component_started(self, _component_name: str) -> None:
+        pass
+
+    def operation_started(self, _description: OperationDescription) -> None:
+        pass
 
     def operation_finished(self, result: OperationResult) -> None:
+        component_name = result.description.component_name
         operation_name = result.description.operation_name
         if result.ignored_error_output is not None:
-            self._print_header_once()
-            self._print(f"  ! {operation_name} (error ignored)")
+            self._print_line(component_name, f"! {operation_name} (error ignored)")
             for line in result.ignored_error_output.splitlines():
-                self._print(f"      {line}")
+                self._print_line(component_name, f"    {line}")
             return
         if not result.changed and self._verbosity < 1:
             return
-        self._print_header_once()
         marker = "*" if result.changed else "="
-        self._print(f"  {marker} {operation_name} ({result.duration_seconds:.1f}s)")
+        self._print_line(
+            component_name,
+            f"{marker} {operation_name} ({result.duration_seconds:.1f}s)",
+        )
 
     def component_finished(self, result: ComponentResult) -> None:
+        name = result.component_name
         if result.outcome is ComponentOutcome.SKIPPED:
-            self._print(f"{result.component_name}: skipped ({result.skipped_because})")
+            self._print_line(name, f"- skipped ({result.skipped_because})")
             return
         if result.outcome is not ComponentOutcome.FAILED or result.failure is None:
             return
-        self._print_header_once()
         failure = result.failure
         if failure.failed_operation is not None:
-            self._print(f"  ! FAILED: {failure.failed_operation.operation_name}")
+            failed_name = failure.failed_operation.operation_name
+            self._print_line(name, f"! FAILED: {failed_name}")
         else:
-            self._print("  ! FAILED")
-        self._print(f"    {failure.message}")
+            self._print_line(name, "! FAILED")
+        self._print_line(name, f"    {failure.message}")
         for line in failure.captured_log_lines:
-            self._print(f"      {line}")
+            self._print_line(name, f"      {line}")
 
     def run_finished(
         self, results: Sequence[ComponentResult], duration_seconds: float
@@ -114,6 +131,8 @@ class PlainReporter:
         timing = f"{duration_seconds:.1f}s"
         if ignored_error_count:
             self._print(f"Warnings: {ignored_error_count} ignored errors")
+        if (failed_names or ignored_error_count) and self._log_path is not None:
+            self._print(f"Full log: {self._log_path}")
         if changed_count == 0 and not failed_names and not ignored_error_count:
             self._print(
                 f"Everything up to date ({len(operation_results)} operations, {timing})"
@@ -124,10 +143,11 @@ class PlainReporter:
             f"Done: {changed_count} changed, {unchanged_count} unchanged ({timing})"
         )
 
-    def _print_header_once(self) -> None:
-        if not self._header_printed and self._current_component_name is not None:
-            self._header_printed = True
-            self._print(self._current_component_name)
+    def close(self) -> None:
+        pass
+
+    def _print_line(self, component_name: str, message: str) -> None:
+        self._print(f"{component_name:<{self._name_width}}  {message}")
 
     def _print(self, message: str) -> None:
         print(message, file=self._output)

@@ -1,8 +1,8 @@
 import shlex
-import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
+from gevent import subprocess
 from pyinfra.operations import server
 
 

@@ -1,7 +1,7 @@
-import subprocess
 from functools import cache
 from pathlib import Path
 
+from gevent import subprocess
 from pyinfra.operations import git
 
 GITHUB_SSH_PREFIX = "git@github.com:"

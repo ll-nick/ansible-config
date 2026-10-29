@@ -38,6 +38,8 @@ class OperationResult:
     description: OperationDescription
     changed: bool
     duration_seconds: float
+    stdout: str = ""
+    stderr: str = ""
     ignored_error_output: str | None = None
 
 
@@ -67,16 +69,23 @@ class ComponentResult:
     outcome: ComponentOutcome
     operation_results: Sequence[OperationResult]
     duration_seconds: float
+    log_lines: Sequence[str] = ()
     failure: RunFailure | None = None
     skipped_because: str | None = None
 
 
 class Reporter(Protocol):
-    def plan(self, component_plans: Sequence[ComponentPlan]) -> None: ...
+    def run_started(self, component_names: Sequence[str]) -> None: ...
+
+    def plan(
+        self, component_plans: Sequence[ComponentPlan], visible: bool, /
+    ) -> None: ...
 
     def confirm(self) -> bool: ...
 
-    def component_started(self, component_name: str) -> None: ...
+    def component_started(self, component_name: str, /) -> None: ...
+
+    def operation_started(self, description: OperationDescription, /) -> None: ...
 
     def operation_finished(self, result: OperationResult) -> None: ...
 
@@ -85,3 +94,5 @@ class Reporter(Protocol):
     def run_finished(
         self, results: Sequence[ComponentResult], duration_seconds: float
     ) -> None: ...
+
+    def close(self) -> None: ...

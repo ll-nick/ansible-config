@@ -1,7 +1,8 @@
 import logging
+import re
 import time
 import traceback
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import override
 
@@ -11,6 +12,11 @@ from pyinfra.api.operations import run_ops
 from pyinfra.api.state import BaseStateCallback, State
 
 from devstack.component import Component
+from devstack.concurrency import (
+    current_component_name,
+    run_all,
+    set_current_component_name,
+)
 from devstack.pyinfra_adapters import (
     create_local_state,
     operation_order,
@@ -27,7 +33,11 @@ from devstack.reporting import (
     Reporter,
     RunFailure,
 )
+from devstack.scheduler import schedule_components
 from pyinfra import logger as pyinfra_logger
+
+HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
+NO_HOSTS_REMAINING_MESSAGE = "No hosts remaining!"
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -39,18 +49,28 @@ class RunOptions:
     dry_run: bool
     assume_yes: bool
     fail_on_change: bool
+    jobs: int = 4
 
 
 class LogCapture(logging.Handler):
-    lines: list[str]
+    _lines_by_component: dict[str, list[str]]
 
     def __init__(self) -> None:
         super().__init__(level=logging.WARNING)
-        self.lines = []
+        self._lines_by_component = {}
 
     @override
     def emit(self, record: logging.LogRecord) -> None:
-        self.lines.append(record.getMessage())
+        component_name = current_component_name() or ""
+        for line in record.getMessage().splitlines():
+            cleaned_line = HOST_PREFIX_PATTERN.sub("", line).rstrip()
+            if cleaned_line:
+                self._lines_by_component.setdefault(component_name, []).append(
+                    cleaned_line
+                )
+
+    def lines_for(self, component_name: str) -> list[str]:
+        return list(self._lines_by_component.get(component_name, []))
 
 
 class ReportingCallbacks(BaseStateCallback):
@@ -71,6 +91,7 @@ class ReportingCallbacks(BaseStateCallback):
     ) -> None:
         self._operation_started_at[op_hash] = time.monotonic()
         self.current_operation = describe_operation(state, op_hash)
+        self._reporter.operation_started(self.current_operation)
 
     @override
     def operation_end(  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -81,10 +102,13 @@ class ReportingCallbacks(BaseStateCallback):
             state.get_op_data_for_host(host, op_hash).operation_meta.did_change()
             for host in state.inventory.get_active_hosts()
         )
+        stdout, stderr = operation_output(state, op_hash)
         result = OperationResult(
             description=describe_operation(state, op_hash),
             changed=changed,
             duration_seconds=duration_seconds,
+            stdout=stdout,
+            stderr=stderr,
             ignored_error_output=ignored_error_output(state, op_hash),
         )
         self.results.append(result)
@@ -96,6 +120,16 @@ def describe_operation(state: State, op_hash: str) -> OperationDescription:
     return OperationDescription.from_pyinfra_name(pyinfra_name)
 
 
+def operation_output(state: State, op_hash: str) -> tuple[str, str]:
+    stdout_parts: list[str] = []
+    stderr_parts: list[str] = []
+    for host in state.inventory.get_active_hosts():
+        operation_meta = state.get_op_data_for_host(host, op_hash).operation_meta
+        stdout_parts.append(operation_meta.stdout)
+        stderr_parts.append(operation_meta.stderr)
+    return "\n".join(stdout_parts), "\n".join(stderr_parts)
+
+
 def ignored_error_output(state: State, op_hash: str) -> str | None:
     for host in state.inventory.get_active_hosts():
         operation_meta = state.get_op_data_for_host(host, op_hash).operation_meta
@@ -105,6 +139,8 @@ def ignored_error_output(state: State, op_hash: str) -> str | None:
 
 
 def describe_error(error: Exception) -> str:
+    if isinstance(error, PyinfraError) and str(error) == NO_HOSTS_REMAINING_MESSAGE:
+        return "Operation failed"
     return f"{type(error).__name__}: {error}"
 
 
@@ -144,33 +180,31 @@ def plan_component(component: Component) -> ComponentPlan:
 def execute_component(
     component: Component, reporter: Reporter, log_capture: LogCapture
 ) -> ComponentResult:
+    set_current_component_name(component.name)
     callbacks = ReportingCallbacks(reporter)
-    log_capture.lines.clear()
     started_at = time.monotonic()
     reporter.component_started(component.name)
+    failure: RunFailure | None = None
     try:
         state = prepare_state(component, callbacks)
         run_ops(state)
     except Exception as error:
-        captured_lines = list(log_capture.lines)
+        captured_lines = log_capture.lines_for(component.name)
         if not isinstance(error, PyinfraError):
             captured_lines.extend(traceback.format_exc().splitlines())
         failure = RunFailure(
             callbacks.current_operation, describe_error(error), captured_lines
         )
-        return ComponentResult(
-            component.name,
-            ComponentOutcome.FAILED,
-            callbacks.results,
-            time.monotonic() - started_at,
-            failure=failure,
-        )
-    return ComponentResult(
+    result = ComponentResult(
         component.name,
-        ComponentOutcome.SUCCEEDED,
+        ComponentOutcome.FAILED if failure else ComponentOutcome.SUCCEEDED,
         callbacks.results,
         time.monotonic() - started_at,
+        log_lines=log_capture.lines_for(component.name),
+        failure=failure,
     )
+    reporter.component_finished(result)
+    return result
 
 
 def skipped_result(
@@ -202,36 +236,42 @@ def run_components(
     log_capture = LogCapture()
     pyinfra_logger.addHandler(log_capture)
     pyinfra_logger.setLevel(logging.INFO)
+    try:
+        return _run_components(components, options, reporter, log_capture)
+    finally:
+        pyinfra_logger.removeHandler(log_capture)
+        reporter.close()
 
+
+def _run_components(
+    components: Sequence[Component],
+    options: RunOptions,
+    reporter: Reporter,
+    log_capture: LogCapture,
+) -> int:
     started_at = time.monotonic()
-    component_plans = [plan_component(component) for component in components]
-    reporter.plan(component_plans)
+    reporter.run_started([component.name for component in components])
+    component_plans = run_all([_plan_task(component) for component in components])
+    needs_confirmation = has_pending_changes(component_plans) and not options.assume_yes
+    reporter.plan(component_plans, options.dry_run or needs_confirmation)
     if options.dry_run:
         return EXIT_SUCCESS
-    if (
-        has_pending_changes(component_plans)
-        and not options.assume_yes
-        and not reporter.confirm()
-    ):
+    if needs_confirmation and not reporter.confirm():
         return EXIT_FAILURE
 
-    results: list[ComponentResult] = []
-    unsuccessful_names: set[str] = set()
-    for component in components:
-        unsuccessful_dependency = next(
-            (name for name in component.depends_on if name in unsuccessful_names), None
-        )
-        if unsuccessful_dependency is not None:
-            result = skipped_result(component, unsuccessful_dependency)
-        else:
-            result = execute_component(component, reporter, log_capture)
-        if result.outcome is not ComponentOutcome.SUCCEEDED:
-            unsuccessful_names.add(component.name)
+    def execute(component: Component) -> ComponentResult:
+        return execute_component(component, reporter, log_capture)
+
+    def skip(component: Component, unsuccessful_dependency: str) -> ComponentResult:
+        result = skipped_result(component, unsuccessful_dependency)
         reporter.component_finished(result)
-        results.append(result)
+        return result
+
+    results_by_name = schedule_components(components, execute, skip, options.jobs)
+    results = [results_by_name[component.name] for component in components]
 
     reporter.run_finished(results, time.monotonic() - started_at)
-    if unsuccessful_names:
+    if any(result.outcome is not ComponentOutcome.SUCCEEDED for result in results):
         return EXIT_FAILURE
     changed_anything = any(
         operation.changed
@@ -241,3 +281,7 @@ def run_components(
     if options.fail_on_change and changed_anything:
         return EXIT_CHANGES_DETECTED
     return EXIT_SUCCESS
+
+
+def _plan_task(component: Component) -> Callable[[], ComponentPlan]:
+    return lambda: plan_component(component)
