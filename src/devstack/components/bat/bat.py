@@ -1,8 +1,6 @@
 from pathlib import Path
 
-from pyinfra.operations import server
-from pyinfra.operations.util import any_changed
-
+from devstack.commands import run_command
 from devstack.file_copy import copy_file
 from devstack.mise import install_mise_tools, mise_executable
 from devstack.pyinfra_adapters import component_deploy
@@ -27,10 +25,10 @@ def apply_bat() -> None:
     )
     config = copy_file(FILES / "config", config_directory / "config")
 
-    server.shell(
-        name="Rebuild bat cache",
-        commands=[f"{mise_executable()} exec -- bat cache --build"],
-        _if=any_changed(dark_theme, light_theme, config),
+    run_command(
+        "Rebuild bat cache",
+        f"{mise_executable()} exec -- bat cache --build",
+        when_any_changed=[dark_theme, light_theme, config],
     )
 
     add_bash_snippet(FILES / "bat.bash")

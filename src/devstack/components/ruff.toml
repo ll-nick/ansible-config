@@ -1,0 +1,10 @@
+extend = "../../../pyproject.toml"
+include = ["**/*.py"]
+
+[lint]
+extend-select = ["TID251"]
+
+[lint.flake8-tidy-imports.banned-api]
+"pyinfra" = { msg = "Components use the helpers in devstack instead of importing pyinfra." }
+"pyinfra.operations" = { msg = "Components use the helpers in devstack instead of importing pyinfra." }
+"pyinfra.api" = { msg = "Components use the helpers in devstack instead of importing pyinfra." }
