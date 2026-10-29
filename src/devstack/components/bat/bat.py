@@ -5,10 +5,9 @@ from pyinfra.operations.util import any_changed
 
 from devstack.file_copy import copy_file
 from devstack.mise import install_mise_tools, mise_executable
-from devstack.paths import FILES_DIRECTORY
 from devstack.shells import add_bash_snippet, add_nushell_snippet
 
-BAT_FILES = FILES_DIRECTORY / "bat"
+BAT_FILES = Path(__file__).resolve().parent / "files"
 BAT_CONFIG_DIRECTORY = Path.home() / ".config" / "bat"
 
 install_mise_tools("bat", BAT_FILES / "mise.toml")
