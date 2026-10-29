@@ -219,6 +219,7 @@ name = "devstack"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "pyinfra" },
 ]
 
@@ -231,7 +232,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyinfra", specifier = ">=3.10.0" }]
+requires-dist = [
+    { name = "click", specifier = ">=8.5.0" },
+    { name = "pyinfra", specifier = ">=3.10.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
