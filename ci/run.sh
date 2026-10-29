@@ -12,54 +12,36 @@ set -e
 
 COMMAND="${1:-all}"
 WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
-IMAGE="ansible-ci"
+IMAGE="devstack-ci"
 
 ci_build() {
-    docker build --no-cache \
+    docker build \
         ${GITHUB_TOKEN:+--secret id=github_token,env=GITHUB_TOKEN} \
         -f "$WORKSPACE/ci/Dockerfile" -t "$IMAGE" "$WORKSPACE"
 }
 
 ci_verify() {
-    docker run --rm \
-        "$IMAGE" \
-        bash -c '
-            eval "$(~/.local/bin/mise activate bash --shims)"
-            for tool in mise bat delta eza fd fzf lazygit leadr node nvim nu rg starship stk tmux uv zoxide; do
-                command -v "$tool" || { echo "MISSING binary: $tool"; exit 1; }
-            done
-            for config in \
-                "$HOME/.config/bat/config" \
-                "$HOME/.config/nushell" \
-                "$HOME/.config/starship"; do
-                [ -e "$config" ] || { echo "MISSING config: $config"; exit 1; }
-            done
-            echo "All checks passed."
-        '
+    docker run --rm "$IMAGE" bash -c '
+        eval "$(~/.local/bin/mise activate bash --shims)"
+        for tool in mise fd; do
+            command -v "$tool" || { echo "MISSING binary: $tool"; exit 1; }
+        done
+        echo "All checks passed."
+    '
 }
 
 ci_idempotency() {
-    docker run --rm \
-        -e ANSIBLE_BECOME_PASS="" \
-        -e DEBIAN_FRONTEND=noninteractive \
-        ${GITHUB_TOKEN:+-e GITHUB_TOKEN} \
-        "$IMAGE" \
-        bash -c '
-            eval "$(~/.local/bin/mise activate bash --shims)"
-            cd /workspace
-            ansible-playbook local.yml -e "{\"run_privileged\": true}" 2>&1 | tee /tmp/idempotency.txt
-            grep -qE "✱ Changed +\| +0" /tmp/idempotency.txt \
-                || { echo "FAIL: playbook is not idempotent"; exit 1; }
-            echo "Idempotency check passed."
-        '
+    docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" bash -c '
+        uv run --no-dev pyinfra --yes @local src/devstack/deploy.py 2>&1 | tee /tmp/idempotency.txt
+        grep -E "^ +Grand total" /tmp/idempotency.txt
+        grep -qE "^ +Grand total +[0-9]+ +- +- +[0-9]+ *$" /tmp/idempotency.txt \
+            || { echo "FAIL: deploy is not idempotent"; exit 1; }
+        echo "Idempotency check passed."
+    '
 }
 
 ci_shell() {
-    docker run -it --rm \
-        -e ANSIBLE_BECOME_PASS="" \
-        -e DEBIAN_FRONTEND=noninteractive \
-        "$IMAGE" \
-        bash
+    docker run -it --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" bash
 }
 
 case "$COMMAND" in

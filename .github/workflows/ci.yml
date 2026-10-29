@@ -2,12 +2,24 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, pyinfra]
   pull_request:
 
 jobs:
+  check:
+    name: Lint and type-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
+
+      - name: Run checks
+        run: uv run poe check
+
   test-ubuntu:
-    name: Deploy on Ubuntu
+    name: Apply on Ubuntu
     runs-on: ubuntu-latest
 
     steps:
