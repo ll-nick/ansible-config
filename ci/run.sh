@@ -25,13 +25,8 @@ ci_verify() {
 }
 
 ci_idempotency() {
-    docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" bash -c '
-        uv run --no-dev pyinfra --yes @local src/devstack/deploy.py 2>&1 | tee /tmp/idempotency.txt
-        grep -E "^ +Grand total" /tmp/idempotency.txt
-        grep -qE "^ +Grand total +[0-9]+ +- +- +[0-9]+ *$" /tmp/idempotency.txt \
-            || { echo "FAIL: deploy is not idempotent"; exit 1; }
-        echo "Idempotency check passed."
-    '
+    docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" \
+        uv run --no-dev devstack apply --yes --fail-on-change
 }
 
 ci_shell() {
