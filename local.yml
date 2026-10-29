@@ -77,8 +77,6 @@
     - role: nushell
       tags: nushell
 
-    - role: bat
-      tags: bat
     - role: claude
       tags: claude
     - role: eza

@@ -3,6 +3,8 @@ from pathlib import Path
 
 from pyinfra.operations import files, server
 
+from devstack.file_copy import copy_file
+
 MISE_INSTALL_SCRIPT_URL = "https://mise.jdx.dev/install.sh"
 
 
@@ -25,19 +27,12 @@ def ensure_mise_installed() -> None:
         commands=[f"curl -fsSL {MISE_INSTALL_SCRIPT_URL} | sh"],
         _if=lambda: not mise_executable().exists(),
     )
-    files.directory(
-        name="Ensure mise conf.d exists",
-        path=str(mise_config_directory()),
-    )
 
 
 def install_mise_tools(component_name: str, mise_config_source: Path) -> None:
     ensure_mise_installed()
-    config_upload = files.put(
-        name=f"Add mise config for {component_name}",
-        src=str(mise_config_source),
-        dest=str(mise_config_directory() / f"{component_name}.toml"),
-        mode="644",
+    config_upload = copy_file(
+        mise_config_source, mise_config_directory() / f"{component_name}.toml"
     )
     server.shell(
         name=f"Install mise tools for {component_name}",
