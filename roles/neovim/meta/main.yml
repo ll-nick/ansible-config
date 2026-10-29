@@ -2,6 +2,5 @@ dependencies:
   - role: mise
   - role: bash
   - role: nushell
-  - role: fd
   - role: ripgrep
   - role: nodejs
