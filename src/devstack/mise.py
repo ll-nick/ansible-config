@@ -1,7 +1,6 @@
-from functools import cache
 from pathlib import Path
 
-from pyinfra.operations import files, server
+from pyinfra.operations import server
 
 from devstack.file_copy import copy_file
 
@@ -16,21 +15,7 @@ def mise_config_directory() -> Path:
     return Path.home() / ".config" / "mise" / "conf.d"
 
 
-@cache
-def ensure_mise_installed() -> None:
-    files.directory(
-        name="Ensure ~/.local/bin exists",
-        path=str(mise_executable().parent),
-    )
-    server.shell(
-        name="Install mise",
-        commands=[f"curl -fsSL {MISE_INSTALL_SCRIPT_URL} | sh"],
-        _if=lambda: not mise_executable().exists(),
-    )
-
-
 def install_mise_tools(component_name: str, mise_config_source: Path) -> None:
-    ensure_mise_installed()
     config_upload = copy_file(
         mise_config_source, mise_config_directory() / f"{component_name}.toml"
     )

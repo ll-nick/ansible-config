@@ -6,3 +6,4 @@ from dataclasses import dataclass
 class Component:
     name: str
     apply: Callable[[], object]
+    depends_on: tuple[str, ...] = ()
