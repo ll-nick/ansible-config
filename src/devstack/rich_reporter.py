@@ -95,6 +95,8 @@ class RichReporter:
             ]
             for planned in component_plan.operations:
                 counts[planned.change] += 1
+            if component_plan.not_applicable_reason is not None:
+                continue
             if not shown and component_plan.planning_error is None:
                 continue
             branch = tree.add(Text(component_plan.component_name, style="bold"))
@@ -150,6 +152,14 @@ class RichReporter:
         if result.outcome is ComponentOutcome.SKIPPED:
             detail = f"skipped ({result.skipped_because})"
             self._console.print(self._status_line(SYMBOL_SKIPPED, "dim", name, detail))
+            return
+
+        if result.outcome is ComponentOutcome.NOT_APPLICABLE:
+            if self._verbosity >= 1:
+                detail = f"not applicable ({result.skipped_because})"
+                self._console.print(
+                    self._status_line(SYMBOL_SKIPPED, "dim", name, detail)
+                )
             return
 
         if result.outcome is ComponentOutcome.FAILED and result.failure is not None:

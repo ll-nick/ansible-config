@@ -39,6 +39,8 @@ from pyinfra import logger as pyinfra_logger
 HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
 NO_HOSTS_REMAINING_MESSAGE = "No hosts remaining!"
 
+PROBLEM_OUTCOMES = frozenset({ComponentOutcome.FAILED, ComponentOutcome.SKIPPED})
+
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_CHANGES_DETECTED = 3
@@ -169,7 +171,17 @@ def collect_plan(state: State) -> list[PlannedOperation]:
     return planned_operations
 
 
+def not_applicable_reason(component: Component) -> str | None:
+    requirement = component.unmet_requirement()
+    if requirement is None:
+        return None
+    return f"requires {requirement.description}"
+
+
 def plan_component(component: Component) -> ComponentPlan:
+    reason = not_applicable_reason(component)
+    if reason is not None:
+        return ComponentPlan(component.name, (), None, not_applicable_reason=reason)
     try:
         state = prepare_state(component, BaseStateCallback())
     except Exception as error:
@@ -180,6 +192,18 @@ def plan_component(component: Component) -> ComponentPlan:
 def execute_component(
     component: Component, reporter: Reporter, log_capture: LogCapture
 ) -> ComponentResult:
+    reason = not_applicable_reason(component)
+    if reason is not None:
+        not_applicable = ComponentResult(
+            component.name,
+            ComponentOutcome.NOT_APPLICABLE,
+            (),
+            0.0,
+            skipped_because=reason,
+        )
+        reporter.component_finished(not_applicable)
+        return not_applicable
+
     set_current_component_name(component.name)
     callbacks = ReportingCallbacks(reporter)
     started_at = time.monotonic()
@@ -215,7 +239,7 @@ def skipped_result(
         ComponentOutcome.SKIPPED,
         (),
         0.0,
-        skipped_because=f"dependency {unsuccessful_dependency} did not succeed",
+        skipped_because=f"dependency {unsuccessful_dependency} was not applied",
     )
 
 
@@ -271,7 +295,7 @@ def _run_components(
     results = [results_by_name[component.name] for component in components]
 
     reporter.run_finished(results, time.monotonic() - started_at)
-    if any(result.outcome is not ComponentOutcome.SUCCEEDED for result in results):
+    if any(result.outcome in PROBLEM_OUTCOMES for result in results):
         return EXIT_FAILURE
     changed_anything = any(
         operation.changed

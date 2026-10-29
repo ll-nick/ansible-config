@@ -54,6 +54,7 @@ class ComponentOutcome(Enum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     SKIPPED = "skipped"
+    NOT_APPLICABLE = "not applicable"
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class ComponentPlan:
     component_name: str
     operations: Sequence[PlannedOperation]
     planning_error: str | None
+    not_applicable_reason: str | None = None
 
 
 @dataclass(frozen=True)

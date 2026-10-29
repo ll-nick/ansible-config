@@ -47,6 +47,8 @@ class PlainReporter:
         unchanged_count = 0
         for component_plan in component_plans:
             lines: list[str] = []
+            if component_plan.not_applicable_reason is not None:
+                continue
             if component_plan.planning_error is not None:
                 lines.append(f"  ! could not plan: {component_plan.planning_error}")
             for planned in component_plan.operations:
@@ -98,6 +100,10 @@ class PlainReporter:
         name = result.component_name
         if result.outcome is ComponentOutcome.SKIPPED:
             self._print_line(name, f"- skipped ({result.skipped_because})")
+            return
+        if result.outcome is ComponentOutcome.NOT_APPLICABLE:
+            if self._verbosity >= 1:
+                self._print_line(name, f"- not applicable ({result.skipped_because})")
             return
         if result.outcome is not ComponentOutcome.FAILED or result.failure is None:
             return

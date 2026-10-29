@@ -48,6 +48,13 @@ def apply(
         components = select_components(component_names)
     except UnknownComponentError as error:
         raise click.UsageError(str(error)) from error
+    for component in components:
+        requirement = component.unmet_requirement()
+        if component.name in component_names and requirement is not None:
+            raise click.UsageError(
+                f"{component.name} is not applicable here "
+                + f"(requires {requirement.description})"
+            )
 
     options = RunOptions(
         dry_run=dry_run, assume_yes=yes, fail_on_change=fail_on_change, jobs=jobs
@@ -71,6 +78,12 @@ def build_terminal_reporter(
 def list_components() -> None:
     """List the available components."""
     for component in COMPONENTS:
-        dependencies = ", ".join(component.depends_on)
-        suffix = f" (needs {dependencies})" if dependencies else ""
+        details: list[str] = []
+        if component.depends_on:
+            details.append(f"needs {', '.join(component.depends_on)}")
+        for requirement in component.requires:
+            details.append(f"requires {requirement.description}")
+        if component.unmet_requirement() is not None:
+            details.append("not applicable here")
+        suffix = f" ({'; '.join(details)})" if details else ""
         click.echo(f"{component.name}{suffix}")
