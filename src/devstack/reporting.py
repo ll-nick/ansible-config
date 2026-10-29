@@ -47,15 +47,40 @@ class RunFailure:
     captured_log_lines: Sequence[str]
 
 
+class ComponentOutcome(Enum):
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+@dataclass(frozen=True)
+class ComponentPlan:
+    component_name: str
+    operations: Sequence[PlannedOperation]
+    planning_error: str | None
+
+
+@dataclass(frozen=True)
+class ComponentResult:
+    component_name: str
+    outcome: ComponentOutcome
+    operation_results: Sequence[OperationResult]
+    duration_seconds: float
+    failure: RunFailure | None = None
+    skipped_because: str | None = None
+
+
 class Reporter(Protocol):
-    def plan(self, planned_operations: Sequence[PlannedOperation]) -> None: ...
+    def plan(self, component_plans: Sequence[ComponentPlan]) -> None: ...
 
     def confirm(self) -> bool: ...
 
+    def component_started(self, component_name: str) -> None: ...
+
     def operation_finished(self, result: OperationResult) -> None: ...
 
-    def run_failed(self, failure: RunFailure) -> None: ...
+    def component_finished(self, result: ComponentResult) -> None: ...
 
     def run_finished(
-        self, results: Sequence[OperationResult], duration_seconds: float
+        self, results: Sequence[ComponentResult], duration_seconds: float
     ) -> None: ...

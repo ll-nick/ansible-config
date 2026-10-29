@@ -1,5 +1,6 @@
 import logging
 import time
+import traceback
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import override
@@ -16,6 +17,9 @@ from devstack.pyinfra_adapters import (
     prepare_component,
 )
 from devstack.reporting import (
+    ComponentOutcome,
+    ComponentPlan,
+    ComponentResult,
     OperationDescription,
     OperationResult,
     PlannedChange,
@@ -38,9 +42,11 @@ class RunOptions:
 
 
 class LogCapture(logging.Handler):
+    lines: list[str]
+
     def __init__(self) -> None:
-        super().__init__(level=logging.INFO)
-        self.lines: list[str] = []
+        super().__init__(level=logging.WARNING)
+        self.lines = []
 
     @override
     def emit(self, record: logging.LogRecord) -> None:
@@ -49,12 +55,15 @@ class LogCapture(logging.Handler):
 
 class ReportingCallbacks(BaseStateCallback):
     _reporter: Reporter
+    _operation_started_at: dict[str, float]
+    results: list[OperationResult]
+    current_operation: OperationDescription | None
 
     def __init__(self, reporter: Reporter) -> None:
         self._reporter = reporter
-        self._operation_started_at: dict[str, float] = {}
-        self.results: list[OperationResult] = []
-        self.current_operation: OperationDescription | None = None
+        self._operation_started_at = {}
+        self.results = []
+        self.current_operation = None
 
     @override
     def operation_start(  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -86,6 +95,17 @@ def describe_operation(state: State, op_hash: str) -> OperationDescription:
     return OperationDescription.from_pyinfra_name(pyinfra_name)
 
 
+def describe_error(error: Exception) -> str:
+    return f"{type(error).__name__}: {error}"
+
+
+def prepare_state(component: Component, callbacks: BaseStateCallback) -> State:
+    state = create_local_state(callbacks)
+    connect_all(state)
+    prepare_component(state, component.apply)
+    return state
+
+
 def collect_plan(state: State) -> list[PlannedOperation]:
     planned_operations: list[PlannedOperation] = []
     for op_hash in operation_order(state):
@@ -104,6 +124,69 @@ def collect_plan(state: State) -> list[PlannedOperation]:
     return planned_operations
 
 
+def plan_component(component: Component) -> ComponentPlan:
+    try:
+        state = prepare_state(component, BaseStateCallback())
+    except Exception as error:
+        return ComponentPlan(component.name, (), describe_error(error))
+    return ComponentPlan(component.name, tuple(collect_plan(state)), None)
+
+
+def execute_component(
+    component: Component, reporter: Reporter, log_capture: LogCapture
+) -> ComponentResult:
+    callbacks = ReportingCallbacks(reporter)
+    log_capture.lines.clear()
+    started_at = time.monotonic()
+    reporter.component_started(component.name)
+    try:
+        state = prepare_state(component, callbacks)
+        run_ops(state)
+    except Exception as error:
+        captured_lines = list(log_capture.lines)
+        if not isinstance(error, PyinfraError):
+            captured_lines.extend(traceback.format_exc().splitlines())
+        failure = RunFailure(
+            callbacks.current_operation, describe_error(error), captured_lines
+        )
+        return ComponentResult(
+            component.name,
+            ComponentOutcome.FAILED,
+            callbacks.results,
+            time.monotonic() - started_at,
+            failure=failure,
+        )
+    return ComponentResult(
+        component.name,
+        ComponentOutcome.SUCCEEDED,
+        callbacks.results,
+        time.monotonic() - started_at,
+    )
+
+
+def skipped_result(
+    component: Component, unsuccessful_dependency: str
+) -> ComponentResult:
+    return ComponentResult(
+        component.name,
+        ComponentOutcome.SKIPPED,
+        (),
+        0.0,
+        skipped_because=f"dependency {unsuccessful_dependency} did not succeed",
+    )
+
+
+def has_pending_changes(component_plans: Sequence[ComponentPlan]) -> bool:
+    return any(
+        component_plan.planning_error is not None
+        or any(
+            planned.change is PlannedChange.WILL_CHANGE
+            for planned in component_plan.operations
+        )
+        for component_plan in component_plans
+    )
+
+
 def run_components(
     components: Sequence[Component], options: RunOptions, reporter: Reporter
 ) -> int:
@@ -111,34 +194,41 @@ def run_components(
     pyinfra_logger.addHandler(log_capture)
     pyinfra_logger.setLevel(logging.INFO)
 
-    callbacks = ReportingCallbacks(reporter)
-    state = create_local_state(callbacks)
-
     started_at = time.monotonic()
-    try:
-        connect_all(state)
-        for component in components:
-            prepare_component(state, component.apply)
-
-        planned_operations = collect_plan(state)
-        reporter.plan(planned_operations)
-        if options.dry_run:
-            return EXIT_SUCCESS
-        has_pending_changes = any(
-            planned.change is not PlannedChange.UNCHANGED
-            for planned in planned_operations
-        )
-        if has_pending_changes and not options.assume_yes and not reporter.confirm():
-            return EXIT_FAILURE
-
-        run_ops(state)
-    except PyinfraError as error:
-        reporter.run_failed(
-            RunFailure(callbacks.current_operation, str(error), log_capture.lines)
-        )
+    component_plans = [plan_component(component) for component in components]
+    reporter.plan(component_plans)
+    if options.dry_run:
+        return EXIT_SUCCESS
+    if (
+        has_pending_changes(component_plans)
+        and not options.assume_yes
+        and not reporter.confirm()
+    ):
         return EXIT_FAILURE
 
-    reporter.run_finished(callbacks.results, time.monotonic() - started_at)
-    if options.fail_on_change and any(result.changed for result in callbacks.results):
+    results: list[ComponentResult] = []
+    unsuccessful_names: set[str] = set()
+    for component in components:
+        unsuccessful_dependency = next(
+            (name for name in component.depends_on if name in unsuccessful_names), None
+        )
+        if unsuccessful_dependency is not None:
+            result = skipped_result(component, unsuccessful_dependency)
+        else:
+            result = execute_component(component, reporter, log_capture)
+        if result.outcome is not ComponentOutcome.SUCCEEDED:
+            unsuccessful_names.add(component.name)
+        reporter.component_finished(result)
+        results.append(result)
+
+    reporter.run_finished(results, time.monotonic() - started_at)
+    if unsuccessful_names:
+        return EXIT_FAILURE
+    changed_anything = any(
+        operation.changed
+        for result in results
+        for operation in result.operation_results
+    )
+    if options.fail_on_change and changed_anything:
         return EXIT_CHANGES_DETECTED
     return EXIT_SUCCESS
