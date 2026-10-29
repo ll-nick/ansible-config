@@ -21,13 +21,7 @@ ci_build() {
 }
 
 ci_verify() {
-    docker run --rm "$IMAGE" bash -c '
-        eval "$(~/.local/bin/mise activate bash --shims)"
-        for tool in mise fd; do
-            command -v "$tool" || { echo "MISSING binary: $tool"; exit 1; }
-        done
-        echo "All checks passed."
-    '
+    docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" uv run pytest
 }
 
 ci_idempotency() {
