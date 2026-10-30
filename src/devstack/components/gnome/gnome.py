@@ -4,7 +4,7 @@ from gevent import subprocess
 
 from devstack.archives import download_and_extract_zip
 from devstack.commands import run_command
-from devstack.dconf import DconfSetting, apply_dconf_settings, reset_dconf_key
+from devstack.dconf import DconfSetting, apply_dconf_settings
 from devstack.file_copy import EXECUTABLE_MODE, copy_file
 from devstack.machine import distribution_ids
 from devstack.mise import install_mise_tools, mise_executable
@@ -130,7 +130,6 @@ def apply_gnome() -> None:
     install_mise_tools("gnome", FILES / "mise.toml")
     _install_and_enable_paperwm()
 
-    reset_dconf_key(PAPERWM_KEYBINDINGS_KEY)
     apply_dconf_settings(
         [
             DconfSetting(f"{PAPERWM_KEYBINDINGS_KEY}/{binding.key}", binding.value)

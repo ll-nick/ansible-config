@@ -30,9 +30,3 @@ def apply_dconf_settings(settings: list[DconfSetting]) -> None:
             f"Set dconf {setting.key}",
             f"dconf write {shlex.quote(setting.key)} {shlex.quote(setting.value)}",
         )
-
-
-def reset_dconf_key(key: str) -> None:
-    if read_dconf_value(key) is None:
-        return
-    run_command(f"Reset dconf {key}", f"dconf reset {shlex.quote(key)}")
