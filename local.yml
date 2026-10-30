@@ -72,10 +72,6 @@
     - role: ansible
       tags: ansible
 
-    - role: claude
-      tags: claude
-    - role: tmux
-      tags: tmux
     - role: update
       tags: update
     - role: xdg_open
@@ -84,9 +80,6 @@
     - role: gnome
       when: has_display
       tags: gnome
-    - role: inkflow
-      when: has_display and inkscape_available
-      tags: inkflow
     - role: kitty
       when: has_display
       tags: kitty
@@ -94,6 +87,3 @@
       when: has_display
       tags: nerdfont
 
-    - role: joy
-      when: is_joy
-      tags: joy

@@ -12,6 +12,7 @@ OS_RELEASE_PATH = Path("/etc/os-release")
 SYSTEMD_RUNTIME_DIRECTORY = Path("/run/systemd/system")
 LOCAL_DISPLAY_PATTERN = re.compile(r":[0-9]")
 VERSION_PATTERN = re.compile(r"\d+(?:\.\d+)*")
+JOY_HOSTNAME = "mrtjoy"
 
 
 def has_display() -> bool:
