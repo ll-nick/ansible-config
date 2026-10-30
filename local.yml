@@ -74,32 +74,12 @@
 
     - role: claude
       tags: claude
-    - role: eza
-      tags: eza
-    - role: fzf
-      tags: fzf
-    - role: lazygit
-      tags: lazygit
-    - role: leadr
-      tags: leadr
-    - role: neovim
-      tags: neovim
-    - role: nodejs
-      tags: nodejs
-    - role: ripgrep
-      tags: ripgrep
-    - role: starship
-      tags: starship
     - role: tmux
       tags: tmux
     - role: update
       tags: update
-    - role: uv
-      tags: uv
     - role: xdg_open
       tags: xdg_open
-    - role: zoxide
-      tags: zoxide
 
     - role: gnome
       when: has_display

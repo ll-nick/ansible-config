@@ -1,4 +1,0 @@
-dependencies:
-  - role: mise
-  - role: ripgrep
-  - role: nodejs

@@ -2,6 +2,7 @@ from functools import cache
 from pathlib import Path
 
 from gevent import subprocess
+from pyinfra.api.operation import OperationMeta
 from pyinfra.operations import git
 
 GITHUB_SSH_PREFIX = "git@github.com:"
@@ -33,8 +34,8 @@ def github_url_prefix() -> str:
     return GITHUB_HTTPS_PREFIX
 
 
-def clone_github_repository(repository: str, destination: Path) -> None:
-    git.repo(
+def clone_github_repository(repository: str, destination: Path) -> OperationMeta:
+    return git.repo(
         name=f"Clone {repository}",
         src=f"{github_url_prefix()}{repository}",
         dest=str(destination),
