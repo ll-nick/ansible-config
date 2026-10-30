@@ -9,6 +9,7 @@ from devstack.registry import UnknownComponentError, select_components
 from devstack.reporting import Reporter
 from devstack.rich_reporter import RichReporter
 from devstack.runner import RunOptions, run_components
+from devstack.sudo import SudoUnavailableError, obtain_sudo_password
 
 
 @click.group()
@@ -32,6 +33,11 @@ def cli() -> None:
     show_default=True,
     help="Components to apply concurrently.",
 )
+@click.option(
+    "--privileged",
+    is_flag=True,
+    help="Also apply the parts that need root (installs system packages via sudo).",
+)
 @click.option("--plain", is_flag=True, help="Use plain output even on a terminal.")
 @click.option("-v", "--verbose", count=True, help="Show unchanged operations.")
 def apply(
@@ -40,6 +46,7 @@ def apply(
     yes: bool,
     fail_on_change: bool,
     jobs: int,
+    privileged: bool,
     plain: bool,
     verbose: int,
 ) -> None:
@@ -56,8 +63,20 @@ def apply(
                 + f"(requires {requirement.description})"
             )
 
+    sudo_password = None
+    if privileged:
+        try:
+            sudo_password = obtain_sudo_password()
+        except SudoUnavailableError as error:
+            raise click.UsageError(str(error)) from error
+
     options = RunOptions(
-        dry_run=dry_run, assume_yes=yes, fail_on_change=fail_on_change, jobs=jobs
+        dry_run=dry_run,
+        assume_yes=yes,
+        fail_on_change=fail_on_change,
+        jobs=jobs,
+        privileged=privileged,
+        sudo_password=sudo_password,
     )
     log_file_reporter = LogFileReporter()
     terminal_reporter = build_terminal_reporter(verbose, plain, log_file_reporter)

@@ -3,7 +3,7 @@ import re
 import time
 import traceback
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import override
 
 from pyinfra.api.connect import connect_all
@@ -33,7 +33,9 @@ from devstack.reporting import (
     Reporter,
     RunFailure,
 )
+from devstack.run_settings import RunSettings, configure_run_settings
 from devstack.scheduler import schedule_components
+from devstack.system_packages import with_system_packages
 from pyinfra import logger as pyinfra_logger
 
 HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
@@ -52,6 +54,8 @@ class RunOptions:
     assume_yes: bool
     fail_on_change: bool
     jobs: int = 4
+    privileged: bool = False
+    sudo_password: str | None = field(default=None, repr=False)
 
 
 class LogCapture(logging.Handler):
@@ -260,6 +264,11 @@ def run_components(
     log_capture = LogCapture()
     pyinfra_logger.addHandler(log_capture)
     pyinfra_logger.setLevel(logging.INFO)
+    configure_run_settings(
+        RunSettings(privileged=options.privileged, sudo_password=options.sudo_password)
+    )
+    if options.privileged:
+        components = with_system_packages(components)
     try:
         return _run_components(components, options, reporter, log_capture)
     finally:

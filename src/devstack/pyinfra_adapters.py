@@ -8,6 +8,8 @@ from pyinfra.api.inventory import Inventory
 from pyinfra.api.state import BaseStateCallback, State
 from pyinfra.context import ctx_state
 
+from devstack.run_settings import run_settings
+
 # pyinfra's own type hints are incomplete in these places,
 # so the untyped calls are confined to this module.
 
@@ -22,7 +24,7 @@ def component_deploy(name: str) -> Callable[[Callable[[], None]], Callable[[], N
 def create_local_state(callbacks: BaseStateCallback) -> State:
     state = State(
         inventory=Inventory((["@local"], {})),  # pyright: ignore[reportUnknownArgumentType]
-        config=Config(),
+        config=Config(SUDO_PASSWORD=run_settings().sudo_password),
     )
     state.add_callback_handler(callbacks)  # pyright: ignore[reportUnknownMemberType]
     return state

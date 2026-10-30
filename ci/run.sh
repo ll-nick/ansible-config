@@ -26,7 +26,7 @@ ci_verify() {
 
 ci_idempotency() {
     docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" \
-        uv run --no-dev devstack apply --yes --fail-on-change
+        uv run --no-dev devstack apply --yes --privileged --fail-on-change
 }
 
 ci_shell() {

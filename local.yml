@@ -78,14 +78,10 @@
       tags: eza
     - role: fzf
       tags: fzf
-    - role: git
-      tags: git
     - role: lazygit
       tags: lazygit
     - role: leadr
       tags: leadr
-    - role: locale
-      tags: locale
     - role: neovim
       tags: neovim
     - role: nodejs

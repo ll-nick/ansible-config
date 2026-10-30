@@ -18,4 +18,4 @@ COPY --chown=tester:tester . /workspace
 WORKDIR /workspace
 
 RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
-    uv run --no-dev devstack apply --yes
+    uv run --no-dev devstack apply --yes --privileged
