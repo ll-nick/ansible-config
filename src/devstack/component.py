@@ -8,6 +8,15 @@ class Requirement:
     is_met: Callable[[], bool]
 
 
+def first_unmet_requirement(
+    requirements: tuple[Requirement, ...],
+) -> Requirement | None:
+    for requirement in requirements:
+        if not requirement.is_met():
+            return requirement
+    return None
+
+
 @dataclass(frozen=True)
 class Component:
     name: str
@@ -17,7 +26,4 @@ class Component:
     system_packages: tuple[str, ...] = ()
 
     def unmet_requirement(self) -> Requirement | None:
-        for requirement in self.requires:
-            if not requirement.is_met():
-                return requirement
-        return None
+        return first_unmet_requirement(self.requires)

@@ -20,6 +20,7 @@ from devstack.components.nodejs.nodejs import apply_nodejs
 from devstack.components.nushell.nushell import apply_nushell
 from devstack.components.ripgrep.ripgrep import apply_ripgrep
 from devstack.components.starship.starship import apply_starship
+from devstack.components.stk.stk import apply_stk
 from devstack.components.tmux.tmux import apply_tmux
 from devstack.components.uv.uv import apply_uv
 from devstack.components.zoxide.zoxide import apply_zoxide
@@ -102,4 +103,5 @@ COMPONENTS: tuple[Component, ...] = (
         depends_on=("mise",),
         requires=(HAS_DISPLAY,),
     ),
+    Component("stk", apply_stk),
 )

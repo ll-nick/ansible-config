@@ -70,9 +70,5 @@
     - role: ansible
       tags: ansible
 
-    - role: update
-      tags: update
-    - role: xdg_open
-      tags: xdg_open
 
 

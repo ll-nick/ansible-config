@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import click
 from rich.console import Console
 
@@ -10,6 +12,10 @@ from devstack.reporting import Reporter
 from devstack.rich_reporter import RichReporter
 from devstack.runner import RunOptions, run_components
 from devstack.sudo import SudoUnavailableError, obtain_sudo_password
+from devstack.updates import UPDATE_STEPS
+from devstack.updates.check import check_updates
+from devstack.updates.context import TerminalUpdateContext
+from devstack.updates.runner import run_update_steps
 
 
 @click.group()
@@ -106,3 +112,45 @@ def list_components() -> None:
             details.append("not applicable here")
         suffix = f" ({'; '.join(details)})" if details else ""
         click.echo(f"{component.name}{suffix}")
+
+
+@cli.command()
+@click.argument("step_names", nargs=-1)
+@click.option("-b", "--bump", is_flag=True, help="Bump versions of locked components.")
+@click.option("-y", "--yes", is_flag=True, help="Assume yes for all prompts.")
+def update(step_names: tuple[str, ...], bump: bool, yes: bool) -> None:
+    """Update the system and the tools (default: all STEP_NAMES)."""
+    known_names = [step.name for step in UPDATE_STEPS]
+    unknown_names = [name for name in step_names if name not in known_names]
+    if unknown_names:
+        raise click.UsageError(
+            f"Unknown steps: {', '.join(unknown_names)}"
+            + f" (known: {', '.join(known_names)})"
+        )
+    steps = [step for step in UPDATE_STEPS if not step_names or step.name in step_names]
+
+    console = Console()
+    context = TerminalUpdateContext(console, assume_yes=yes, bump_versions=bump)
+    succeeded = run_update_steps(steps, context, console)
+    if succeeded and not step_names:
+        console.print("\n[green]✔[/] All updates completed")
+    raise SystemExit(0 if succeeded else 1)
+
+
+@cli.command()
+@click.option(
+    "-r",
+    "--reminder-days",
+    default=7,
+    show_default=True,
+    help="Days after which a step counts as out of date.",
+)
+@click.option("-n", "--notify", is_flag=True, help="Send a desktop notification.")
+def check(reminder_days: int, notify: bool) -> None:
+    """Show when each update step last ran."""
+    check_updates(
+        UPDATE_STEPS,
+        Console(),
+        reminder_time=timedelta(days=reminder_days),
+        notify=notify,
+    )

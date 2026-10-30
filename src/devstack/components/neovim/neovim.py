@@ -8,12 +8,16 @@ from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
 
 FILES = Path(__file__).resolve().parent / "files"
+RESTORE_PLUGINS_COMMAND = (
+    "lua vim.pack.update(nil, { target = 'lockfile', force = true })"
+)
+POST_INSTALL_COMMAND = "lua require('post-install').run()"
 
 
-def headless_neovim_command(*lua_commands: str) -> str:
+def headless_neovim_command(*vim_commands: str) -> str:
     arguments = [str(mise_executable()), "exec", "--", "nvim", "--headless"]
-    for lua_command in lua_commands:
-        arguments += ["-c", lua_command]
+    for vim_command in vim_commands:
+        arguments += ["-c", vim_command]
     return shlex.join(arguments)
 
 
@@ -26,14 +30,12 @@ def apply_neovim() -> None:
     )
     run_command(
         "Install neovim plugins",
-        headless_neovim_command(
-            "lua vim.pack.update(nil, { target = 'lockfile', force = true })", "qa"
-        ),
+        headless_neovim_command(RESTORE_PLUGINS_COMMAND, "qa"),
         when_any_changed=[configuration],
     )
     run_command(
         "Run neovim post-install hooks",
-        headless_neovim_command("lua require('post-install').run()"),
+        headless_neovim_command(POST_INSTALL_COMMAND),
         when_any_changed=[configuration],
     )
 
