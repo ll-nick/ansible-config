@@ -67,8 +67,6 @@
 
 
   roles:
-    - role: mise
-      tags: mise
     - role: ansible
       tags: ansible
 
@@ -77,13 +75,4 @@
     - role: xdg_open
       tags: xdg_open
 
-    - role: gnome
-      when: has_display
-      tags: gnome
-    - role: kitty
-      when: has_display
-      tags: kitty
-    - role: nerdfont
-      when: has_display
-      tags: nerdfont
 
