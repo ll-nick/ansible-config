@@ -1,7 +1,7 @@
 import pytest
 
 from devstack import system_packages
-from devstack.component import Component, Requirement, SystemPackages
+from devstack.component import Component, Requirement
 from devstack.system_packages import (
     SYSTEM_PACKAGES_COMPONENT_NAME,
     UnsupportedDistributionError,
@@ -20,29 +20,21 @@ def use_distributions(monkeypatch: pytest.MonkeyPatch, *identifiers: str) -> Non
     )
 
 
-def test_packages_are_merged_per_package_manager(
+def test_packages_are_merged_without_duplicates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    wanted = [
-        SystemPackages(common=("git",), debian=("fonts-noto",), arch=("noto-fonts",)),
-        SystemPackages(common=("git", "unzip")),
-    ]
-
     use_distributions(monkeypatch, "ubuntu", "debian")
-    assert packages_for_this_machine(wanted) == ("apt", ["git", "fonts-noto", "unzip"])
 
-    use_distributions(monkeypatch, "arch")
-    assert packages_for_this_machine(wanted) == (
-        "pacman",
-        ["git", "noto-fonts", "unzip"],
-    )
+    merged = packages_for_this_machine([("git", "fonts-noto"), ("git", "unzip")])
+
+    assert merged == ["git", "fonts-noto", "unzip"]
 
 
 def test_other_distributions_are_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     use_distributions(monkeypatch, "nixos")
 
     with pytest.raises(UnsupportedDistributionError, match="nixos"):
-        packages_for_this_machine([SystemPackages(common=("git",))])
+        packages_for_this_machine([("git",)])
 
 
 def test_consumers_depend_on_the_installer() -> None:
@@ -51,7 +43,7 @@ def test_consumers_depend_on_the_installer() -> None:
             "git",
             noop,
             depends_on=("mise",),
-            system_packages=SystemPackages(common=("git",)),
+            system_packages=("git",),
         ),
         Component("fd", noop),
     ]
@@ -77,7 +69,7 @@ def test_inapplicable_components_do_not_pull_in_packages() -> None:
             "gui",
             noop,
             requires=(unmet,),
-            system_packages=SystemPackages(common=("fontconfig",)),
+            system_packages=("fontconfig",),
         )
     ]
 

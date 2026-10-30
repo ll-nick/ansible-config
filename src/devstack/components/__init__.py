@@ -1,4 +1,4 @@
-from devstack.component import Component, SystemPackages
+from devstack.component import Component
 from devstack.components.bash.bash import apply_bash
 from devstack.components.bat.bat import apply_bat
 from devstack.components.fd.fd import apply_fd
@@ -16,7 +16,7 @@ COMPONENTS: tuple[Component, ...] = (
         "git",
         apply_git,
         depends_on=("mise",),
-        system_packages=SystemPackages(common=("git",)),
+        system_packages=("git",),
     ),
     Component("nushell", apply_nushell, depends_on=("mise",)),
     Component("fd", apply_fd, depends_on=("mise",)),
@@ -25,6 +25,6 @@ COMPONENTS: tuple[Component, ...] = (
         "locale",
         apply_locale,
         requires=(PRIVILEGED, runs_distribution("debian")),
-        system_packages=SystemPackages(debian=("locales",)),
+        system_packages=("locales",),
     ),
 )

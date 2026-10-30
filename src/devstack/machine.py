@@ -58,13 +58,6 @@ def parse_version(text: str) -> tuple[int, ...] | None:
     return tuple(int(part) for part in match.group().split("."))
 
 
-def glibc_version() -> tuple[int, ...] | None:
-    try:
-        return parse_version(os.confstr("CS_GNU_LIBC_VERSION") or "")
-    except ValueError, OSError:
-        return None
-
-
 def git_version() -> tuple[int, ...] | None:
     try:
         completed = subprocess.run(

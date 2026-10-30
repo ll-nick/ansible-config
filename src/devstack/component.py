@@ -9,19 +9,12 @@ class Requirement:
 
 
 @dataclass(frozen=True)
-class SystemPackages:
-    common: tuple[str, ...] = ()
-    debian: tuple[str, ...] = ()
-    arch: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True)
 class Component:
     name: str
     apply: Callable[[], object]
     depends_on: tuple[str, ...] = ()
     requires: tuple[Requirement, ...] = ()
-    system_packages: SystemPackages = SystemPackages()
+    system_packages: tuple[str, ...] = ()
 
     def unmet_requirement(self) -> Requirement | None:
         for requirement in self.requires:
