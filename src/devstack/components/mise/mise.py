@@ -1,6 +1,9 @@
 from devstack.commands import run_command
-from devstack.mise import MISE_INSTALL_SCRIPT_URL, mise_executable
+from devstack.mise import MISE_INSTALL_SCRIPT_URL, MISE_IS_INSTALLED, mise_executable
 from devstack.pyinfra_adapters import component_deploy
+from devstack.updates.step import StepOutcome, UpdateContext, UpdateStep
+
+PREBUILT_BINARIES_ONLY = {"MISE_NODE_COMPILE": "false", "MISE_PYTHON_COMPILE": "false"}
 
 
 @component_deploy("mise")
@@ -14,3 +17,14 @@ def apply_mise() -> None:
             + f' && curl -fsSL {MISE_INSTALL_SCRIPT_URL} -o "$installer"'
             + ' && sh "$installer"',
         )
+
+
+def update_mise(context: UpdateContext) -> StepOutcome:
+    context.section("Updating Mise Packages 📦")
+    mise = str(mise_executable())
+    context.run([mise, "self-update", "--yes"], environment=PREBUILT_BINARIES_ONLY)
+    context.run([mise, "upgrade", "--yes"], environment=PREBUILT_BINARIES_ONLY)
+    return StepOutcome.UPDATED
+
+
+MISE_UPDATE = UpdateStep("mise", update_mise, requires=(MISE_IS_INSTALLED,))

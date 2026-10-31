@@ -14,10 +14,10 @@ from devstack.rich_reporter import RichReporter
 from devstack.run_settings import RunSettings, configure_run_settings
 from devstack.runner import RunOptions, run_components
 from devstack.sudo import SudoUnavailableError, obtain_sudo_password
-from devstack.updates import UPDATE_STEPS
 from devstack.updates.check import check_updates
 from devstack.updates.context import TerminalUpdateContext
-from devstack.updates.runner import run_update_steps
+from devstack.updates.registry import all_update_steps
+from devstack.updates.runner import plan_update_steps, run_update_steps
 
 
 @click.group()
@@ -120,22 +120,44 @@ def list_components() -> None:
 
 @cli.command()
 @click.argument("step_names", nargs=-1)
+@click.option("-n", "--dry-run", is_flag=True, help="Show the plan and stop.")
 @click.option("-b", "--bump", is_flag=True, help="Bump versions of locked components.")
-@click.option("-y", "--yes", is_flag=True, help="Assume yes for all prompts.")
-def update(step_names: tuple[str, ...], bump: bool, yes: bool) -> None:
+@click.option("-y", "--yes", is_flag=True, help="Skip the confirmation prompt.")
+def update(step_names: tuple[str, ...], dry_run: bool, bump: bool, yes: bool) -> None:
     """Update the system and the tools (default: all STEP_NAMES)."""
-    known_names = [step.name for step in UPDATE_STEPS]
+    all_steps = all_update_steps()
+    known_names = [step.name for step in all_steps]
     unknown_names = [name for name in step_names if name not in known_names]
     if unknown_names:
         raise click.UsageError(
             f"Unknown steps: {', '.join(unknown_names)}"
             + f" (known: {', '.join(known_names)})"
         )
-    steps = [step for step in UPDATE_STEPS if not step_names or step.name in step_names]
+    plan = plan_update_steps(
+        [step for step in all_steps if not step_names or step.name in step_names]
+    )
 
     console = Console()
+    for unavailable in plan.unavailable:
+        console.print(f"[yellow]![/] {unavailable.name} skipped: {unavailable.reason}")
+    if not plan.steps:
+        console.print("Nothing to update")
+        raise SystemExit(0)
+    console.print(f"Will update: {', '.join(step.name for step in plan.steps)}")
+    if dry_run:
+        raise SystemExit(0)
+
     context = TerminalUpdateContext(console, assume_yes=yes, bump_versions=bump)
-    succeeded = run_update_steps(steps, context, console)
+    if not yes:
+        try:
+            confirmed = context.confirm("Proceed?")
+        except EOFError:
+            console.print("Cannot ask for confirmation without a terminal, use --yes.")
+            raise SystemExit(1) from None
+        if not confirmed:
+            raise SystemExit(1)
+
+    succeeded = run_update_steps(plan.steps, context, console)
     if succeeded and not step_names:
         console.print("\n[green]✔[/] All updates completed")
     raise SystemExit(0 if succeeded else 1)
@@ -153,7 +175,7 @@ def update(step_names: tuple[str, ...], bump: bool, yes: bool) -> None:
 def check(reminder_days: int, notify: bool) -> None:
     """Show when each update step last ran."""
     check_updates(
-        UPDATE_STEPS,
+        all_update_steps(),
         Console(),
         reminder_time=timedelta(days=reminder_days),
         notify=notify,

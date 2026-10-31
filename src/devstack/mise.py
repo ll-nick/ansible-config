@@ -7,12 +7,16 @@ from gevent import subprocess
 from devstack.commands import run_command
 from devstack.json_settings import parse_json_object
 from devstack.links import symlink_file
+from devstack.requirement import Requirement
 
 MISE_INSTALL_SCRIPT_URL = "https://mise.jdx.dev/install.sh"
 
 
 def mise_executable() -> Path:
     return Path.home() / ".local" / "bin" / "mise"
+
+
+MISE_IS_INSTALLED = Requirement("mise", lambda: mise_executable().exists())
 
 
 def mise_config_directory() -> Path:

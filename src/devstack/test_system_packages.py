@@ -1,7 +1,8 @@
 import pytest
 
 from devstack import system_packages
-from devstack.component import Component, Requirement
+from devstack.component import Component
+from devstack.requirement import Requirement
 from devstack.system_packages import (
     SYSTEM_PACKAGES_COMPONENT_NAME,
     UnsupportedDistributionError,

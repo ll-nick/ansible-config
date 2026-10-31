@@ -8,10 +8,16 @@ from typing import final
 import pytest
 from rich.console import Console
 
-from devstack.component import Requirement
-from devstack.updates import UPDATE_STEPS
+from devstack.component import Component
+from devstack.components.mise.mise import update_mise
+from devstack.requirement import Requirement
 from devstack.updates.check import collect_freshness, describe_age
-from devstack.updates.runner import run_update_steps
+from devstack.updates.registry import (
+    CORE_UPDATE_STEPS,
+    all_update_steps,
+    component_update_steps,
+)
+from devstack.updates.runner import plan_update_steps, run_update_steps
 from devstack.updates.step import (
     CommandFailedError,
     StepOutcome,
@@ -19,15 +25,13 @@ from devstack.updates.step import (
     UpdateStep,
 )
 from devstack.updates.steps import system
-from devstack.updates.steps.mise import update_mise
 from devstack.updates.timestamps import last_update, record_update
 from devstack.updates.version_bump import commit_and_offer_push
 
 
 @final
 class RecordingContext:
-    def __init__(self, *, assume_yes: bool = False, answers: bool = True) -> None:
-        self.assume_yes: bool = assume_yes
+    def __init__(self, *, answers: bool = True) -> None:
         self.bump_versions: bool = False
         self.answers: bool = answers
         self.nothing_staged: bool = False
@@ -69,9 +73,59 @@ def isolated_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_step_names_are_unique() -> None:
-    names = [step.name for step in UPDATE_STEPS]
+    names = [step.name for step in all_update_steps()]
 
     assert len(names) == len(set(names))
+
+
+def test_core_steps_run_before_component_steps_and_mise_before_its_dependents() -> None:
+    names = [step.name for step in all_update_steps()]
+
+    assert names[: len(CORE_UPDATE_STEPS)] == [step.name for step in CORE_UPDATE_STEPS]
+    assert names.index("mise") < names.index("tmux")
+    assert names.index("mise") < names.index("neovim")
+
+
+def test_a_component_step_needs_its_component_to_apply_here() -> None:
+    not_applicable = Requirement("another machine", lambda: False)
+    components = (
+        Component(
+            "first",
+            lambda: None,
+            requires=(not_applicable,),
+            update=UpdateStep("first", lambda _: StepOutcome.UPDATED),
+        ),
+        Component("second", lambda: None),
+    )
+
+    (step,) = component_update_steps(components)
+
+    assert step.unmet_requirement() == not_applicable
+
+
+def test_disabled_and_impossible_steps_are_left_out_of_the_plan(
+    tmp_path: Path,
+) -> None:
+    skip_file = tmp_path / ".config/stk/skip"
+    skip_file.parent.mkdir(parents=True)
+    skip_file.write_text("disabled\n")
+    steps = [
+        UpdateStep("available", lambda _: StepOutcome.UPDATED),
+        UpdateStep("disabled", lambda _: StepOutcome.UPDATED),
+        UpdateStep(
+            "impossible",
+            lambda _: StepOutcome.UPDATED,
+            requires=(Requirement("a thing", lambda: False),),
+        ),
+    ]
+
+    plan = plan_update_steps(steps)
+
+    assert [step.name for step in plan.steps] == ["available"]
+    assert {entry.name: entry.reason for entry in plan.unavailable} == {
+        "disabled": "disabled in ~/.config/stk/skip",
+        "impossible": "needs a thing",
+    }
 
 
 def test_timestamps_round_trip() -> None:
@@ -126,32 +180,26 @@ def test_skipped_steps_are_not_reported(tmp_path: Path) -> None:
     assert names == ["mise"]
 
 
-def test_a_declined_step_is_not_recorded_and_a_failure_does_not_stop_the_rest() -> None:
+def test_a_skipped_step_is_not_recorded_and_a_failure_does_not_stop_the_rest() -> None:
     def failing(_context: UpdateContext) -> StepOutcome:
         raise CommandFailedError(["boom"], 1)
 
     steps = [
-        UpdateStep("declined", lambda _: StepOutcome.DECLINED),
+        UpdateStep("skipped", lambda _: StepOutcome.SKIPPED),
         UpdateStep("failing", failing),
         UpdateStep("updated", lambda _: StepOutcome.UPDATED),
-        UpdateStep(
-            "unavailable",
-            lambda _: StepOutcome.UPDATED,
-            requires=(Requirement("a thing", lambda: False),),
-        ),
     ]
 
     succeeded = run_update_steps(steps, RecordingContext(), Console(quiet=True))
 
     assert not succeeded
-    assert last_update("declined") is None
+    assert last_update("skipped") is None
     assert last_update("failing") is None
-    assert last_update("unavailable") is None
     assert last_update("updated") is not None
 
 
-def test_mise_is_updated_with_prebuilt_binaries_and_confirmations() -> None:
-    context = RecordingContext(assume_yes=True)
+def test_mise_is_updated_with_prebuilt_binaries() -> None:
+    context = RecordingContext()
 
     assert update_mise(context) is StepOutcome.UPDATED
 
@@ -165,14 +213,7 @@ def test_mise_is_updated_with_prebuilt_binaries_and_confirmations() -> None:
     )
 
 
-def test_declining_runs_nothing() -> None:
-    context = RecordingContext(answers=False)
-
-    assert update_mise(context) is StepOutcome.DECLINED
-    assert context.commands == []
-
-
-def test_apt_upgrade_only_assumes_yes_when_asked(
+def test_apt_upgrade_runs_without_further_prompts(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
 
@@ -180,13 +221,13 @@ def test_apt_upgrade_only_assumes_yes_when_asked(
         return f"/usr/bin/{name}"
 
     monkeypatch.setattr(shutil, "which", fake_which)
-    context = RecordingContext(assume_yes=False)
+    context = RecordingContext()
 
     system.update_system(context)
 
     assert context.commands == [
         ["sudo", "apt", "update"],
-        ["sudo", "apt", "upgrade"],
+        ["sudo", "apt", "upgrade", "--yes"],
     ]
 
 

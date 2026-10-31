@@ -5,9 +5,10 @@ import pytest
 from click.testing import CliRunner
 
 from devstack import cli as cli_module
-from devstack.component import Component, Requirement
+from devstack.component import Component
 from devstack.plain_reporter import PlainReporter
 from devstack.reporting import ComponentOutcome, ComponentResult
+from devstack.requirement import Requirement
 from devstack.runner import RunOptions, run_components
 
 UNMET = Requirement("a display", lambda: False)

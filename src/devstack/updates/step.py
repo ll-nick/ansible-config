@@ -4,12 +4,12 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Protocol
 
-from devstack.component import Requirement, first_unmet_requirement
+from devstack.requirement import Requirement, first_unmet_requirement
 
 
 class StepOutcome(Enum):
     UPDATED = auto()
-    DECLINED = auto()
+    SKIPPED = auto()
 
 
 class CommandFailedError(RuntimeError):
@@ -18,9 +18,6 @@ class CommandFailedError(RuntimeError):
 
 
 class UpdateContext(Protocol):
-    @property
-    def assume_yes(self) -> bool: ...
-
     @property
     def bump_versions(self) -> bool: ...
 

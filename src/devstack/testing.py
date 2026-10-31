@@ -2,8 +2,8 @@ import subprocess
 
 import pytest
 
-from devstack.component import Requirement
 from devstack.mise import mise_exec
+from devstack.requirement import Requirement
 
 
 def run_with_mise(*command: str) -> str:

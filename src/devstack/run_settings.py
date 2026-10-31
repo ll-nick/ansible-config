@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from devstack.component import Requirement
+from devstack.requirement import Requirement
 
 
 @dataclass(frozen=True)

@@ -13,15 +13,15 @@ from devstack.components.kitty.kitty import apply_kitty
 from devstack.components.lazygit.lazygit import apply_lazygit
 from devstack.components.leadr.leadr import apply_leadr
 from devstack.components.locale.locale import apply_locale
-from devstack.components.mise.mise import apply_mise
-from devstack.components.neovim.neovim import apply_neovim
+from devstack.components.mise.mise import MISE_UPDATE, apply_mise
+from devstack.components.neovim.neovim import NEOVIM_UPDATE, apply_neovim
 from devstack.components.nerdfont.nerdfont import apply_nerdfont
 from devstack.components.nodejs.nodejs import apply_nodejs
 from devstack.components.nushell.nushell import apply_nushell
 from devstack.components.ripgrep.ripgrep import apply_ripgrep
 from devstack.components.starship.starship import apply_starship
 from devstack.components.stk.stk import apply_stk
-from devstack.components.tmux.tmux import apply_tmux
+from devstack.components.tmux.tmux import TMUX_UPDATE, apply_tmux
 from devstack.components.uv.uv import apply_uv
 from devstack.components.zoxide.zoxide import apply_zoxide
 from devstack.machine import (
@@ -34,7 +34,7 @@ from devstack.machine import (
 from devstack.run_settings import PRIVILEGED
 
 COMPONENTS: tuple[Component, ...] = (
-    Component("mise", apply_mise),
+    Component("mise", apply_mise, update=MISE_UPDATE),
     Component("bash", apply_bash),
     Component(
         "git",
@@ -64,6 +64,7 @@ COMPONENTS: tuple[Component, ...] = (
         apply_neovim,
         depends_on=("mise", "bash", "nushell", "fd", "ripgrep", "nodejs"),
         system_packages=("gcc", "make", "unzip"),
+        update=NEOVIM_UPDATE,
     ),
     Component("leadr", apply_leadr, depends_on=("mise", "bash", "nushell")),
     Component("claude", apply_claude, depends_on=("mise", "bash", "nushell")),
@@ -72,6 +73,7 @@ COMPONENTS: tuple[Component, ...] = (
         apply_tmux,
         depends_on=("mise", "bash", "nushell"),
         system_packages=("xclip",),
+        update=TMUX_UPDATE,
     ),
     Component(
         "inkflow",

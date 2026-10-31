@@ -1,20 +1,8 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
-class Requirement:
-    description: str
-    is_met: Callable[[], bool]
-
-
-def first_unmet_requirement(
-    requirements: tuple[Requirement, ...],
-) -> Requirement | None:
-    for requirement in requirements:
-        if not requirement.is_met():
-            return requirement
-    return None
+from devstack.requirement import Requirement, first_unmet_requirement
+from devstack.updates.step import UpdateStep
 
 
 @dataclass(frozen=True)
@@ -24,6 +12,7 @@ class Component:
     depends_on: tuple[str, ...] = ()
     requires: tuple[Requirement, ...] = ()
     system_packages: tuple[str, ...] = ()
+    update: UpdateStep | None = None
 
     def unmet_requirement(self) -> Requirement | None:
         return first_unmet_requirement(self.requires)

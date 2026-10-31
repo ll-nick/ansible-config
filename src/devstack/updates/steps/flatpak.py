@@ -1,6 +1,6 @@
 import shutil
 
-from devstack.component import Requirement
+from devstack.requirement import Requirement
 from devstack.updates.step import StepOutcome, UpdateContext
 
 FLATPAK_IS_INSTALLED = Requirement(
@@ -10,7 +10,5 @@ FLATPAK_IS_INSTALLED = Requirement(
 
 def update_flatpak(context: UpdateContext) -> StepOutcome:
     context.section("Updating Flatpak Packages 📦")
-    if not context.confirm("Update all Flatpak packages?"):
-        return StepOutcome.DECLINED
-    context.run(["flatpak", "update", *(["--assumeyes"] if context.assume_yes else [])])
+    context.run(["flatpak", "update", "--assumeyes"])
     return StepOutcome.UPDATED

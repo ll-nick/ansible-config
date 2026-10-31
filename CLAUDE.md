@@ -64,8 +64,10 @@ Privileged operations use `_sudo=True`; everything else must work without root.
 Components are reported through the `Reporter` protocol (`reporting.py`): `RichReporter` on terminals, `PlainReporter` otherwise, always combined with `LogFileReporter`.
 Keep success output minimal and never hide errors.
 
-**Update steps** (`updates/`) are the second registered unit besides components.
-They are interactive and run sequentially against the terminal (`stk update`): system, mise, dotfiles (pull this repo and re-run `stk apply`), tmux, neovim, flatpak.
+**Update steps** (`updates/`) run sequentially against the terminal (`stk update`).
+A component can carry an `update` step (`Component.update`), which only applies where the component does.
+The core steps (`system`, `dotfiles`, `flatpak` in `updates/registry.py`) belong to no component and run first.
+Like `stk apply`, `stk update` shows its plan and asks once; the steps themselves never prompt (except before pushing a version bump).
 `stk check` reports their timestamps.
 Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake.
 

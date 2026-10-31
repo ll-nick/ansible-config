@@ -4,13 +4,16 @@ from pathlib import Path
 from devstack.commands import run_command
 from devstack.github import clone_github_repository, clone_repository
 from devstack.machine import JOY_HOSTNAME, has_systemd, hostname
-from devstack.mise import install_mise_tools, mise_exec
+from devstack.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
+from devstack.requirement import Requirement
 from devstack.shells import add_bash_snippet, add_nushell_snippet
 from devstack.systemd import enable_user_unit, install_user_unit_file
+from devstack.updates.step import StepOutcome, UpdateContext, UpdateStep
 
 FILES = Path(__file__).resolve().parent / "files"
 TMUX_PLUGIN_MANAGER_URL = "https://github.com/tmux-plugins/tpm"
+PLUGIN_UPDATER = Path.home() / ".config/tmux/plugins/tpm/bin/update_plugins"
 
 
 @component_deploy("tmux")
@@ -38,3 +41,19 @@ def apply_tmux() -> None:
     if has_systemd() and hostname() != JOY_HOSTNAME:
         install_user_unit_file(FILES / "tmux.service")
         enable_user_unit("tmux")
+
+
+def update_tmux(context: UpdateContext) -> StepOutcome:
+    context.section("Updating Tmux Plugins 🔧")
+    context.run(mise_exec(str(PLUGIN_UPDATER), "all"))
+    return StepOutcome.UPDATED
+
+
+TMUX_UPDATE = UpdateStep(
+    "tmux",
+    update_tmux,
+    requires=(
+        MISE_IS_INSTALLED,
+        Requirement("the tmux plugin manager", PLUGIN_UPDATER.exists),
+    ),
+)

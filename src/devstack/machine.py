@@ -6,7 +6,7 @@ from pathlib import Path
 
 from gevent import subprocess
 
-from devstack.component import Requirement
+from devstack.requirement import Requirement
 
 OS_RELEASE_PATH = Path("/etc/os-release")
 SYSTEMD_RUNTIME_DIRECTORY = Path("/run/systemd/system")
