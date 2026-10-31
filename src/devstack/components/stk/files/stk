@@ -1,2 +1,4 @@
 #!/bin/sh
+# uv is installed to ~/.local/bin by the bootstrap, which non-login shells may lack
+PATH="$HOME/.local/bin:$PATH"
 exec uv run --quiet --no-dev --project "$HOME/.config/devstack" stk "$@"
