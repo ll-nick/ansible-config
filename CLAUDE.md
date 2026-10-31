@@ -37,10 +37,10 @@ and is registered in `components/__init__.py` as a `Component` with
 Typical component: install via mise (`install_mise_tools`), clone a config repo from GitHub,
 link files and shell snippets, generate init scripts.
 
-**Components must not import pyinfra.**
-A nested `components/ruff.toml` bans it.
-All pyinfra use is confined to the helper modules (`file_copy`, `commands`, `shells`, `mise`, `links`, `github`, `generated_file`, `file_edit`, `systemd`, `dconf`, `archives`, `json_settings`, `system_packages`) and the engine (`runner`, `pyinfra_adapters`).
-Add a helper rather than calling pyinfra from a component.
+**pyinfra use.**
+Components may call pyinfra directly.
+Shared pyinfra use lives in helper modules (`file_copy`, `commands`, `shells`, `mise`, `links`, `github`, `generated_file`, `file_edit`, `systemd`, `dconf`, `archives`, `json_settings`, `system_packages`) and the engine (`runner`, `pyinfra_adapters`).
+Add a helper when it removes duplication or makes a component easier to read, not to hide pyinfra.
 
 **Two phases.**
 pyinfra first prepares a component (runs facts, evaluates the Python in `apply_*`, queues operations), then executes the queued operations.
