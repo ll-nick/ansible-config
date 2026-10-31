@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from devstack.file_copy import copy_file
+from devstack.links import link_repository_file
 from devstack.machine import git_version
 from devstack.mise import install_mise_tools
 from devstack.pyinfra_adapters import component_deploy
@@ -19,9 +19,9 @@ FIRST_VERSION_WITH_ZDIFF3 = (2, 35)
 def apply_git() -> None:
     config_directory = Path.home() / ".config" / "git"
 
-    copy_file(FILES / "gitconfig", Path.home() / ".gitconfig")
+    link_repository_file(FILES / "gitconfig", Path.home() / ".gitconfig")
     for name in CONFIG_FILE_NAMES:
-        copy_file(FILES / name, config_directory / name)
+        link_repository_file(FILES / name, config_directory / name)
 
     install_mise_tools("git", FILES / "mise.toml")
 
@@ -32,4 +32,6 @@ def apply_git() -> None:
         if supports_zdiff3
         else "conflict-style.gitconfig"
     )
-    copy_file(FILES / conflict_style, config_directory / "conflict-style.gitconfig")
+    link_repository_file(
+        FILES / conflict_style, config_directory / "conflict-style.gitconfig"
+    )

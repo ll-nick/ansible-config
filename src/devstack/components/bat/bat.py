@@ -2,7 +2,7 @@ import shlex
 from pathlib import Path
 
 from devstack.commands import run_command
-from devstack.file_copy import copy_file
+from devstack.links import link_repository_file
 from devstack.mise import install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
@@ -16,15 +16,15 @@ def apply_bat() -> None:
 
     install_mise_tools("bat", FILES / "mise.toml")
 
-    dark_theme = copy_file(
+    dark_theme = link_repository_file(
         FILES / "Catppuccin Mocha.tmTheme",
         config_directory / "themes" / "Catppuccin Mocha.tmTheme",
     )
-    light_theme = copy_file(
+    light_theme = link_repository_file(
         FILES / "Catppuccin Latte.tmTheme",
         config_directory / "themes" / "Catppuccin Latte.tmTheme",
     )
-    config = copy_file(FILES / "config", config_directory / "config")
+    config = link_repository_file(FILES / "config", config_directory / "config")
 
     run_command(
         "Rebuild bat cache",

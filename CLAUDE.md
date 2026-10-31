@@ -35,7 +35,7 @@ Each module exposes an `apply_<name>` function decorated with `@component_deploy
 and is registered in `components/__init__.py` as a `Component` with
 `depends_on`, `requires` (machine conditions, see `machine.py`) and `system_packages`.
 Typical component: install via mise (`install_mise_tools`), clone a config repo from GitHub,
-copy files and shell snippets, generate init scripts.
+link files and shell snippets, generate init scripts.
 
 **Components must not import pyinfra.**
 A nested `components/ruff.toml` bans it.
@@ -78,6 +78,10 @@ The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from t
 - Tests are colocated with the code; component tests verify the applied result (e.g. the tool runs, a generated file exists) and use `skip_unless(requirement)` when the component is not applicable everywhere.
   Tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
 - Prefer separate files in a component's `files/` over inline content.
+- Files from `files/` are symlinked (`link_repository_file`), not copied, so edits on the machine land in the repository.
+  They point into the tree `stk` runs from, normally `~/.config/devstack`; applying from another clone re-points them.
+  The executable bit comes from git, so scripts need mode 755 in the index.
+  systemd units are copied instead, and files a tool rewrites itself are merged (`claude` settings).
 - Helpers write files with explicit modes (`644`, `755`) so results do not depend on the umask.
 - Linting policy: fix properly first, then a line-level ignore with a reason, never disable rules globally.
   Untyped pyinfra/gevent calls are confined to a few adapter modules with line-level ignores.

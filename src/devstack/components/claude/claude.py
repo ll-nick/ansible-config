@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from devstack.file_copy import EXECUTABLE_MODE, copy_file
 from devstack.json_settings import write_merged_json_settings
+from devstack.links import link_repository_file
 from devstack.mise import install_mise_tools
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
@@ -15,14 +15,12 @@ def apply_claude() -> None:
 
     install_mise_tools("claude", FILES / "mise.toml")
 
-    copy_file(FILES / "CLAUDE.md", config_directory / "CLAUDE.md")
-    copy_file(
+    link_repository_file(FILES / "CLAUDE.md", config_directory / "CLAUDE.md")
+    link_repository_file(
         FILES / "statusline-command.sh", config_directory / "statusline-command.sh"
     )
-    copy_file(
-        FILES / "fetch-usage-limits.sh",
-        config_directory / "fetch-usage-limits.sh",
-        mode=EXECUTABLE_MODE,
+    link_repository_file(
+        FILES / "fetch-usage-limits.sh", config_directory / "fetch-usage-limits.sh"
     )
 
     # Merged with the existing settings, as Claude Code writes to this file itself

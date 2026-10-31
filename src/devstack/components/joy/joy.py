@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from devstack.file_copy import copy_file, ensure_file_exists
+from devstack.file_copy import ensure_file_exists
+from devstack.links import link_repository_file
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet
 from devstack.systemd import USER_UNIT_DIRECTORY, disable_user_unit
@@ -15,8 +16,10 @@ def apply_joy() -> None:
     # Silences the setup hint of the shared dotfiles
     ensure_file_exists(Path.home() / ".dotfiles")
 
-    copy_file(FILES / "joy.gitconfig", Path.home() / ".config/git/local.gitconfig")
-    copy_file(FILES / "stk-skip", Path.home() / ".config/stk/skip")
+    link_repository_file(
+        FILES / "joy.gitconfig", Path.home() / ".config/git/local.gitconfig"
+    )
+    link_repository_file(FILES / "stk-skip", Path.home() / ".config/stk/skip")
 
     # The tmux service stops the tmux server, and everything running in it,
     # when the last session of the user ends

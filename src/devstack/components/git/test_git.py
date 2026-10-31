@@ -9,6 +9,15 @@ def test_the_git_config_is_valid() -> None:
     subprocess.run(["git", "config", "--list"], capture_output=True, check=True)
 
 
+def test_the_git_config_is_linked_into_the_repository() -> None:
+    gitconfig = Path.home() / ".gitconfig"
+
+    assert gitconfig.is_symlink()
+    assert (
+        gitconfig.resolve() == Path(__file__).resolve().parent / "files" / "gitconfig"
+    )
+
+
 def test_delta_runs() -> None:
     assert run_with_mise("delta", "--version").strip()
 

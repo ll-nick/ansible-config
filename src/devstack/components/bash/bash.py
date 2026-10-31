@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from devstack.file_copy import copy_file
 from devstack.github import clone_github_repository
-from devstack.links import link_file
+from devstack.links import link_file, link_repository_file
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet
 
@@ -35,5 +34,5 @@ def apply_bash() -> None:
             config_directory / symbolic_link.target_name,
         )
 
-    copy_file(FILES / "inputrc", Path.home() / ".inputrc")
+    link_repository_file(FILES / "inputrc", Path.home() / ".inputrc")
     add_bash_snippet(FILES / "1_mise.bash")

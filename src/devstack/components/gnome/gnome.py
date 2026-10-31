@@ -6,7 +6,7 @@ from gevent import subprocess
 from devstack.archives import download_and_extract_zip
 from devstack.commands import run_command
 from devstack.dconf import DconfSetting, apply_dconf_settings
-from devstack.file_copy import EXECUTABLE_MODE, copy_file
+from devstack.links import link_repository_file
 from devstack.machine import distribution_ids
 from devstack.mise import install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
@@ -113,8 +113,8 @@ def apply_gnome() -> None:
 
     light_wallpaper = home / "Pictures/wallpaper-light.png"
     dark_wallpaper = home / "Pictures/wallpaper-dark.png"
-    copy_file(FILES / "wallpaper-light.png", light_wallpaper)
-    copy_file(FILES / "wallpaper-dark.png", dark_wallpaper)
+    link_repository_file(FILES / "wallpaper-light.png", light_wallpaper)
+    link_repository_file(FILES / "wallpaper-dark.png", dark_wallpaper)
     apply_dconf_settings(
         [
             DconfSetting(
@@ -140,7 +140,7 @@ def apply_gnome() -> None:
 
     # Lets others who use this account switch to plain GNOME and back
     paperwm_toggle = home / ".local/bin/paperwm-toggle"
-    copy_file(FILES / "paperwm-toggle", paperwm_toggle, mode=EXECUTABLE_MODE)
+    link_repository_file(FILES / "paperwm-toggle", paperwm_toggle)
     toggle_key = PAPERWM_TOGGLE_KEYBINDING_KEY
     apply_dconf_settings(
         [

@@ -67,7 +67,7 @@ Each one lives in `src/devstack/components/<name>/` together with its files and 
 ```text
 neovim/
 ├── neovim.py        what to do
-├── files/           configs and snippets that get copied to the machine
+├── files/           configs and snippets that get symlinked into the machine
 └── test_neovim.py   checks that the result works
 ```
 
