@@ -1,11 +1,13 @@
 import logging
 import re
+import sys
 import time
 import traceback
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import override
 
+from pyinfra import logger as pyinfra_logger
 from pyinfra.api.connect import connect_all
 from pyinfra.api.exceptions import PyinfraError
 from pyinfra.api.operations import run_ops
@@ -36,7 +38,6 @@ from devstack.reporting import (
 from devstack.run_settings import RunSettings, configure_run_settings
 from devstack.scheduler import schedule_components
 from devstack.system_packages import with_system_packages
-from pyinfra import logger as pyinfra_logger
 
 HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
 NO_HOSTS_REMAINING_MESSAGE = "No hosts remaining!"
@@ -289,7 +290,7 @@ def _run_components(
     reporter.plan(component_plans, options.dry_run or needs_confirmation)
     if options.dry_run:
         return EXIT_SUCCESS
-    if needs_confirmation and not reporter.confirm():
+    if needs_confirmation and not _confirmed(reporter):
         return EXIT_FAILURE
 
     def execute(component: Component) -> ComponentResult:
@@ -314,6 +315,17 @@ def _run_components(
     if options.fail_on_change and changed_anything:
         return EXIT_CHANGES_DETECTED
     return EXIT_SUCCESS
+
+
+def _confirmed(reporter: Reporter) -> bool:
+    try:
+        return reporter.confirm()
+    except EOFError:
+        print(
+            "Cannot ask for confirmation without a terminal, use --yes.",
+            file=sys.stderr,
+        )
+        return False
 
 
 def _plan_task(component: Component) -> Callable[[], ComponentPlan]:

@@ -1,9 +1,0 @@
-- name: Copy mise config
-  ansible.builtin.copy:
-    src: mise.toml
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/mise/conf.d/ansible.toml"
-
-- name: Install
-  ansible.builtin.command:
-    cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise install"
-  changed_when: false

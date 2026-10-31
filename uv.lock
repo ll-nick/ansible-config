@@ -237,7 +237,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.5.0" },
     { name = "gevent", specifier = ">=26.9.0" },
-    { name = "pyinfra", specifier = ">=3.10.0" },
+    { name = "pyinfra", specifier = ">=3.10.0,<4" },
     { name = "rich", specifier = ">=15.0.0" },
 ]
 

@@ -1,11 +1,18 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# Bootstraps devstack on a fresh machine.
+# Only needs curl and git (installed on Debian and Ubuntu if missing);
+# everything else is set up by devstack itself.
+#
+# Can be piped into a shell: curl <url> | sh
 
-set -e
+set -eu
+
+REPOSITORY_URL="https://github.com/ll-nick/devstack.git"
+CHECKOUT_DIRECTORY="$HOME/.config/devstack"
 
 NO_CONFIRM=false
 PRIVILEGED=false
-PLAYBOOK_PATH=""
-TAGS=""
+BRANCH=""
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
 COLOR_INFO='\033[0;36m'    # Cyan
@@ -19,25 +26,29 @@ print_help() {
 Usage: $(basename "$0") [OPTIONS]
 
 Options:
-  -y, --no-confirm          Automatically answer yes to all prompts.
-  --privileged              Also run privileged tasks (requires sudo).
-  --playbook-path <dir>     Run ansible-playbook from a local directory instead of ansible-pull.
-  --tags <tags>             Limit execution to roles/tasks with the given tags (comma-separated).
-  -h, --help                Show this help message and exit.
+  -y, --no-confirm      Automatically answer yes to all prompts.
+  --privileged          Also apply the parts that need root (requires sudo).
+  --branch <name>       Check out this branch of the repository.
+  --repository <url>    Clone from this repository instead of the default.
+  -h, --help            Show this help message and exit.
 EOF
 }
 
 print_header() {
-    local title="$1"
-    local char_count
+    title="$1"
     char_count=$(printf '%s' "$title" | LC_ALL=C.UTF-8 wc -m)
-    local width=$((char_count + 3))
-    local top="╭$(printf '─%.0s' $(seq 1 $width))╮"
-    local bottom="╰$(printf '─%.0s' $(seq 1 $width))╯"
+    width=$((char_count + 3))
+    top="╭$(printf '─%.0s' $(seq 1 "$width"))╮"
+    bottom="╰$(printf '─%.0s' $(seq 1 "$width"))╯"
 
     printf "\n${COLOR_TITLE}%s${COLOR_RESET}\n" "$top"
     printf "${COLOR_TITLE}│${COLOR_RESET} %s ${COLOR_TITLE}│${COLOR_RESET}\n" "$title"
     printf "${COLOR_TITLE}%s${COLOR_RESET}\n" "$bottom"
+}
+
+fail() {
+    printf "  ${COLOR_ERROR}✖ %s${COLOR_RESET}\n" "$1"
+    exit 1
 }
 
 confirm() {
@@ -48,158 +59,96 @@ confirm() {
     printf "  ${COLOR_INFO}➤ %s${COLOR_RESET} [y/N] " "$1"
     # Reading from stderr allows to execute the script by piping it to sh
     # See https://stackoverflow.com/a/54396662
-    read response <&2
+    read -r response <&2
     case "$response" in
-        [yY][eE][sS] | [yY])
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
+        [yY][eE][sS] | [yY]) return 0 ;;
+        *) return 1 ;;
     esac
 }
 
-detect_distro() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        DISTRO=$ID
-        printf "  ${COLOR_SUCCESS}✔ Detected distribution: %s${COLOR_RESET}\n" "$DISTRO"
-    else
-        printf "  ${COLOR_ERROR}✖ Cannot determine the distribution. Exiting.${COLOR_RESET}\n"
-        exit 1
-    fi
+is_debian_based() {
+    [ -f /etc/os-release ] && grep -qiE '^ID(_LIKE)?=.*(debian|ubuntu)' /etc/os-release
 }
 
 ensure_system_package() {
-    PACKAGE=$1
+    package="$1"
 
-    if command -v $PACKAGE > /dev/null 2>&1; then
-        printf "  ${COLOR_SUCCESS}✔ %s is already installed.${COLOR_RESET}\n" "$PACKAGE"
+    if command -v "$package" > /dev/null 2>&1; then
+        printf "  ${COLOR_SUCCESS}✔ %s is already installed.${COLOR_RESET}\n" "$package"
         return
     fi
 
-    printf "  ${COLOR_WARN}⚠ %s is not installed.${COLOR_RESET}\n" "$PACKAGE"
-    if ! confirm "Do you want to install $PACKAGE? This requires sudo."; then
-        printf "  ${COLOR_ERROR}✖ ERROR: %s is required but not installed.${COLOR_RESET}\n" "$PACKAGE"
-        exit 1
+    printf "  ${COLOR_WARN}⚠ %s is not installed.${COLOR_RESET}\n" "$package"
+    is_debian_based || fail "Cannot install $package on this distribution, please install it manually."
+    confirm "Do you want to install $package? This requires sudo." \
+        || fail "$package is required but not installed."
+
+    sudo apt-get update
+    sudo apt-get install -y "$package"
+    command -v "$package" > /dev/null 2>&1 || fail "Failed to install $package."
+    printf "  ${COLOR_SUCCESS}✔ %s installed successfully.${COLOR_RESET}\n" "$package"
+}
+
+ensure_uv() {
+    if command -v uv > /dev/null 2>&1; then
+        printf "  ${COLOR_SUCCESS}✔ uv is already installed.${COLOR_RESET}\n"
+        return
     fi
 
-    printf "  ${COLOR_INFO}⬇ Installing %s...${COLOR_RESET}\n" "$PACKAGE"
-    if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
-        sudo apt-get update
-        sudo apt-get install -y $PACKAGE
-    elif [ "$DISTRO" = "arch" ]; then
-        sudo pacman -Syu --noconfirm $PACKAGE
+    printf "  ${COLOR_WARN}⚠ uv is not installed.${COLOR_RESET}\n"
+    confirm "Do you want to install uv?" || fail "uv is required but not installed."
+
+    printf "  ${COLOR_INFO}⬇ Installing uv...${COLOR_RESET}\n"
+    # The shell configuration is managed by devstack, so the installer must not touch it
+    curl -LsSf https://astral.sh/uv/install.sh | UV_NO_MODIFY_PATH=1 sh
+    command -v uv > /dev/null 2>&1 || fail "uv installation failed."
+}
+
+ensure_checkout() {
+    if [ -d "$CHECKOUT_DIRECTORY/.git" ]; then
+        printf "  ${COLOR_INFO}⬇ Updating %s...${COLOR_RESET}\n" "$CHECKOUT_DIRECTORY"
+        git -C "$CHECKOUT_DIRECTORY" fetch origin
+        if [ -n "$BRANCH" ]; then
+            git -C "$CHECKOUT_DIRECTORY" checkout "$BRANCH"
+        fi
+        git -C "$CHECKOUT_DIRECTORY" pull --ff-only
     else
-        printf "  ${COLOR_ERROR}✖ Unsupported distribution: %s${COLOR_RESET}\n" "$DISTRO"
-        exit 1
-    fi
-
-    if ! command -v "$PACKAGE" > /dev/null 2>&1; then
-        printf "  ${COLOR_ERROR}✖ ERROR: Failed to install %s.${COLOR_RESET}\n" "$PACKAGE"
-        exit 1
-    fi
-
-    printf "  ${COLOR_SUCCESS}✔ %s installed successfully.${COLOR_RESET}\n" "$PACKAGE"
-}
-
-ensure_mise() {
-    if command -v mise > /dev/null 2>&1; then
-        printf "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}\n"
-        return
-    fi
-
-    printf "  ${COLOR_WARN}⚠ mise is not installed.${COLOR_RESET}\n"
-    if ! confirm "Do you want to install mise?"; then
-        printf "  ${COLOR_ERROR}✖ ERROR: mise is required but not installed.${COLOR_RESET}\n"
-        exit 1
-    fi
-
-    printf "  ${COLOR_INFO}⬇ Installing mise...${COLOR_RESET}\n"
-    curl https://mise.run | sh
-
-    if [ ! -f "$HOME/.local/bin/mise" ]; then
-        printf "  ${COLOR_ERROR}✖ ERROR: mise installation failed.${COLOR_RESET}\n"
-        exit 1
+        printf "  ${COLOR_INFO}⬇ Cloning into %s...${COLOR_RESET}\n" "$CHECKOUT_DIRECTORY"
+        mkdir -p "$(dirname "$CHECKOUT_DIRECTORY")"
+        if [ -n "$BRANCH" ]; then
+            git clone --branch "$BRANCH" "$REPOSITORY_URL" "$CHECKOUT_DIRECTORY"
+        else
+            git clone "$REPOSITORY_URL" "$CHECKOUT_DIRECTORY"
+        fi
     fi
 }
 
-activate_mise() {
-    eval "$($HOME/.local/bin/mise activate bash --shims)"
-    printf "  ${COLOR_SUCCESS}✔ mise activated.${COLOR_RESET}\n"
-}
+run_devstack() {
+    confirm "Do you wish to apply the configuration?" || fail "Nothing applied."
 
-ensure_mise_packages() {
-    local CONF_D="$HOME/.config/mise/conf.d"
-
-    if command -v ansible > /dev/null 2>&1; then
-        printf "  ${COLOR_SUCCESS}✔ Required tools are already installed via mise.${COLOR_RESET}\n"
-        return
-    fi
-
-    if ! confirm "Do you want to install required tools (uv, ansible) using mise?"; then
-        printf "  ${COLOR_ERROR}✖ ERROR: Required tools are not installed.${COLOR_RESET}\n"
-        exit 1
-    fi
-
-    mkdir -p "$CONF_D"
-
-    # Inlined because this script may run via curl without the repo; keep in sync with roles/{uv,ansible}/files/mise.toml
-    cat > "$CONF_D/uv.toml" << 'EOF'
-[tools]
-uv = "latest"
-EOF
-    cat > "$CONF_D/ansible.toml" << 'EOF'
-[tools]
-ansible = { version = "latest", with = ["psutil"], uvx_args = "--managed-python --python 3.14" }
-EOF
-
-    printf "  ${COLOR_INFO}⬇ Installing mise packages...${COLOR_RESET}\n"
-    mise install
-    printf "  ${COLOR_SUCCESS}✔ Required tools installed.${COLOR_RESET}\n"
-}
-
-install_ansible_galaxy_collection() {
-    if ansible-galaxy collection list | grep -q 'community.general'; then
-        printf "  ${COLOR_SUCCESS}✔ community.general collection is already installed.${COLOR_RESET}\n"
-        return
-    fi
-
-    printf "  ${COLOR_INFO}⬇ Installing community.general collection...${COLOR_RESET}\n"
-    ansible-galaxy collection install community.general
-}
-
-run_ansible() {
-    if ! confirm "Do you wish to execute the playbook?"; then
-        printf "  ${COLOR_WARN}⚠ Skipping ansible execution.${COLOR_RESET}\n"
-        exit 1
-    fi
-
-    printf "\n  💬 The playbook installs many tools at the user level.\n\
-     Some require sudo for system-wide installation.\n\
-     Running without sudo expects those packages pre-installed.\n"
+    printf "\n  💬 Most tools are installed at the user level.\n\
+     A few system packages require sudo.\n\
+     Without it, those packages are expected to be installed already.\n"
 
     if [ "$NO_CONFIRM" = false ] && [ "$PRIVILEGED" = false ]; then
-        if confirm "Do you want to also run privileged tasks (requires sudo)?"; then
+        if confirm "Do you want to also apply the privileged parts (requires sudo)?"; then
             PRIVILEGED=true
         fi
     fi
 
-    ANSIBLE_FLAGS=()
+    set -- apply
+    [ "$NO_CONFIRM" = true ] && set -- "$@" --yes
+    [ "$PRIVILEGED" = true ] && set -- "$@" --privileged
 
-    [ -n "$TAGS" ] && ANSIBLE_FLAGS+=(--tags "$TAGS")
-    [ "$PRIVILEGED" = true ] && ANSIBLE_FLAGS+=(-e '{"run_privileged": true}')
-    [ "$PRIVILEGED" = true ] && [ -z "${ANSIBLE_BECOME_PASS+x}" ] && ANSIBLE_FLAGS+=(-K)
-
-    if [ -n "$PLAYBOOK_PATH" ]; then
-        printf "  ${COLOR_INFO}📂 Running ansible-playbook from local path: %s${COLOR_RESET}\n" "$PLAYBOOK_PATH"
-        cd "$PLAYBOOK_PATH"
-        ansible-playbook local.yml "${ANSIBLE_FLAGS[@]}"
+    cd "$CHECKOUT_DIRECTORY"
+    # When piped into a shell, stdin is the script and must not be read by prompts
+    if [ -t 0 ]; then
+        uv run --quiet --no-dev stk "$@"
+    elif (: < /dev/tty) 2> /dev/null; then
+        uv run --quiet --no-dev stk "$@" < /dev/tty
     else
-        ansible-pull -U https://github.com/ll-nick/ansible-config.git "${ANSIBLE_FLAGS[@]}"
+        uv run --quiet --no-dev stk "$@" < /dev/null
     fi
-
-    printf "  ${COLOR_SUCCESS}✔ Ansible execution completed.${COLOR_RESET}\n"
 }
 
 main() {
@@ -213,20 +162,14 @@ main() {
                 PRIVILEGED=true
                 shift
                 ;;
-            --playbook-path)
-                if [ -z "$2" ]; then
-                    printf "${COLOR_ERROR}✖ --playbook-path requires a directory argument.${COLOR_RESET}\n"
-                    exit 1
-                fi
-                PLAYBOOK_PATH="$2"
+            --branch)
+                [ -n "${2:-}" ] || fail "--branch requires a branch name."
+                BRANCH="$2"
                 shift 2
                 ;;
-            --tags)
-                if [ -z "$2" ]; then
-                    printf "${COLOR_ERROR}✖ --tags requires a comma-separated list of tags.${COLOR_RESET}\n"
-                    exit 1
-                fi
-                TAGS="$2"
+            --repository)
+                [ -n "${2:-}" ] || fail "--repository requires a URL."
+                REPOSITORY_URL="$2"
                 shift 2
                 ;;
             -h | --help)
@@ -243,23 +186,18 @@ main() {
 
     export PATH="$HOME/.local/bin:$PATH"
 
-    print_header "🔍 Detecting Linux Distribution"
-    detect_distro
-
     print_header "📦 Checking system packages"
-    ensure_system_package "curl"
-    ensure_system_package "git"
+    ensure_system_package curl
+    ensure_system_package git
 
-    print_header "🔧 Checking mise installation"
-    ensure_mise
-    activate_mise
+    print_header "🔧 Checking uv"
+    ensure_uv
 
-    print_header "🧰 Checking mise packages"
-    ensure_mise_packages
-    install_ansible_galaxy_collection
+    print_header "📥 Fetching devstack"
+    ensure_checkout
 
-    print_header "🚀 Running ansible"
-    run_ansible
+    print_header "🚀 Applying devstack"
+    run_devstack
 
     printf "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
 }
