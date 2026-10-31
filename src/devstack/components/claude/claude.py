@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from devstack.json_settings import write_merged_json_settings
-from devstack.links import link_repository_file
+from devstack.links import symlink_file
 from devstack.mise import install_mise_tools
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
@@ -15,11 +15,11 @@ def apply_claude() -> None:
 
     install_mise_tools("claude", FILES / "mise.toml")
 
-    link_repository_file(FILES / "CLAUDE.md", config_directory / "CLAUDE.md")
-    link_repository_file(
+    symlink_file(FILES / "CLAUDE.md", config_directory / "CLAUDE.md")
+    symlink_file(
         FILES / "statusline-command.sh", config_directory / "statusline-command.sh"
     )
-    link_repository_file(
+    symlink_file(
         FILES / "fetch-usage-limits.sh", config_directory / "fetch-usage-limits.sh"
     )
 

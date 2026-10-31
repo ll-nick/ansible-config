@@ -39,7 +39,7 @@ link files and shell snippets, generate init scripts.
 
 **pyinfra use.**
 Components may call pyinfra directly.
-Shared pyinfra use lives in helper modules (`file_copy`, `commands`, `shells`, `mise`, `links`, `github`, `generated_file`, `file_edit`, `systemd`, `dconf`, `archives`, `json_settings`, `system_packages`) and the engine (`runner`, `pyinfra_adapters`).
+Shared pyinfra use lives in helper modules in `src/devstack/` and the engine (`runner`, `pyinfra_adapters`).
 Add a helper when it removes duplication or makes a component easier to read, not to hide pyinfra.
 
 **Two phases.**
@@ -78,7 +78,7 @@ The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from t
 - Tests are colocated with the code; component tests verify the applied result (e.g. the tool runs, a generated file exists) and use `skip_unless(requirement)` when the component is not applicable everywhere.
   Tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
 - Prefer separate files in a component's `files/` over inline content.
-- Files from `files/` are symlinked (`link_repository_file`), not copied, so edits on the machine land in the repository.
+- Files from `files/` are symlinked (`symlink_file`), not copied, so edits on the machine land in the repository.
   They point into the tree `stk` runs from, normally `~/.config/devstack`; applying from another clone re-points them.
   The executable bit comes from git, so scripts need mode 755 in the index.
   systemd units are copied instead, and files a tool rewrites itself are merged (`claude` settings).

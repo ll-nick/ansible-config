@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import pytest
+from pyinfra.operations import files
 
 from devstack.commands import run_command
 from devstack.component import Component
-from devstack.file_copy import copy_file
 from devstack.plain_reporter import PlainReporter
 from devstack.pyinfra_adapters import component_deploy
 from devstack.reporting import ComponentOutcome
@@ -18,7 +18,11 @@ def make_component(name: str, source: Path, destination: Path) -> Component:
     @component_deploy(name)
     def apply() -> None:
         for index in range(FILES_PER_COMPONENT):
-            copy_file(source, destination / name / f"file-{index}")
+            files.put(
+                src=str(source),
+                dest=str(destination / name / f"file-{index}"),
+                mode="644",
+            )
         run_command("Pause", "sleep 0.2")
 
     return Component(name, apply)

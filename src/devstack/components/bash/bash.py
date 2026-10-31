@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from devstack.github import clone_github_repository
-from devstack.links import link_file, link_repository_file
+from devstack.links import symlink_file
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet
 
@@ -29,10 +29,10 @@ def apply_bash() -> None:
     clone_github_repository("ll-nick/bash-config", config_directory)
 
     for symbolic_link in SYMBOLIC_LINKS:
-        link_file(
-            Path.home() / symbolic_link.link_name,
+        symlink_file(
             config_directory / symbolic_link.target_name,
+            Path.home() / symbolic_link.link_name,
         )
 
-    link_repository_file(FILES / "inputrc", Path.home() / ".inputrc")
+    symlink_file(FILES / "inputrc", Path.home() / ".inputrc")
     add_bash_snippet(FILES / "1_mise.bash")

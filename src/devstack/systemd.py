@@ -1,8 +1,17 @@
 from pathlib import Path
 
-from pyinfra.operations import systemd
+from pyinfra.operations import files, systemd
 
 USER_UNIT_DIRECTORY = Path.home() / ".config" / "systemd" / "user"
+
+
+def install_user_unit_file(source: Path) -> None:
+    files.put(
+        name=f"Install systemd user unit {source.name}",
+        src=str(source),
+        dest=str(USER_UNIT_DIRECTORY / source.name),
+        mode="644",
+    )
 
 
 # pyinfra accepts running=None to leave the current state alone,

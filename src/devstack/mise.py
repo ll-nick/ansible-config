@@ -6,7 +6,7 @@ from gevent import subprocess
 
 from devstack.commands import run_command
 from devstack.json_settings import parse_json_object
-from devstack.links import link_repository_file
+from devstack.links import symlink_file
 
 MISE_INSTALL_SCRIPT_URL = "https://mise.jdx.dev/install.sh"
 
@@ -42,7 +42,7 @@ def declared_mise_tools(mise_config_source: Path) -> frozenset[str]:
 
 
 def install_mise_tools(component_name: str, mise_config_source: Path) -> None:
-    config_upload = link_repository_file(
+    config_upload = symlink_file(
         mise_config_source, mise_config_directory() / f"{component_name}.toml"
     )
     # Also retries after an interrupted install, when the config is already in place
