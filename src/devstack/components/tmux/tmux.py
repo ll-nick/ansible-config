@@ -1,10 +1,11 @@
+import shlex
 from pathlib import Path
 
 from devstack.commands import run_command
 from devstack.file_copy import copy_file
 from devstack.github import clone_github_repository, clone_repository
 from devstack.machine import JOY_HOSTNAME, has_systemd, hostname
-from devstack.mise import install_mise_tools, mise_executable
+from devstack.mise import install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
 from devstack.systemd import USER_UNIT_DIRECTORY, enable_user_unit
@@ -27,7 +28,7 @@ def apply_tmux() -> None:
     )
     run_command(
         "Install tmux plugins",
-        f"{mise_executable()} exec -- bash {plugin_installer}",
+        shlex.join(mise_exec("bash", str(plugin_installer))),
         when_any_changed=[configuration],
     )
 

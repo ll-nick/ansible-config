@@ -5,11 +5,13 @@ from rich.console import Console
 
 from devstack.components import COMPONENTS
 from devstack.composite_reporter import CompositeReporter
+from devstack.environment import remove_own_virtual_environment
 from devstack.log_file_reporter import LogFileReporter
 from devstack.plain_reporter import PlainReporter
 from devstack.registry import UnknownComponentError, select_components
 from devstack.reporting import Reporter
 from devstack.rich_reporter import RichReporter
+from devstack.run_settings import RunSettings, configure_run_settings
 from devstack.runner import RunOptions, run_components
 from devstack.sudo import SudoUnavailableError, obtain_sudo_password
 from devstack.updates import UPDATE_STEPS
@@ -20,7 +22,7 @@ from devstack.updates.runner import run_update_steps
 
 @click.group()
 def cli() -> None:
-    pass
+    remove_own_virtual_environment()
 
 
 @cli.command()
@@ -36,6 +38,7 @@ def cli() -> None:
     "-j",
     "--jobs",
     default=4,
+    type=click.IntRange(min=1),
     show_default=True,
     help="Components to apply concurrently.",
 )
@@ -57,6 +60,7 @@ def apply(
     verbose: int,
 ) -> None:
     """Apply COMPONENT_NAMES (default: all) together with their dependencies."""
+    configure_run_settings(RunSettings(privileged=privileged))
     try:
         components = select_components(component_names)
     except UnknownComponentError as error:

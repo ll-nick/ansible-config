@@ -71,7 +71,6 @@ def git_version() -> tuple[int, ...] | None:
 
 HAS_DISPLAY = Requirement("a display", has_display)
 HAS_INKSCAPE = Requirement("inkscape", has_inkscape)
-HAS_SYSTEMD = Requirement("systemd", has_systemd)
 
 
 def runs_distribution(*identifiers: str) -> Requirement:
@@ -91,7 +90,3 @@ def does_not_run_distribution(identifier: str) -> Requirement:
 
 def host_is(name: str) -> Requirement:
     return Requirement(f"the host {name}", lambda: hostname() == name)
-
-
-def host_is_not(name: str) -> Requirement:
-    return Requirement(f"a host other than {name}", lambda: hostname() != name)

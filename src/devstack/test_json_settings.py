@@ -11,6 +11,18 @@ def test_managed_settings_override_and_unmanaged_settings_survive() -> None:
     assert merged == {"theme": "dark", "editorMode": "vim"}
 
 
+def test_nested_objects_are_merged_instead_of_replaced() -> None:
+    existing = json.dumps(
+        {"enabledPlugins": {"other@market": True, "ours@market": True}}
+    )
+
+    merged = parse_json_object(
+        merge_json_settings(existing, {"enabledPlugins": {"ours@market": False}})
+    )
+
+    assert merged == {"enabledPlugins": {"other@market": True, "ours@market": False}}
+
+
 def test_missing_settings_start_from_the_managed_ones() -> None:
     merged = parse_json_object(merge_json_settings(None, {"editorMode": "vim"}))
 

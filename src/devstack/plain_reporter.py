@@ -28,11 +28,11 @@ class PlainReporter:
     def __init__(
         self,
         verbosity: int,
-        output: TextIO = sys.stdout,
+        output: TextIO | None = None,
         log_path: Path | None = None,
     ) -> None:
         self._verbosity = verbosity
-        self._output = output
+        self._output = output if output is not None else sys.stdout
         self._name_width = 0
         self._log_path = log_path
 

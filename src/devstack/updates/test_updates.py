@@ -21,6 +21,7 @@ from devstack.updates.step import (
 from devstack.updates.steps import system
 from devstack.updates.steps.mise import update_mise
 from devstack.updates.timestamps import last_update, record_update
+from devstack.updates.version_bump import commit_and_offer_push
 
 
 @final
@@ -29,6 +30,7 @@ class RecordingContext:
         self.assume_yes: bool = assume_yes
         self.bump_versions: bool = False
         self.answers: bool = answers
+        self.nothing_staged: bool = False
         self.commands: list[list[str]] = []
         self.environments: list[Mapping[str, str] | None] = []
 
@@ -37,6 +39,16 @@ class RecordingContext:
 
     def confirm(self, _question: str, /) -> bool:
         return self.answers
+
+    def note(self, _message: str, /) -> None:
+        pass
+
+    def succeeds(
+        self, command: Sequence[str], *, working_directory: Path | None = None
+    ) -> bool:
+        del working_directory
+        self.commands.append(list(command))
+        return self.nothing_staged
 
     def run(
         self,
@@ -184,3 +196,32 @@ def test_environment_is_not_modified() -> None:
     update_mise(RecordingContext())
 
     assert dict(os.environ) == before
+
+
+def test_version_bumps_without_changes_are_not_committed() -> None:
+    context = RecordingContext()
+    context.nothing_staged = True
+
+    commit_and_offer_push(context, Path("/repository"), "flake.lock")
+
+    assert ["git", "commit", "-m", "Version bump"] not in context.commands
+
+
+def test_version_bumps_with_changes_are_committed() -> None:
+    context = RecordingContext()
+
+    commit_and_offer_push(context, Path("/repository"), "flake.lock")
+
+    assert ["git", "commit", "-m", "Version bump"] in context.commands
+
+
+def test_steps_that_cannot_run_here_are_not_reported_as_stale() -> None:
+    impossible = Requirement("a thing", lambda: False)
+    steps = [
+        UpdateStep("possible", lambda _: StepOutcome.UPDATED),
+        UpdateStep("impossible", lambda _: StepOutcome.UPDATED, requires=(impossible,)),
+    ]
+
+    names = [entry.step_name for entry in collect_freshness(steps, timedelta(days=7))]
+
+    assert names == ["possible"]

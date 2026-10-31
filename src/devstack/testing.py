@@ -3,12 +3,12 @@ import subprocess
 import pytest
 
 from devstack.component import Requirement
-from devstack.mise import mise_executable
+from devstack.mise import mise_exec
 
 
 def run_with_mise(*command: str) -> str:
     completed = subprocess.run(
-        [str(mise_executable()), "exec", "--", *command],
+        mise_exec(*command),
         capture_output=True,
         text=True,
         check=True,

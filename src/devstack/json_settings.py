@@ -12,11 +12,27 @@ def parse_json_object(text: str) -> dict[str, object]:
     return parsed
 
 
+def merge_settings(
+    existing: Mapping[str, object], managed: Mapping[str, object]
+) -> dict[str, object]:
+    merged = dict(existing)
+    for key, managed_value in managed.items():
+        existing_value = merged.get(key)
+        if isinstance(existing_value, dict) and isinstance(managed_value, dict):
+            merged[key] = merge_settings(
+                existing_value,  # pyright: ignore[reportUnknownArgumentType]
+                managed_value,  # pyright: ignore[reportUnknownArgumentType]
+            )
+        else:
+            merged[key] = managed_value
+    return merged
+
+
 def merge_json_settings(
     existing_text: str | None, managed: Mapping[str, object]
 ) -> str:
     existing = parse_json_object(existing_text) if existing_text else {}
-    merged = {**existing, **managed}
+    merged = merge_settings(existing, managed)
     return json.dumps(merged, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 

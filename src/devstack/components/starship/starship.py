@@ -2,7 +2,7 @@ from pathlib import Path
 
 from devstack.generated_file import write_generated_file
 from devstack.github import clone_github_repository
-from devstack.mise import install_mise_tools, mise_executable
+from devstack.mise import install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
 
@@ -17,5 +17,5 @@ def apply_starship() -> None:
     add_nushell_snippet(FILES / "starship.nu")
     write_generated_file(
         Path.home() / ".local/share/nushell/vendor/autoload/starship.nu",
-        [str(mise_executable()), "exec", "--", "starship", "init", "nu"],
+        mise_exec("starship", "init", "nu"),
     )

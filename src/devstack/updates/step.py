@@ -28,6 +28,12 @@ class UpdateContext(Protocol):
 
     def confirm(self, question: str, /) -> bool: ...
 
+    def note(self, message: str, /) -> None: ...
+
+    def succeeds(
+        self, command: Sequence[str], *, working_directory: Path | None = None
+    ) -> bool: ...
+
     def run(
         self,
         command: Sequence[str],

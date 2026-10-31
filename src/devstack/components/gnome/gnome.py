@@ -1,3 +1,4 @@
+import shlex
 from pathlib import Path
 
 from gevent import subprocess
@@ -7,7 +8,7 @@ from devstack.commands import run_command
 from devstack.dconf import DconfSetting, apply_dconf_settings
 from devstack.file_copy import EXECUTABLE_MODE, copy_file
 from devstack.machine import distribution_ids
-from devstack.mise import install_mise_tools, mise_executable
+from devstack.mise import install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
 
 FILES = Path(__file__).resolve().parent / "files"
@@ -63,7 +64,7 @@ PAPERWM_KEYBINDINGS = (
 def list_gnome_extensions(*arguments: str) -> str:
     try:
         completed = subprocess.run(
-            [str(mise_executable()), "exec", "--", "gext", "list", *arguments],
+            mise_exec("gext", "list", *arguments),
             capture_output=True,
             text=True,
             check=True,
@@ -154,7 +155,7 @@ def apply_gnome() -> None:
 
 
 def _install_and_enable_paperwm() -> None:
-    gext = f"{mise_executable()} exec -- gext"
+    gext = shlex.join(mise_exec("gext"))
     if PAPERWM_UUID not in list_gnome_extensions("--only-uuid", "--all"):
         certificates = (
             f"SSL_CERT_FILE={NIXOS_CERTIFICATE_BUNDLE} "

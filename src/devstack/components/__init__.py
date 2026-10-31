@@ -62,7 +62,7 @@ COMPONENTS: tuple[Component, ...] = (
     Component(
         "neovim",
         apply_neovim,
-        depends_on=("mise", "bash", "nushell", "ripgrep", "nodejs"),
+        depends_on=("mise", "bash", "nushell", "fd", "ripgrep", "nodejs"),
         system_packages=("gcc", "make", "unzip"),
     ),
     Component("leadr", apply_leadr, depends_on=("mise", "bash", "nushell")),
@@ -89,7 +89,7 @@ COMPONENTS: tuple[Component, ...] = (
         "nerdfont",
         apply_nerdfont,
         requires=(HAS_DISPLAY,),
-        system_packages=("fontconfig", "fonts-noto"),
+        system_packages=("fontconfig", "fonts-noto", "unzip"),
     ),
     Component(
         "kitty",
@@ -102,6 +102,7 @@ COMPONENTS: tuple[Component, ...] = (
         apply_gnome,
         depends_on=("mise",),
         requires=(HAS_DISPLAY,),
+        system_packages=("unzip",),
     ),
     Component("stk", apply_stk),
 )

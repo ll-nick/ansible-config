@@ -37,7 +37,7 @@ def collect_freshness(
     skipped_names = skipped_step_names()
     freshness: list[StepFreshness] = []
     for step in steps:
-        if step.name in skipped_names:
+        if step.name in skipped_names or step.unmet_requirement() is not None:
             continue
         updated_at = last_update(step.name)
         if updated_at is None:

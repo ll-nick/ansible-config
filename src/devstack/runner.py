@@ -285,7 +285,13 @@ def _run_components(
 ) -> int:
     started_at = time.monotonic()
     reporter.run_started([component.name for component in components])
-    component_plans = run_all([_plan_task(component) for component in components])
+    # Plans are only shown for a dry run or a confirmation, so otherwise skip the work
+    plans_are_needed = options.dry_run or not options.assume_yes
+    component_plans = (
+        run_all([_plan_task(component) for component in components], options.jobs)
+        if plans_are_needed
+        else []
+    )
     needs_confirmation = has_pending_changes(component_plans) and not options.assume_yes
     reporter.plan(component_plans, options.dry_run or needs_confirmation)
     if options.dry_run:

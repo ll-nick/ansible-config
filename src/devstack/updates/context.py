@@ -41,6 +41,17 @@ class TerminalUpdateContext:
         self._console.print("Skipping...")
         return False
 
+    def note(self, message: str, /) -> None:
+        self._console.print(message)
+
+    def succeeds(
+        self, command: Sequence[str], *, working_directory: Path | None = None
+    ) -> bool:
+        completed = subprocess.run(
+            command, cwd=working_directory, capture_output=True, check=False
+        )
+        return completed.returncode == 0
+
     def run(
         self,
         command: Sequence[str],

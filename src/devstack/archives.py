@@ -1,12 +1,11 @@
 import shlex
-import sys
 from pathlib import Path
 
 from devstack.commands import run_command
 
 
 def download_and_extract_zip(url: str, destination: Path) -> None:
-    # zipfile avoids depending on an installed unzip
+    # unzip, unlike Python's zipfile, keeps symbolic links as links
     run_command(
         f"Download and extract {url.rsplit('/', 1)[-1]}",
         'temporary_file="$(mktemp)"'
@@ -14,6 +13,5 @@ def download_and_extract_zip(url: str, destination: Path) -> None:
         + f' && curl --fail --location --silent --show-error "{url}"'
         + ' --output "$temporary_file"'
         + f" && mkdir -p {shlex.quote(str(destination))}"
-        + f' && {shlex.quote(sys.executable)} -m zipfile -e "$temporary_file"'
-        + f" {shlex.quote(str(destination))}",
+        + f' && unzip -q -o "$temporary_file" -d {shlex.quote(str(destination))}',
     )

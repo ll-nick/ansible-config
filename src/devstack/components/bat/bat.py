@@ -1,8 +1,9 @@
+import shlex
 from pathlib import Path
 
 from devstack.commands import run_command
 from devstack.file_copy import copy_file
-from devstack.mise import install_mise_tools, mise_executable
+from devstack.mise import install_mise_tools, mise_exec
 from devstack.pyinfra_adapters import component_deploy
 from devstack.shells import add_bash_snippet, add_nushell_snippet
 
@@ -27,7 +28,7 @@ def apply_bat() -> None:
 
     run_command(
         "Rebuild bat cache",
-        f"{mise_executable()} exec -- bat cache --build",
+        shlex.join(mise_exec("bat", "cache", "--build")),
         when_any_changed=[dark_theme, light_theme, config],
     )
 

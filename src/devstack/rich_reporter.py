@@ -224,7 +224,7 @@ class RichReporter:
     ) -> RenderResult:
         table = Table.grid(padding=(0, 1))
         now = time.monotonic()
-        for running in self._running.values():
+        for running in list(self._running.values()):
             table.add_row(
                 running.spinner,
                 Text(running.name.ljust(self._name_width), style="bold"),

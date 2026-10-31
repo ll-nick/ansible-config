@@ -3,6 +3,7 @@ from typing import cast
 
 import gevent
 from gevent import Greenlet
+from gevent.pool import Pool
 
 # pyinfra runs on gevent, so concurrent work has to be gevent greenlets on the
 # main thread; OS threads cannot spawn subprocesses through gevent.
@@ -33,8 +34,11 @@ class TaskSet[Key, Result]:
         ]
 
 
-def run_all[Result](functions: Sequence[Callable[[], Result]]) -> list[Result]:
-    greenlets = [_spawn(function) for function in functions]
+def run_all[Result](
+    functions: Sequence[Callable[[], Result]], limit: int | None = None
+) -> list[Result]:
+    pool = Pool(limit)
+    greenlets = [pool.spawn(function) for function in functions]
     gevent.joinall(greenlets, raise_error=True)
     return [greenlet.get() for greenlet in greenlets]
 

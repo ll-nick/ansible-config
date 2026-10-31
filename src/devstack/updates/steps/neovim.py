@@ -5,7 +5,7 @@ from devstack.components.neovim.neovim import (
     POST_INSTALL_COMMAND,
     RESTORE_PLUGINS_COMMAND,
 )
-from devstack.mise import mise_executable
+from devstack.mise import mise_exec
 from devstack.updates.step import StepOutcome, UpdateContext
 from devstack.updates.version_bump import commit_and_offer_push
 
@@ -17,7 +17,7 @@ NEOVIM_CONFIG_EXISTS = Requirement(
 
 
 def _run_headless(context: UpdateContext, *vim_commands: str) -> None:
-    arguments = [str(mise_executable()), "exec", "--", "nvim", "--headless"]
+    arguments = mise_exec("nvim", "--headless")
     for vim_command in vim_commands:
         arguments += ["-c", vim_command]
     context.run(arguments)

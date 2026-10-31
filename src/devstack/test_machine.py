@@ -59,7 +59,6 @@ def test_host_requirements_compare_the_hostname(
     monkeypatch.setattr(machine, "hostname", lambda: "workstation")
 
     assert machine.host_is("workstation").is_met()
-    assert not machine.host_is_not("workstation").is_met()
 
 
 @pytest.mark.parametrize(
