@@ -53,6 +53,12 @@ def test_distribution_requirements_follow_the_os_release(
     assert machine.does_not_run_distribution("nixos").is_met()
 
 
+def test_the_hostname_leaves_out_the_domain(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("socket.gethostname", lambda: "joy.example.org")
+
+    assert machine.hostname() == "joy"
+
+
 def test_host_requirements_compare_the_hostname(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

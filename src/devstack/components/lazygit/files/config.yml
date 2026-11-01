@@ -17,11 +17,9 @@ customCommands:
           - value: 'push --force-with-lease'
           - value: 'push --force'
     command: "git {{index .PromptResponses 1}} {{index .PromptResponses 0}}"
-
 git:
-  pagers:
-    - pager: delta --dark --paging=never
-
+  diffRenderers:
+    - command: delta --dark --paging=never
 gui:
   theme:
     activeBorderColor:
@@ -51,7 +49,6 @@ gui:
       - '#cdd6f4'
     authorColors:
       '*': '#b4befe'
-
 keybinding:
   commits:
     moveDownCommit: <c-d>

@@ -19,10 +19,14 @@ class UnsupportedDistributionError(RuntimeError):
         )
 
 
-def packages_for_this_machine(all_packages: Sequence[tuple[str, ...]]) -> list[str]:
+def ensure_supported_distribution() -> None:
     identifiers = distribution_ids()
     if "debian" not in identifiers:
         raise UnsupportedDistributionError(identifiers)
+
+
+def packages_for_this_machine(all_packages: Sequence[tuple[str, ...]]) -> list[str]:
+    ensure_supported_distribution()
 
     names: list[str] = []
     for packages in all_packages:
@@ -62,18 +66,15 @@ def with_system_packages(components: Sequence[Component]) -> list[Component]:
     if installer is None:
         return list(components)
 
-    needing_packages = {
-        component.name
-        for component in components
-        if component.system_packages and component.unmet_requirement() is None
-    }
+    # Everyone waits, not just those declaring packages: mise installs the tools of
+    # all components together, and any of them may need a package to run
     return [
         installer,
         *(
             dataclasses.replace(
                 component, depends_on=(*component.depends_on, installer.name)
             )
-            if component.name in needing_packages
+            if component.unmet_requirement() is None
             else component
             for component in components
         ),

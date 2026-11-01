@@ -58,7 +58,12 @@ COMPONENTS: tuple[Component, ...] = (
     Component("lazygit", apply_lazygit, depends_on=("mise", "bash", "nushell")),
     Component("zoxide", apply_zoxide, depends_on=("mise", "bash", "nushell")),
     Component("starship", apply_starship, depends_on=("mise", "bash", "nushell")),
-    Component("nodejs", apply_nodejs, depends_on=("mise",)),
+    Component(
+        "nodejs",
+        apply_nodejs,
+        depends_on=("mise",),
+        system_packages=("libatomic1",),
+    ),
     Component(
         "neovim",
         apply_neovim,

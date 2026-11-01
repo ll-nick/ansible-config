@@ -21,7 +21,7 @@ def has_display() -> bool:
 
 
 def hostname() -> str:
-    return socket.gethostname()
+    return socket.gethostname().split(".", maxsplit=1)[0]
 
 
 def has_inkscape() -> bool:

@@ -5,7 +5,10 @@ from rich.console import Console
 
 from devstack.components import COMPONENTS
 from devstack.composite_reporter import CompositeReporter
-from devstack.environment import remove_own_virtual_environment
+from devstack.environment import (
+    isolate_mise_from_the_caller,
+    remove_own_virtual_environment,
+)
 from devstack.log_file_reporter import LogFileReporter
 from devstack.plain_reporter import PlainReporter
 from devstack.registry import UnknownComponentError, select_components
@@ -14,6 +17,10 @@ from devstack.rich_reporter import RichReporter
 from devstack.run_settings import RunSettings, configure_run_settings
 from devstack.runner import RunOptions, run_components
 from devstack.sudo import SudoUnavailableError, obtain_sudo_password
+from devstack.system_packages import (
+    UnsupportedDistributionError,
+    ensure_supported_distribution,
+)
 from devstack.updates.check import check_updates
 from devstack.updates.context import TerminalUpdateContext
 from devstack.updates.registry import all_update_steps
@@ -76,9 +83,12 @@ def apply(
     sudo_password = None
     if privileged:
         try:
+            ensure_supported_distribution()
             sudo_password = obtain_sudo_password()
-        except SudoUnavailableError as error:
+        except (SudoUnavailableError, UnsupportedDistributionError) as error:
             raise click.UsageError(str(error)) from error
+
+    isolate_mise_from_the_caller()
 
     options = RunOptions(
         dry_run=dry_run,
