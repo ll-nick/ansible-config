@@ -21,6 +21,7 @@ uv run stk apply [names]  # apply components (and their dependencies)
 uv run stk apply --privileged   # also install system packages via sudo
 ci/run.sh all             # Docker: build + apply, verify (pytest), idempotency check
 ci/run.sh shell           # shell in the image from the last build
+ci/vm.sh                  # disposable desktop VM for display, systemd and sudo tests
 ```
 
 `stk` and `devstack` are the same entry point (`devstack.cli:cli`).
