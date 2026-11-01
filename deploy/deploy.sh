@@ -9,6 +9,7 @@ set -eu
 
 REPOSITORY_URL="https://github.com/ll-nick/devstack.git"
 CHECKOUT_DIRECTORY="$HOME/.config/devstack"
+MISE_EXECUTABLE="$HOME/.local/bin/mise"
 
 NO_CONFIRM=false
 PRIVILEGED=false
@@ -89,19 +90,26 @@ ensure_system_package() {
     printf "  ${COLOR_SUCCESS}✔ %s installed successfully.${COLOR_RESET}\n" "$package"
 }
 
-ensure_uv() {
-    if command -v uv > /dev/null 2>&1; then
-        printf "  ${COLOR_SUCCESS}✔ uv is already installed.${COLOR_RESET}\n"
+ensure_mise() {
+    if [ -x "$MISE_EXECUTABLE" ]; then
+        printf "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}\n"
         return
     fi
 
-    printf "  ${COLOR_WARN}⚠ uv is not installed.${COLOR_RESET}\n"
-    confirm "Do you want to install uv?" || fail "uv is required but not installed."
+    printf "  ${COLOR_WARN}⚠ mise is not installed.${COLOR_RESET}\n"
+    confirm "Do you want to install mise?" || fail "mise is required but not installed."
 
-    printf "  ${COLOR_INFO}⬇ Installing uv...${COLOR_RESET}\n"
-    # The shell configuration is managed by devstack, so the installer must not touch it
-    curl -LsSf https://astral.sh/uv/install.sh | UV_NO_MODIFY_PATH=1 sh
-    command -v uv > /dev/null 2>&1 || fail "uv installation failed."
+    printf "  ${COLOR_INFO}⬇ Installing mise...${COLOR_RESET}\n"
+    curl -fsSL https://mise.jdx.dev/install.sh | sh
+    [ -x "$MISE_EXECUTABLE" ] || fail "mise installation failed."
+}
+
+ensure_uv() {
+    printf "  ${COLOR_INFO}⬇ Installing uv through mise...${COLOR_RESET}\n"
+    # From the home directory, as a mise config in the current directory could get in the way
+    (cd "$HOME" && "$MISE_EXECUTABLE" install --quiet uv@latest)
+    UV_EXECUTABLE="$(cd "$HOME" && "$MISE_EXECUTABLE" --quiet which --tool uv@latest uv)" \
+        || fail "uv installation failed."
 }
 
 ensure_checkout() {
@@ -143,11 +151,11 @@ run_devstack() {
     cd "$CHECKOUT_DIRECTORY"
     # When piped into a shell, stdin is the script and must not be read by prompts
     if [ -t 0 ]; then
-        uv run --quiet --no-dev stk "$@"
+        "$UV_EXECUTABLE" run --quiet --no-dev stk "$@"
     elif (: < /dev/tty) 2> /dev/null; then
-        uv run --quiet --no-dev stk "$@" < /dev/tty
+        "$UV_EXECUTABLE" run --quiet --no-dev stk "$@" < /dev/tty
     else
-        uv run --quiet --no-dev stk "$@" < /dev/null
+        "$UV_EXECUTABLE" run --quiet --no-dev stk "$@" < /dev/null
     fi
 }
 
@@ -190,7 +198,8 @@ main() {
     ensure_system_package curl
     ensure_system_package git
 
-    print_header "🔧 Checking uv"
+    print_header "🔧 Checking mise and uv"
+    ensure_mise
     ensure_uv
 
     print_header "📥 Fetching devstack"

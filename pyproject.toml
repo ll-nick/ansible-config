@@ -21,7 +21,6 @@ dev = [
 ]
 
 [project.scripts]
-devstack = "devstack.cli:cli"
 stk = "devstack.cli:cli"
 
 [build-system]

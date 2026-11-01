@@ -19,7 +19,8 @@ It is also known to work on NixOS (without `--privileged`).
 I'm not sure why you would want to use my config but don't let that stop you!
 
 The only requirements are `curl` and `git`.
-The bootstrap script installs [uv](https://docs.astral.sh/uv/) if needed,
+The bootstrap script installs [mise](https://mise.jdx.dev/) if needed,
+uses it to install [uv](https://docs.astral.sh/uv/),
 clones this repository to `~/.config/devstack` and applies the configuration:
 
 ```bash

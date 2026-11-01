@@ -25,8 +25,9 @@ ci_verify() {
 }
 
 ci_idempotency() {
-    docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" \
-        uv run --no-dev devstack apply --yes --privileged --fail-on-change
+    # Not through the uv shim, whose environment would end up in the generated shell setup
+    docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" sh -c \
+        '"$(mise which uv)" run --no-dev stk apply --yes --privileged --fail-on-change'
 }
 
 ci_shell() {

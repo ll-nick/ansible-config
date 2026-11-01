@@ -24,7 +24,7 @@ ci/run.sh shell           # shell in the image from the last build
 ci/vm.sh                  # disposable desktop VM for display, systemd and sudo tests
 ```
 
-`stk` and `devstack` are the same entry point (`devstack.cli:cli`).
+The command is `stk` (`devstack.cli:cli`).
 Subcommands: `apply`, `list`, `update`, `check`.
 
 ## Architecture
@@ -73,7 +73,7 @@ Like `stk apply`, `stk update` shows its plan and asks once; the steps themselve
 Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake.
 
 **Bootstrap.**
-`deploy/deploy.sh` installs uv, clones the repo to `~/.config/devstack` (the permanent checkout, `checkout.py`) and runs `stk apply`.
+`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/devstack` (the permanent checkout, `checkout.py`) and runs `stk apply`.
 The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from that checkout.
 
 ## Conventions
