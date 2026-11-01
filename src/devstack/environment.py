@@ -14,10 +14,10 @@ def isolate_mise_from_the_caller() -> None:
 
 
 def remove_own_virtual_environment() -> None:
-    """Keeps the virtual environment devstack runs in out of what it generates.
+    """Keeps the virtual environment devstack runs in away from the tools it runs.
 
-    `uv run` puts the environment's bin directory first on PATH, and tools like
-    `mise activate` would bake that into the shell setup of every future session.
+    `uv run` puts the environment's bin directory first on PATH, where its Python
+    and scripts would take precedence over the ones those tools expect.
     """
     own_bin_directory = Path(sys.prefix) / "bin"
     os.environ.pop("VIRTUAL_ENV", None)

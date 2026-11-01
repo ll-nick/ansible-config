@@ -1,9 +1,6 @@
 #!/bin/sh
-# Non-login shells may lack it, and generated shell setup captures the PATH of the apply
-case ":$PATH:" in
-    *":$HOME/.local/bin:"*) ;;
-    *) PATH="$HOME/.local/bin:$PATH" ;;
-esac
+# Non-login shells may lack it
+PATH="$HOME/.local/bin:$PATH"
 # Resolved from the home directory, as a mise config in the current directory could get in the way
 uv_executable="$(cd "$HOME" && "$HOME/.local/bin/mise" --quiet which uv)" || exit 1
 exec "$uv_executable" run --quiet --no-dev --project "$HOME/.config/devstack" stk "$@"
