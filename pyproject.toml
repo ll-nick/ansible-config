@@ -37,15 +37,15 @@ fix = ["lint", "format"]
 check = ["lint-check", "format-check", "typecheck", "lint-lock"]
 
 [tool.pyright]
-include = ["src"]
+include = ["src", "tests"]
 reportUnusedCallResult = "none"
 reportMissingTypeStubs = "none"
 
 [tool.ruff]
-include = ["src/**/*.py"]
+include = ["src/**/*.py", "tests/**/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.pytest]
-testpaths = ["src"]
+testpaths = ["src", "tests"]

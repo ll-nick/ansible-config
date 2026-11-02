@@ -15,7 +15,8 @@ This repo is the basis of all the owner's machines, so changes need to be carefu
 ```bash
 uv run poe check          # ruff lint + format check, basedpyright, lock check
 uv run poe fix            # apply lint and format fixes
-uv run pytest             # unit tests + component tests
+uv run pytest tests       # tests of the tool itself, no applied machine needed
+uv run pytest             # also the component tests, for an applied machine (Docker harness)
 uv run stk apply -n       # dry run: show the plan and stop
 uv run stk apply [names]  # apply components (and their dependencies)
 uv run stk apply --skip sudo    # one run without sudo (or --skip <component>)
@@ -93,8 +94,9 @@ The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from t
 
 ## Conventions
 
-- Tests are colocated with the code; component tests verify the applied result (e.g. the tool runs, a generated file exists) and use `skip_unless(requirement)` when the component is not applicable everywhere.
-  Tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
+- Tests of the tool itself live in `tests/`, mirroring `src/stk/`.
+  A component keeps its test next to it, so it stays self-contained; these verify the applied result (e.g. the tool runs, a generated file exists) and use `skip_unless(requirement)` when the component is not applicable everywhere.
+  Component tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
 - Prefer separate files in a component's `files/` over inline content.
 - Files from `files/` are symlinked (`symlink_file`), not copied, so edits on the machine land in the repository.
   They point into the tree `stk` runs from, normally `~/.config/stk`; applying from another clone re-points them.
