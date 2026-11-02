@@ -46,10 +46,10 @@ def test_enabling_twice_does_not_duplicate_entries() -> None:
     assert enable(("flatpak",)) == ("default", "flatpak")
 
 
-def test_default_means_every_component_that_is_not_optional() -> None:
+def test_components_are_selected_by_name_or_by_group() -> None:
     components = [
         Component("base", noop),
-        Component("flatpak", noop, optional=True),
+        Component("flatpak", noop, groups=()),
     ]
 
     assert enabled_component_names(("default",), components) == ("base",)

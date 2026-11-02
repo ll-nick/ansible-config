@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from stk.requirement import Requirement, first_unmet_requirement
 from stk.updates.step import UpdateStep
 
+DEFAULT_GROUP = "default"
+
 
 @dataclass(frozen=True)
 class Component:
@@ -13,7 +15,7 @@ class Component:
     requires: tuple[Requirement, ...] = ()
     system_packages: tuple[str, ...] = ()
     update: UpdateStep | None = None
-    optional: bool = False
+    groups: tuple[str, ...] = (DEFAULT_GROUP,)
     # What the component would do as root, checked without root before asking for sudo
     pending_sudo_work: Callable[[], str | None] | None = None
 

@@ -1,10 +1,9 @@
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-from stk.component import Component
+from stk.component import DEFAULT_GROUP, Component
 from stk.log_file_reporter import state_directory
 
-DEFAULT_ALIAS = "default"
 SUDO_ENTRY = "sudo"
 
 
@@ -45,8 +44,8 @@ def enable(names: Sequence[str]) -> tuple[str, ...]:
     try:
         entries = list(enabled_entries())
     except NothingEnabledError:
-        entries = [DEFAULT_ALIAS]
-    for name in names or (DEFAULT_ALIAS,):
+        entries = [DEFAULT_GROUP]
+    for name in names or (DEFAULT_GROUP,):
         if name not in entries:
             entries.append(name)
     _write_entries(entries)
@@ -61,7 +60,11 @@ def disable(names: Sequence[str]) -> tuple[str, ...]:
 
 def valid_entries(components: Sequence[Component]) -> frozenset[str]:
     return frozenset(
-        {DEFAULT_ALIAS, SUDO_ENTRY, *(component.name for component in components)}
+        {
+            SUDO_ENTRY,
+            *(component.name for component in components),
+            *(group for component in components for group in component.groups),
+        }
     )
 
 
@@ -72,5 +75,5 @@ def enabled_component_names(
         component.name
         for component in components
         if component.name in entries
-        or (DEFAULT_ALIAS in entries and not component.optional)
+        or any(group in entries for group in component.groups)
     )
