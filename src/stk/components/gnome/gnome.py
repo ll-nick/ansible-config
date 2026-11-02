@@ -1,7 +1,6 @@
 import shlex
+import subprocess
 from pathlib import Path
-
-from gevent import subprocess
 
 from stk.archives import download_and_extract_zip
 from stk.commands import run_command

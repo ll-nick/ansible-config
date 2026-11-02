@@ -2,9 +2,8 @@ import os
 import re
 import shutil
 import socket
+import subprocess
 from pathlib import Path
-
-from gevent import subprocess
 
 from stk.requirement import Requirement
 

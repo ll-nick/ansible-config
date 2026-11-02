@@ -91,7 +91,7 @@ The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from t
   systemd units are copied instead, and files a tool rewrites itself are merged (`claude` settings).
 - Helpers write files with explicit modes (`644`, `755`) so results do not depend on the umask.
 - Linting policy: fix properly first, then a line-level ignore with a reason, never disable rules globally.
-  Untyped pyinfra/gevent calls are confined to a few adapter modules with line-level ignores.
+  Untyped pyinfra calls are confined to a few adapter modules with line-level ignores.
 - Keep `pyinfra<4` pinned: the engine relies on pyinfra internals.
 - `HOME=` does not sandbox mise (it reads the config via the passwd entry); use Docker for hermetic tests.
 - A change is only done when `uv run poe check`, `uv run pytest` and `ci/run.sh all` are green.

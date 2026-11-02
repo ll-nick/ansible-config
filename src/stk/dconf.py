@@ -1,7 +1,6 @@
 import shlex
+import subprocess
 from dataclasses import dataclass
-
-from gevent import subprocess
 
 from stk.commands import run_command
 

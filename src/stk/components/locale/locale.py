@@ -1,7 +1,6 @@
 import re
+import subprocess
 from pathlib import Path
-
-from gevent import subprocess
 
 from stk.commands import run_command
 from stk.file_edit import replace_line

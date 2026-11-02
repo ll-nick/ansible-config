@@ -1,8 +1,7 @@
+import subprocess
 import tomllib
 from pathlib import Path
 from typing import cast
-
-from gevent import subprocess
 
 from stk.commands import run_command
 from stk.json_settings import parse_json_object

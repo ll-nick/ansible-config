@@ -1,7 +1,6 @@
 import getpass
 import os
-
-from gevent import subprocess
+import subprocess
 
 
 class SudoUnavailableError(RuntimeError):

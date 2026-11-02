@@ -1,7 +1,7 @@
 import dataclasses
+import subprocess
 from collections.abc import Sequence
 
-from gevent import subprocess
 from pyinfra.operations import apt
 
 from stk.component import Component
