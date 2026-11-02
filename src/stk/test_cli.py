@@ -155,7 +155,6 @@ def test_sudo_is_requested_when_there_is_work_for_it(
 
     assert result.exit_code == 0
     assert "locale: generate" in result.output
-    assert recorded_runs[0].privileged
     assert recorded_runs[0].sudo_password == "secret"
 
 
@@ -183,7 +182,7 @@ def test_sudo_is_not_requested_otherwise(
     result = CliRunner().invoke(cli, arguments)
 
     assert result.exit_code == 0
-    assert not recorded_runs[0].privileged
+    assert recorded_runs[0].sudo_password is None
 
 
 @pytest.mark.usefixtures("machine_state")

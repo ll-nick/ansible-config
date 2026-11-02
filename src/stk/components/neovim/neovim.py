@@ -7,7 +7,7 @@ from stk.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
 from stk.pyinfra_adapters import component_deploy
 from stk.requirement import Requirement
 from stk.shells import add_bash_snippet, add_nushell_snippet
-from stk.updates.step import StepOutcome, UpdateContext, UpdateStep
+from stk.update_step import StepOutcome, UpdateContext, UpdateStep
 from stk.updates.version_bump import commit_and_offer_push
 
 FILES = Path(__file__).resolve().parent / "files"

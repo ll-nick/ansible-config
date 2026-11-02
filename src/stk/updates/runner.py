@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from rich.console import Console
 
 from stk.enablement import SUDO_ENTRY, sudo_is_enabled
-from stk.updates.step import (
+from stk.update_step import (
     CommandFailedError,
     StepOutcome,
     UpdateContext,

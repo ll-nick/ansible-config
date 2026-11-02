@@ -1,7 +1,7 @@
 from stk.commands import run_command
 from stk.mise import MISE_INSTALL_SCRIPT_URL, MISE_IS_INSTALLED, mise_executable
 from stk.pyinfra_adapters import component_deploy
-from stk.updates.step import StepOutcome, UpdateContext, UpdateStep
+from stk.update_step import StepOutcome, UpdateContext, UpdateStep
 
 PREBUILT_BINARIES_ONLY = {"MISE_NODE_COMPILE": "false", "MISE_PYTHON_COMPILE": "false"}
 

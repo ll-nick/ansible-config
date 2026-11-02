@@ -1,9 +1,9 @@
-import os
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import TextIO
 
+from stk.paths import state_directory
 from stk.reporting import (
     ComponentOutcome,
     ComponentPlan,
@@ -14,12 +14,6 @@ from stk.reporting import (
 
 LOG_RETENTION_COUNT = 20
 LAST_RUN_LINK_NAME = "last-run.log"
-
-
-def state_directory() -> Path:
-    state_home = os.environ.get("XDG_STATE_HOME")
-    base = Path(state_home) if state_home else Path.home() / ".local" / "state"
-    return base / "stk"
 
 
 class LogFileReporter:

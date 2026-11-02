@@ -9,7 +9,7 @@ from stk.pyinfra_adapters import component_deploy
 from stk.requirement import Requirement
 from stk.shells import add_bash_snippet, add_nushell_snippet
 from stk.systemd import enable_user_unit, install_user_unit_file
-from stk.updates.step import StepOutcome, UpdateContext, UpdateStep
+from stk.update_step import StepOutcome, UpdateContext, UpdateStep
 
 FILES = Path(__file__).resolve().parent / "files"
 TMUX_PLUGIN_MANAGER_URL = "https://github.com/tmux-plugins/tpm"

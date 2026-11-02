@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from stk.checkout import PERMANENT_CHECKOUT
 from stk.enablement import SUDO_ENTRY
+from stk.paths import PERMANENT_CHECKOUT
 from stk.requirement import Requirement
-from stk.updates.step import StepOutcome, UpdateContext
+from stk.update_step import StepOutcome, UpdateContext
 
 STK_SHIM = Path.home() / ".local/bin/stk"
 

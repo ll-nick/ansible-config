@@ -77,7 +77,9 @@ def test_explicitly_requesting_an_inapplicable_component_is_a_usage_error(
 ) -> None:
     gui = Component("gui", noop, requires=(UNMET,))
 
-    def select_gui(_names: Sequence[str]) -> tuple[Component, ...]:
+    def select_gui(
+        _names: Sequence[str], _available: Sequence[Component]
+    ) -> tuple[Component, ...]:
         return (gui,)
 
     monkeypatch.setattr(cli_module, "select_components", select_gui)

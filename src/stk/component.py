@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from stk.requirement import Requirement, first_unmet_requirement
-from stk.updates.step import UpdateStep
+from stk.update_step import UpdateStep
 
 DEFAULT_GROUP = "default"
 

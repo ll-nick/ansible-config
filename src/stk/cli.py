@@ -28,7 +28,7 @@ from stk.registry import UnknownComponentError, select_components, without_skipp
 from stk.rich_reporter import RichReporter
 from stk.runner import RunOptions, run_components
 from stk.sudo import SudoUnavailableError, obtain_sudo_password
-from stk.system_packages import pending_sudo_work
+from stk.system_packages import pending_sudo_work, with_privileged_work
 from stk.updates.check import check_updates, send_notification
 from stk.updates.context import TerminalUpdateContext
 from stk.updates.registry import all_update_steps
@@ -55,7 +55,7 @@ def resolve_enabled_components() -> tuple[tuple[Component, ...], tuple[str, ...]
     """
     entries = require_enabled_entries()
     names = enabled_component_names(entries, COMPONENTS)
-    selected = select_components(names) if names else ()
+    selected = select_components(names, COMPONENTS) if names else ()
     return without_skipped(selected, excluded_names(entries))
 
 
@@ -136,7 +136,9 @@ def apply(
     """
     reject_unknown_entries(skipped_names)
     try:
-        requested = select_components(component_names) if component_names else ()
+        requested = (
+            select_components(component_names, COMPONENTS) if component_names else ()
+        )
     except UnknownComponentError as error:
         raise click.UsageError(str(error)) from error
     enabled = enabled_components()
@@ -199,7 +201,6 @@ def apply(
         dry_run=dry_run,
         assume_yes=yes,
         fail_on_change=fail_on_change,
-        privileged=privileged,
         sudo_password=sudo_password,
     )
     log_file_reporter = LogFileReporter()
@@ -207,7 +208,8 @@ def apply(
         Console(), verbose, log_path=log_file_reporter.log_path
     )
     reporter = CompositeReporter([terminal_reporter, log_file_reporter])
-    raise SystemExit(run_components(components, options, reporter))
+    runnable = with_privileged_work(components) if privileged else components
+    raise SystemExit(run_components(runnable, options, reporter))
 
 
 @cli.command("list")

@@ -2,7 +2,7 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 from stk.component import DEFAULT_GROUP, Component
-from stk.log_file_reporter import state_directory
+from stk.paths import state_directory
 
 SUDO_ENTRY = "sudo"
 EXCLUSION_PREFIX = "-"

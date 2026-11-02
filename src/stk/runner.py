@@ -30,7 +30,6 @@ from stk.reporting import (
     Reporter,
     RunFailure,
 )
-from stk.system_packages import with_privileged_work
 
 HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
 NO_HOSTS_REMAINING_MESSAGE = "No hosts remaining!"
@@ -47,7 +46,6 @@ class RunOptions:
     dry_run: bool
     assume_yes: bool
     fail_on_change: bool
-    privileged: bool = False
     sudo_password: str | None = field(default=None, repr=False)
 
 
@@ -287,8 +285,6 @@ def run_components(
     log_capture = LogCapture()
     pyinfra_logger.addHandler(log_capture)
     pyinfra_logger.setLevel(logging.INFO)
-    if options.privileged:
-        components = with_privileged_work(components)
     try:
         return _run_components(components, options, reporter, log_capture)
     finally:

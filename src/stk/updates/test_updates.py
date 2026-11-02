@@ -9,9 +9,16 @@ import pytest
 from rich.console import Console
 
 from stk.component import Component
+from stk.components import COMPONENTS
 from stk.components.mise.mise import update_mise
 from stk.enablement import enable
 from stk.requirement import Requirement
+from stk.update_step import (
+    CommandFailedError,
+    StepOutcome,
+    UpdateContext,
+    UpdateStep,
+)
 from stk.updates.check import collect_freshness, describe_age
 from stk.updates.registry import (
     CORE_UPDATE_STEPS,
@@ -19,12 +26,6 @@ from stk.updates.registry import (
     component_update_steps,
 )
 from stk.updates.runner import plan_update_steps, run_update_steps
-from stk.updates.step import (
-    CommandFailedError,
-    StepOutcome,
-    UpdateContext,
-    UpdateStep,
-)
 from stk.updates.steps import system
 from stk.updates.timestamps import last_update, record_update
 from stk.updates.version_bump import commit_and_offer_push
@@ -75,13 +76,13 @@ def isolated_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_step_names_are_unique() -> None:
-    names = [step.name for step in all_update_steps()]
+    names = [step.name for step in all_update_steps(COMPONENTS)]
 
     assert len(names) == len(set(names))
 
 
 def test_core_steps_run_before_component_steps_and_mise_before_its_dependents() -> None:
-    names = [step.name for step in all_update_steps()]
+    names = [step.name for step in all_update_steps(COMPONENTS)]
 
     assert names[: len(CORE_UPDATE_STEPS)] == [step.name for step in CORE_UPDATE_STEPS]
     assert names.index("mise") < names.index("tmux")

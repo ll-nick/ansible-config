@@ -3,7 +3,7 @@ from pathlib import Path
 from pyinfra.api.operation import OperationMeta
 from pyinfra.operations import files
 
-from stk.log_file_reporter import state_directory
+from stk.paths import state_directory
 
 
 def replaced_files_directory(destination: Path) -> Path:

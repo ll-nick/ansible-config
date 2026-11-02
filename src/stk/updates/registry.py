@@ -1,8 +1,7 @@
 from dataclasses import replace
 
 from stk.component import Component
-from stk.components import COMPONENTS
-from stk.updates.step import UpdateStep
+from stk.update_step import UpdateStep
 from stk.updates.steps.dotfiles import (
     CHECKOUT_EXISTS,
     STK_SHIM_EXISTS,
@@ -25,7 +24,7 @@ CORE_UPDATE_STEPS: tuple[UpdateStep, ...] = (
 
 
 def component_update_steps(
-    components: tuple[Component, ...] = COMPONENTS,
+    components: tuple[Component, ...],
 ) -> tuple[UpdateStep, ...]:
     # A component's step only makes sense where the component itself applies
     return tuple(
@@ -37,7 +36,5 @@ def component_update_steps(
     )
 
 
-def all_update_steps(
-    components: tuple[Component, ...] = COMPONENTS,
-) -> tuple[UpdateStep, ...]:
+def all_update_steps(components: tuple[Component, ...]) -> tuple[UpdateStep, ...]:
     return (*CORE_UPDATE_STEPS, *component_update_steps(components))

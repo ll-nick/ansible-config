@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from graphlib import TopologicalSorter
 
 from stk.component import Component
-from stk.components import COMPONENTS
 
 
 class UnknownComponentError(ValueError):
@@ -36,7 +35,7 @@ def without_skipped(
 
 def select_components(
     requested_names: Sequence[str],
-    available: Sequence[Component] = COMPONENTS,
+    available: Sequence[Component],
 ) -> tuple[Component, ...]:
     components_by_name = {component.name: component for component in available}
     known_names = list(components_by_name)
