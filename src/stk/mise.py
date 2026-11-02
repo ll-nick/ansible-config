@@ -10,9 +10,6 @@ from stk.links import symlink_file
 from stk.requirement import Requirement
 
 MISE_INSTALL_SCRIPT_URL = "https://mise.jdx.dev/install.sh"
-# mise aborts when a config changes while it reads them, and it reads the configs
-# of all components, which other components may be linking at that moment
-MISE_INSTALL_RETRIES = 3
 
 
 def mise_executable() -> Path:
@@ -60,5 +57,4 @@ def install_mise_tools(component_name: str, mise_config_source: Path) -> None:
         f"Install mise tools for {component_name}",
         f"{mise_executable()} install",
         when_any_changed=() if tools_are_missing else [config_upload],
-        retries=MISE_INSTALL_RETRIES,
     )

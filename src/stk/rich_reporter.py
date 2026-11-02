@@ -58,8 +58,8 @@ class RichReporter:
     _name_width: int
     _total_components: int
     _finished_count: int
-    _running: dict[str, RunningComponent]
-    _operations: dict[str, list[OperationResult]]
+    _running: RunningComponent | None
+    _operations: list[OperationResult]
     _live: Live | None
     _run_started_at: float
 
@@ -72,8 +72,8 @@ class RichReporter:
         self._name_width = 0
         self._total_components = 0
         self._finished_count = 0
-        self._running = {}
-        self._operations = {}
+        self._running = None
+        self._operations = []
         self._live = None
         self._run_started_at = time.monotonic()
 
@@ -122,10 +122,7 @@ class RichReporter:
         return Confirm.ask("Apply?", console=self._console, default=False)
 
     def component_started(self, component_name: str) -> None:
-        self._running[component_name] = RunningComponent(
-            component_name, time.monotonic()
-        )
-        self._operations[component_name] = []
+        self._running = RunningComponent(component_name, time.monotonic())
         if self._live is None and self._console.is_terminal:
             self._live = Live(
                 self, console=self._console, refresh_per_second=10, transient=True
@@ -133,19 +130,16 @@ class RichReporter:
             self._live.start()
 
     def operation_started(self, description: OperationDescription) -> None:
-        running = self._running.get(description.component_name)
-        if running is not None:
-            running.current_operation = description.operation_name
+        if self._running is not None:
+            self._running.current_operation = description.operation_name
 
     def operation_finished(self, result: OperationResult) -> None:
-        self._operations.setdefault(result.description.component_name, []).append(
-            result
-        )
+        self._operations.append(result)
 
     def component_finished(self, result: ComponentResult) -> None:
-        self._running.pop(result.component_name, None)
+        self._running = None
         self._finished_count += 1
-        operations = self._operations.pop(result.component_name, [])
+        operations, self._operations = self._operations, []
         name = result.component_name
         duration = format_duration(result.duration_seconds)
 
@@ -224,17 +218,17 @@ class RichReporter:
     ) -> RenderResult:
         table = Table.grid(padding=(0, 1))
         now = time.monotonic()
-        for running in list(self._running.values()):
+        if self._running is not None:
             table.add_row(
-                running.spinner,
-                Text(running.name.ljust(self._name_width), style="bold"),
+                self._running.spinner,
+                Text(self._running.name.ljust(self._name_width), style="bold"),
                 Text(
-                    self._shorten(running.current_operation),
+                    self._shorten(self._running.current_operation),
                     style="dim",
                     overflow="ellipsis",
                     no_wrap=True,
                 ),
-                Text(format_duration(now - running.started_at), style="dim"),
+                Text(format_duration(now - self._running.started_at), style="dim"),
             )
         footer = Text(
             f"{self._finished_count}/{self._total_components} components"

@@ -165,9 +165,3 @@ def test_skipping_a_component_also_skips_its_dependents(
     assert "mise" not in applied
     assert "git" not in applied
     assert "bash" in applied
-
-
-def test_zero_jobs_are_rejected() -> None:
-    result = CliRunner().invoke(cli, ["apply", "--jobs", "0"])
-
-    assert result.exit_code == 2

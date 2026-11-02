@@ -48,14 +48,12 @@ Add a helper when it removes duplication or makes a component easier to read, no
 pyinfra first prepares a component (runs facts, evaluates the Python in `apply_*`, queues operations), then executes the queued operations.
 Plain Python in a component runs at prepare time, so it sees the machine as it is before the component runs.
 Tools a component installs itself are therefore not available to prepare-time checks.
-Each component gets a fresh pyinfra `State`, prepared right before it executes, so it sees the effects of components it depends on.
+Each component gets a fresh pyinfra `State`, prepared right before it executes, so it sees the effects of the components before it.
 
 **Engine.**
-`runner.py` plans all components in parallel, optionally asks for confirmation, then `scheduler.py` runs components concurrently (`--jobs`) as gevent greenlets, respecting `depends_on`.
+`runner.py` plans all components, optionally asks for confirmation, then runs them one at a time in dependency order.
 A failed component makes its dependents SKIPPED; independent components continue.
 Components with unmet `requires` are NOT_APPLICABLE (not a failure).
-pyinfra keeps its current state in a process-wide global, which `pyinfra_adapters.py` replaces with per-greenlet-tree storage; do not remove it (there is a regression test).
-Use `gevent.subprocess` for subprocesses during prepare, not threads.
 
 **Enabling.**
 `enablement.py` keeps what a machine gets in `~/.local/state/stk/enabled`: component names, `default` (every non-optional component) and `sudo`.

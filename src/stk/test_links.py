@@ -16,7 +16,7 @@ def link_with_a_run(source: Path, destination: Path) -> None:
 
     exit_code = run_components(
         [Component("linking", apply)],
-        RunOptions(dry_run=False, assume_yes=True, fail_on_change=False, jobs=1),
+        RunOptions(dry_run=False, assume_yes=True, fail_on_change=False),
         PlainReporter(verbosity=0),
     )
 

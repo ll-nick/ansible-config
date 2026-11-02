@@ -14,11 +14,6 @@ from pyinfra.api.operations import run_ops
 from pyinfra.api.state import BaseStateCallback, State
 
 from stk.component import Component
-from stk.concurrency import (
-    current_component_name,
-    run_all,
-    set_current_component_name,
-)
 from stk.pyinfra_adapters import (
     create_local_state,
     operation_order,
@@ -36,7 +31,6 @@ from stk.reporting import (
     RunFailure,
 )
 from stk.run_settings import RunSettings, configure_run_settings
-from stk.scheduler import schedule_components
 from stk.system_packages import with_system_packages
 
 HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
@@ -54,30 +48,29 @@ class RunOptions:
     dry_run: bool
     assume_yes: bool
     fail_on_change: bool
-    jobs: int = 4
     privileged: bool = False
     sudo_password: str | None = field(default=None, repr=False)
 
 
 class LogCapture(logging.Handler):
-    _lines_by_component: dict[str, list[str]]
+    _lines: list[str]
 
     def __init__(self) -> None:
         super().__init__(level=logging.WARNING)
-        self._lines_by_component = {}
+        self._lines = []
 
     @override
     def emit(self, record: logging.LogRecord) -> None:
-        component_name = current_component_name() or ""
         for line in record.getMessage().splitlines():
             cleaned_line = HOST_PREFIX_PATTERN.sub("", line).rstrip()
             if cleaned_line:
-                self._lines_by_component.setdefault(component_name, []).append(
-                    cleaned_line
-                )
+                self._lines.append(cleaned_line)
 
-    def lines_for(self, component_name: str) -> list[str]:
-        return list(self._lines_by_component.get(component_name, []))
+    def clear(self) -> None:
+        self._lines.clear()
+
+    def lines(self) -> list[str]:
+        return list(self._lines)
 
 
 class ReportingCallbacks(BaseStateCallback):
@@ -209,7 +202,7 @@ def execute_component(
         reporter.component_finished(not_applicable)
         return not_applicable
 
-    set_current_component_name(component.name)
+    log_capture.clear()
     callbacks = ReportingCallbacks(reporter)
     started_at = time.monotonic()
     reporter.component_started(component.name)
@@ -218,7 +211,7 @@ def execute_component(
         state = prepare_state(component, callbacks)
         run_ops(state)
     except Exception as error:
-        captured_lines = log_capture.lines_for(component.name)
+        captured_lines = log_capture.lines()
         if not isinstance(error, PyinfraError):
             captured_lines.extend(traceback.format_exc().splitlines())
         failure = RunFailure(
@@ -229,7 +222,7 @@ def execute_component(
         ComponentOutcome.FAILED if failure else ComponentOutcome.SUCCEEDED,
         callbacks.results,
         time.monotonic() - started_at,
-        log_lines=log_capture.lines_for(component.name),
+        log_lines=log_capture.lines(),
         failure=failure,
     )
     reporter.component_finished(result)
@@ -246,6 +239,31 @@ def skipped_result(
         0.0,
         skipped_because=f"dependency {unsuccessful_dependency} was not applied",
     )
+
+
+def run_in_dependency_order(
+    components: Sequence[Component],
+    execute: Callable[[Component], ComponentResult],
+    skip: Callable[[Component, str], ComponentResult],
+) -> dict[str, ComponentResult]:
+    """Runs the components in the given order, in which dependencies come first."""
+    results: dict[str, ComponentResult] = {}
+    for component in components:
+        unsuccessful_dependency = next(
+            (
+                name
+                for name in component.depends_on
+                if name in results
+                and results[name].outcome is not ComponentOutcome.SUCCEEDED
+            ),
+            None,
+        )
+        results[component.name] = (
+            execute(component)
+            if unsuccessful_dependency is None
+            else skip(component, unsuccessful_dependency)
+        )
+    return results
 
 
 def has_pending_changes(component_plans: Sequence[ComponentPlan]) -> bool:
@@ -288,7 +306,7 @@ def _run_components(
     # Plans are only shown for a dry run or a confirmation, so otherwise skip the work
     plans_are_needed = options.dry_run or not options.assume_yes
     component_plans = (
-        run_all([_plan_task(component) for component in components], options.jobs)
+        [plan_component(component) for component in components]
         if plans_are_needed
         else []
     )
@@ -307,7 +325,7 @@ def _run_components(
         reporter.component_finished(result)
         return result
 
-    results_by_name = schedule_components(components, execute, skip, options.jobs)
+    results_by_name = run_in_dependency_order(components, execute, skip)
     results = [results_by_name[component.name] for component in components]
 
     reporter.run_finished(results, time.monotonic() - started_at)
@@ -332,7 +350,3 @@ def _confirmed(reporter: Reporter) -> bool:
             file=sys.stderr,
         )
         return False
-
-
-def _plan_task(component: Component) -> Callable[[], ComponentPlan]:
-    return lambda: plan_component(component)

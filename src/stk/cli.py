@@ -92,14 +92,6 @@ def disable_command(names: tuple[str, ...]) -> None:
     help="Exit with status 3 if any operation changed something.",
 )
 @click.option(
-    "-j",
-    "--jobs",
-    default=4,
-    type=click.IntRange(min=1),
-    show_default=True,
-    help="Components to apply concurrently.",
-)
-@click.option(
     "--skip",
     "skipped_names",
     multiple=True,
@@ -112,7 +104,6 @@ def apply(
     dry_run: bool,
     yes: bool,
     fail_on_change: bool,
-    jobs: int,
     skipped_names: tuple[str, ...],
     plain: bool,
     verbose: int,
@@ -192,7 +183,6 @@ def apply(
         dry_run=dry_run,
         assume_yes=yes,
         fail_on_change=fail_on_change,
-        jobs=jobs,
         privileged=privileged,
         sudo_password=sudo_password,
     )
