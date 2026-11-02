@@ -1,8 +1,8 @@
 import shutil
 from pathlib import Path
 
-from stk.requirement import Requirement
-from stk.update_step import StepOutcome, UpdateContext
+from stk.engine.requirement import Requirement
+from stk.engine.update_step import StepOutcome, UpdateContext
 from stk.updates.version_bump import commit_and_offer_push
 
 NIX_FLAKE_DIRECTORY = Path.home() / ".config/nix"

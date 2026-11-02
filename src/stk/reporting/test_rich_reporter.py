@@ -2,14 +2,14 @@ from io import StringIO
 
 from rich.console import Console
 
-from stk.reporting import (
+from stk.reporting.reporter import (
     ComponentOutcome,
     ComponentResult,
     OperationDescription,
     OperationResult,
     RunFailure,
 )
-from stk.rich_reporter import RichReporter
+from stk.reporting.rich_reporter import RichReporter
 
 
 def make_console() -> tuple[Console, StringIO]:

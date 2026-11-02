@@ -8,12 +8,12 @@ from typing import final
 import pytest
 from rich.console import Console
 
-from stk.component import Component
 from stk.components import COMPONENTS
 from stk.components.mise.mise import update_mise
 from stk.enablement import enable
-from stk.requirement import Requirement
-from stk.update_step import (
+from stk.engine.component import Component
+from stk.engine.requirement import Requirement
+from stk.engine.update_step import (
     CommandFailedError,
     StepOutcome,
     UpdateContext,

@@ -1,4 +1,3 @@
-from stk.component import Component
 from stk.components.bash.bash import apply_bash
 from stk.components.bat.bat import apply_bat
 from stk.components.claude.claude import apply_claude
@@ -24,6 +23,7 @@ from stk.components.stk.stk import apply_stk
 from stk.components.tmux.tmux import TMUX_UPDATE, apply_tmux
 from stk.components.uv.uv import apply_uv
 from stk.components.zoxide.zoxide import apply_zoxide
+from stk.engine.component import Component
 from stk.machine import (
     HAS_DISPLAY,
     HAS_INKSCAPE,

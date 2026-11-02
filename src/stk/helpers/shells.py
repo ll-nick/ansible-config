@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pyinfra.api.operation import OperationMeta
 
-from stk.links import symlink_file
+from stk.helpers.links import symlink_file
 
 
 def add_bash_snippet(source: Path) -> OperationMeta:

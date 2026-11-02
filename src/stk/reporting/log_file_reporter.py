@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TextIO
 
 from stk.paths import state_directory
-from stk.reporting import (
+from stk.reporting.reporter import (
     ComponentOutcome,
     ComponentPlan,
     ComponentResult,

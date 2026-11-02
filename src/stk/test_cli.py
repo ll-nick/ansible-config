@@ -6,9 +6,9 @@ from click.testing import CliRunner
 
 from stk import cli as cli_module
 from stk.cli import cli, enabled_components
-from stk.component import Component
 from stk.enablement import enabled_file
-from stk.runner import RunOptions
+from stk.engine.component import Component
+from stk.engine.runner import RunOptions
 
 
 def test_list_shows_components_with_their_dependencies() -> None:

@@ -1,7 +1,7 @@
 import pytest
 
-from stk.component import Component
-from stk.registry import UnknownComponentError, select_components
+from stk.engine.component import Component
+from stk.engine.registry import UnknownComponentError, select_components
 
 
 def noop() -> None:

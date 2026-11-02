@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from stk.links import symlink_file
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.links import symlink_file
+from stk.helpers.systemd import enable_user_unit, install_user_unit_file
 from stk.machine import has_display, has_systemd
-from stk.pyinfra_adapters import component_deploy
-from stk.systemd import enable_user_unit, install_user_unit_file
 
 FILES = Path(__file__).resolve().parent / "files"
 

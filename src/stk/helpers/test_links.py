@@ -3,11 +3,11 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from stk.component import Component
-from stk.links import replaced_files_directory, symlink_file
-from stk.pyinfra_adapters import component_deploy
-from stk.rich_reporter import RichReporter
-from stk.runner import RunOptions, run_components
+from stk.engine.component import Component
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.engine.runner import RunOptions, run_components
+from stk.helpers.links import replaced_files_directory, symlink_file
+from stk.reporting.rich_reporter import RichReporter
 
 
 def link_with_a_run(source: Path, destination: Path) -> None:

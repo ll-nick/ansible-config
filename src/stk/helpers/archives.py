@@ -1,7 +1,7 @@
 import shlex
 from pathlib import Path
 
-from stk.commands import run_command
+from stk.helpers.commands import run_command
 
 
 def download_and_extract_zip(url: str, destination: Path) -> None:

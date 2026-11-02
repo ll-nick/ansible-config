@@ -1,6 +1,6 @@
 import subprocess
 
-from stk.mise import mise_executable
+from stk.helpers.mise import mise_executable
 
 
 def test_mise_runs() -> None:

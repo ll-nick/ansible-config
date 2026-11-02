@@ -1,8 +1,8 @@
 from collections.abc import Callable
 
-from stk.component import Component
-from stk.reporting import ComponentOutcome, ComponentResult
-from stk.runner import run_in_dependency_order
+from stk.engine.component import Component
+from stk.engine.runner import run_in_dependency_order
+from stk.reporting.reporter import ComponentOutcome, ComponentResult
 
 
 def noop() -> None:

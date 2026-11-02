@@ -5,7 +5,7 @@ import socket
 import subprocess
 from pathlib import Path
 
-from stk.requirement import Requirement
+from stk.engine.requirement import Requirement
 
 OS_RELEASE_PATH = Path("/etc/os-release")
 SYSTEMD_RUNTIME_DIRECTORY = Path("/run/systemd/system")

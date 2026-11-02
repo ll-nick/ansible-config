@@ -1,4 +1,4 @@
-from stk.dconf import read_dconf_value
+from stk.helpers.dconf import read_dconf_value
 from stk.machine import HAS_DISPLAY
 from stk.testing import skip_unless
 

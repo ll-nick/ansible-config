@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from stk.reporting import (
+from stk.reporting.reporter import (
     ComponentPlan,
     ComponentResult,
     OperationDescription,

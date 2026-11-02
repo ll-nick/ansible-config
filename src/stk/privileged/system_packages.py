@@ -4,9 +4,9 @@ from collections.abc import Sequence
 
 from pyinfra.operations import apt
 
-from stk.component import Component, PrivilegedTask
+from stk.engine.component import Component, PrivilegedTask
+from stk.engine.pyinfra_adapters import component_deploy, deploy_as_root
 from stk.machine import distribution_ids
-from stk.pyinfra_adapters import component_deploy, deploy_as_root
 
 SYSTEM_PACKAGES_COMPONENT_NAME = "system-packages"
 PRIVILEGED_COMPONENT_SUFFIX = "-privileged"

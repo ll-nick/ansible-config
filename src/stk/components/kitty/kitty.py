@@ -1,12 +1,12 @@
 import shlex
 from pathlib import Path
 
-from stk.commands import run_command
-from stk.file_edit import replace_line
-from stk.github import clone_github_repository
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.commands import run_command
+from stk.helpers.file_edit import replace_line
+from stk.helpers.github import clone_github_repository
+from stk.helpers.mise import install_mise_tools
 from stk.machine import distribution_ids
-from stk.mise import install_mise_tools
-from stk.pyinfra_adapters import component_deploy
 
 FILES = Path(__file__).resolve().parent / "files"
 KITTY_INSTALLATION = (

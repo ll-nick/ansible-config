@@ -1,13 +1,13 @@
 import shlex
 from pathlib import Path
 
-from stk.commands import run_command
-from stk.github import clone_github_repository
-from stk.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
-from stk.pyinfra_adapters import component_deploy
-from stk.requirement import Requirement
-from stk.shells import add_bash_snippet, add_nushell_snippet
-from stk.update_step import StepOutcome, UpdateContext, UpdateStep
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.engine.requirement import Requirement
+from stk.engine.update_step import StepOutcome, UpdateContext, UpdateStep
+from stk.helpers.commands import run_command
+from stk.helpers.github import clone_github_repository
+from stk.helpers.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
+from stk.helpers.shells import add_bash_snippet, add_nushell_snippet
 from stk.updates.version_bump import commit_and_offer_push
 
 FILES = Path(__file__).resolve().parent / "files"

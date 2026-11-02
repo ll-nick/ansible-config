@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from stk.log_file_reporter import LAST_RUN_LINK_NAME, LogFileReporter
-from stk.reporting import (
+from stk.reporting.log_file_reporter import LAST_RUN_LINK_NAME, LogFileReporter
+from stk.reporting.reporter import (
     ComponentOutcome,
     ComponentResult,
     OperationDescription,

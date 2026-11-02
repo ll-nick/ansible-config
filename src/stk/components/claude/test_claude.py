@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stk.json_settings import parse_json_object
+from stk.helpers.json_settings import parse_json_object
 from stk.testing import run_with_mise
 
 

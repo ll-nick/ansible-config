@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stk.update_step import UpdateContext
+from stk.engine.update_step import UpdateContext
 
 COMMIT_MESSAGE = "Version bump"
 

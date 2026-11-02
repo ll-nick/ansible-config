@@ -1,7 +1,7 @@
 import shutil
 
-from stk.requirement import Requirement
-from stk.update_step import StepOutcome, UpdateContext
+from stk.engine.requirement import Requirement
+from stk.engine.update_step import StepOutcome, UpdateContext
 
 FLATPAK_IS_INSTALLED = Requirement(
     "flatpak", lambda: shutil.which("flatpak") is not None

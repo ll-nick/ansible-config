@@ -4,9 +4,7 @@ from datetime import timedelta
 import click
 from rich.console import Console
 
-from stk.component import Component
 from stk.components import COMPONENTS
-from stk.composite_reporter import CompositeReporter
 from stk.enablement import (
     EXCLUSION_PREFIX,
     SUDO_ENTRY,
@@ -19,16 +17,22 @@ from stk.enablement import (
     sudo_is_enabled,
     valid_entries,
 )
+from stk.engine.component import Component
+from stk.engine.registry import (
+    UnknownComponentError,
+    select_components,
+    without_skipped,
+)
+from stk.engine.runner import RunOptions, run_components
 from stk.environment import (
     isolate_mise_from_the_caller,
     remove_own_virtual_environment,
 )
-from stk.log_file_reporter import LogFileReporter
-from stk.registry import UnknownComponentError, select_components, without_skipped
-from stk.rich_reporter import RichReporter
-from stk.runner import RunOptions, run_components
-from stk.sudo import SudoUnavailableError, obtain_sudo_password
-from stk.system_packages import pending_sudo_work, with_privileged_work
+from stk.privileged.sudo import SudoUnavailableError, obtain_sudo_password
+from stk.privileged.system_packages import pending_sudo_work, with_privileged_work
+from stk.reporting.composite_reporter import CompositeReporter
+from stk.reporting.log_file_reporter import LogFileReporter
+from stk.reporting.rich_reporter import RichReporter
 from stk.updates.check import check_updates, send_notification
 from stk.updates.context import TerminalUpdateContext
 from stk.updates.registry import all_update_steps

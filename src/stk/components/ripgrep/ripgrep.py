@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from stk.mise import install_mise_tools
-from stk.pyinfra_adapters import component_deploy
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.mise import install_mise_tools
 
 FILES = Path(__file__).resolve().parent / "files"
 

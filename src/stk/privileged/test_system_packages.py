@@ -3,13 +3,13 @@ from collections.abc import Sequence
 import pytest
 from pyinfra.api.state import BaseStateCallback
 
-from stk import system_packages
-from stk.commands import run_command
-from stk.component import Component, PrivilegedTask
-from stk.pyinfra_adapters import operation_order
-from stk.requirement import Requirement
-from stk.runner import prepare_state
-from stk.system_packages import (
+from stk.engine.component import Component, PrivilegedTask
+from stk.engine.pyinfra_adapters import operation_order
+from stk.engine.requirement import Requirement
+from stk.engine.runner import prepare_state
+from stk.helpers.commands import run_command
+from stk.privileged import system_packages
+from stk.privileged.system_packages import (
     SYSTEM_PACKAGES_COMPONENT_NAME,
     merged_packages,
     pending_sudo_work,

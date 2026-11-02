@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
 
-from stk.component import Component
+from stk.engine.component import Component
 
 
 class UnknownComponentError(ValueError):

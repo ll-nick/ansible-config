@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stk.mise import declared_mise_tools
+from stk.helpers.mise import declared_mise_tools
 
 
 def test_tools_are_read_from_a_mise_config(tmp_path: Path) -> None:

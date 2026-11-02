@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from stk.mise import install_mise_tools
-from stk.pyinfra_adapters import component_deploy
-from stk.shells import add_bash_snippet, add_nushell_snippet
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.mise import install_mise_tools
+from stk.helpers.shells import add_bash_snippet, add_nushell_snippet
 
 FILES = Path(__file__).resolve().parent / "files"
 

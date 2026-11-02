@@ -4,7 +4,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Protocol
 
-from stk.requirement import Requirement, first_unmet_requirement
+from stk.engine.requirement import Requirement, first_unmet_requirement
 
 
 class StepOutcome(Enum):

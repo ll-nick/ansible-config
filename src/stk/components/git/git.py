@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from stk.links import symlink_file
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.links import symlink_file
+from stk.helpers.mise import install_mise_tools
 from stk.machine import git_version
-from stk.mise import install_mise_tools
-from stk.pyinfra_adapters import component_deploy
 
 FILES = Path(__file__).resolve().parent / "files"
 CONFIG_FILE_NAMES = (

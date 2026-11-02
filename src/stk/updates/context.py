@@ -8,7 +8,7 @@ from typing import final
 from rich.console import Console
 from rich.rule import Rule
 
-from stk.update_step import CommandFailedError
+from stk.engine.update_step import CommandFailedError
 
 
 @final

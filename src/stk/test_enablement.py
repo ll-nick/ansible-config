@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from stk.component import Component
 from stk.enablement import (
     NothingEnabledError,
     disable,
@@ -11,7 +10,8 @@ from stk.enablement import (
     enabled_entries,
     sudo_is_enabled,
 )
-from stk.registry import without_skipped
+from stk.engine.component import Component
+from stk.engine.registry import without_skipped
 
 
 def noop() -> None:

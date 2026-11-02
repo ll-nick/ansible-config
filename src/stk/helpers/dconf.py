@@ -2,7 +2,7 @@ import shlex
 import subprocess
 from dataclasses import dataclass
 
-from stk.commands import run_command
+from stk.helpers.commands import run_command
 
 
 @dataclass(frozen=True)

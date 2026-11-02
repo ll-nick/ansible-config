@@ -2,8 +2,8 @@ import subprocess
 
 import pytest
 
-from stk.mise import mise_exec
-from stk.requirement import Requirement
+from stk.engine.requirement import Requirement
+from stk.helpers.mise import mise_exec
 
 
 def run_with_mise(*command: str) -> str:

@@ -2,10 +2,10 @@ from pathlib import Path
 
 from pyinfra.operations import files
 
-from stk.links import symlink_file
-from stk.pyinfra_adapters import component_deploy
-from stk.shells import add_bash_snippet
-from stk.systemd import USER_UNIT_DIRECTORY, disable_user_unit
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.links import symlink_file
+from stk.helpers.shells import add_bash_snippet
+from stk.helpers.systemd import USER_UNIT_DIRECTORY, disable_user_unit
 
 FILES = Path(__file__).resolve().parent / "files"
 

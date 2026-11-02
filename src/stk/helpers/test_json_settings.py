@@ -1,6 +1,6 @@
 import json
 
-from stk.json_settings import merge_json_settings, parse_json_object
+from stk.helpers.json_settings import merge_json_settings, parse_json_object
 
 
 def test_managed_settings_override_and_unmanaged_settings_survive() -> None:

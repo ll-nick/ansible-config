@@ -1,15 +1,15 @@
 import shlex
 from pathlib import Path
 
-from stk.commands import run_command
-from stk.github import clone_github_repository, clone_repository
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.engine.requirement import Requirement
+from stk.engine.update_step import StepOutcome, UpdateContext, UpdateStep
+from stk.helpers.commands import run_command
+from stk.helpers.github import clone_github_repository, clone_repository
+from stk.helpers.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
+from stk.helpers.shells import add_bash_snippet, add_nushell_snippet
+from stk.helpers.systemd import enable_user_unit, install_user_unit_file
 from stk.machine import JOY_HOSTNAME, has_systemd, hostname
-from stk.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
-from stk.pyinfra_adapters import component_deploy
-from stk.requirement import Requirement
-from stk.shells import add_bash_snippet, add_nushell_snippet
-from stk.systemd import enable_user_unit, install_user_unit_file
-from stk.update_step import StepOutcome, UpdateContext, UpdateStep
 
 FILES = Path(__file__).resolve().parent / "files"
 TMUX_PLUGIN_MANAGER_URL = "https://github.com/tmux-plugins/tpm"

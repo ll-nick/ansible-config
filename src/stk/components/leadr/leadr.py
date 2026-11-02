@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from stk.generated_file import write_generated_file
-from stk.github import clone_github_repository
-from stk.links import symlink_file
-from stk.mise import install_mise_tools, mise_exec
-from stk.pyinfra_adapters import component_deploy
-from stk.shells import add_bash_snippet
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.generated_file import write_generated_file
+from stk.helpers.github import clone_github_repository
+from stk.helpers.links import symlink_file
+from stk.helpers.mise import install_mise_tools, mise_exec
+from stk.helpers.shells import add_bash_snippet
 
 FILES = Path(__file__).resolve().parent / "files"
 

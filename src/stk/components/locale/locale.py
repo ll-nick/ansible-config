@@ -2,9 +2,9 @@ import re
 import subprocess
 from pathlib import Path
 
-from stk.commands import run_command
-from stk.component import PrivilegedTask
-from stk.file_edit import replace_line
+from stk.engine.component import PrivilegedTask
+from stk.helpers.commands import run_command
+from stk.helpers.file_edit import replace_line
 
 LOCALE_GEN_PATH = Path("/etc/locale.gen")
 LOCALES = ("de_DE.UTF-8", "en_US.UTF-8")

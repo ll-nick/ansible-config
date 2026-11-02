@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from stk.enablement import sudo_is_enabled
-from stk.update_step import UpdateStep
+from stk.engine.update_step import UpdateStep
 from stk.updates.timestamps import last_update
 
 SECONDS_PER_HOUR = 3600

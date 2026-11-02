@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from stk.archives import download_and_extract_zip
-from stk.pyinfra_adapters import component_deploy
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.archives import download_and_extract_zip
 
 NERD_FONTS_VERSION = "3.1.1"
 FONT_ARCHIVE_URL = (

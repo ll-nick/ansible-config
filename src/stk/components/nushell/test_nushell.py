@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from stk.mise import mise_exec
+from stk.helpers.mise import mise_exec
 from stk.testing import run_with_mise
 
 AUTOLOAD_DIRECTORY = Path.home() / ".local/share/nushell/vendor/autoload"

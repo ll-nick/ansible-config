@@ -7,12 +7,12 @@ from click.testing import CliRunner
 from rich.console import Console
 
 from stk import cli as cli_module
-from stk.component import Component
 from stk.enablement import enable
-from stk.reporting import ComponentOutcome, ComponentResult
-from stk.requirement import Requirement
-from stk.rich_reporter import RichReporter
-from stk.runner import RunOptions, run_components
+from stk.engine.component import Component
+from stk.engine.requirement import Requirement
+from stk.engine.runner import RunOptions, run_components
+from stk.reporting.reporter import ComponentOutcome, ComponentResult
+from stk.reporting.rich_reporter import RichReporter
 
 UNMET = Requirement("a display", lambda: False)
 MET = Requirement("a shell", lambda: True)

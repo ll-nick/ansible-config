@@ -30,7 +30,14 @@ Subcommands: `apply`, `list`, `update`, `check`.
 
 ## Architecture
 
-All code lives in `src/stk/`.
+All code lives in `src/stk/`, with imports only pointing down this list:
+
+- `cli.py`: the only module that knows `components.COMPONENTS` and ties everything together
+- `components/`: one package per component
+- `updates/` and `privileged/`: `stk update` and the work that needs root
+- `enablement.py`, `machine.py`, `helpers/`: what a machine gets and can do, and shared pyinfra use
+- `engine/` and `reporting/`: running components and reporting on them, unaware of any specific one
+- `paths.py`
 
 **Components** (`components/<name>/{<name>.py, files/, test_<name>.py}`) are the unit of the setup.
 Each module exposes an `apply_<name>` function decorated with `@component_deploy("<name>")`
@@ -41,7 +48,7 @@ link files and shell snippets, generate init scripts.
 
 **pyinfra use.**
 Components may call pyinfra directly.
-Shared pyinfra use lives in helper modules in `src/stk/` and the engine (`runner`, `pyinfra_adapters`).
+Shared pyinfra use lives in `helpers/` and `engine/` (`runner`, `pyinfra_adapters`).
 Add a helper when it removes duplication or makes a component easier to read, not to hide pyinfra.
 
 **Two phases.**
@@ -51,7 +58,7 @@ Tools a component installs itself are therefore not available to prepare-time ch
 Each component gets a fresh pyinfra `State`, prepared right before it executes, so it sees the effects of the components before it.
 
 **Engine.**
-`runner.py` plans all components, optionally asks for confirmation, then runs them one at a time in dependency order.
+`engine/runner.py` plans all components, optionally asks for confirmation, then runs them one at a time in dependency order.
 A failed component makes its dependents SKIPPED; independent components continue.
 Components with unmet `requires` are NOT_APPLICABLE (not a failure).
 
@@ -62,7 +69,7 @@ Disabling a component also leaves out whatever depends on it.
 `stk apply` and `stk update` fail without that file, so losing it can only ever reduce what happens.
 
 **Privileged mode.**
-With `sudo` enabled, `stk apply` checks without root whether there is work needing it (`pending_sudo_work`), lists it, and only then asks for the password (`sudo.py`).
+With `sudo` enabled, `stk apply` checks without root whether there is work needing it (`pending_sudo_work`), lists it, and only then asks for the password (`privileged/sudo.py`).
 Components declare root work in two ways, which run before everything else and can sit next to user-level work in the same component:
 apt package names in `system_packages`, merged into one synthetic `system-packages` component, and `privileged_tasks`, which each get a synthetic `<name>-privileged` component the owner depends on.
 A task pairs an `is_pending` check that must work without root with an `apply` whose operations all run with sudo.
@@ -70,7 +77,7 @@ It therefore cannot use tools that components install in the same run.
 Everything else must work without root.
 
 **Reporting.**
-Components are reported through the `Reporter` protocol (`reporting.py`): `RichReporter`, which only animates on terminals, always combined with `LogFileReporter`.
+Components are reported through the `Reporter` protocol (`reporting/reporter.py`): `RichReporter`, which only animates on terminals, always combined with `LogFileReporter`.
 Keep success output minimal and never hide errors.
 
 **Update steps** (`updates/`) run sequentially against the terminal (`stk update`).
@@ -81,7 +88,7 @@ Like `stk apply`, `stk update` shows its plan and asks once; the steps themselve
 Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake.
 
 **Bootstrap.**
-`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, `checkout.py`) and runs `stk apply`.
+`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, `paths.py`) and runs `stk apply`.
 The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from that checkout.
 
 ## Conventions

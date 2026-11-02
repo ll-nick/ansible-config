@@ -1,7 +1,7 @@
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-from stk.component import DEFAULT_GROUP, Component
+from stk.engine.component import DEFAULT_GROUP, Component
 from stk.paths import state_directory
 
 SUDO_ENTRY = "sudo"

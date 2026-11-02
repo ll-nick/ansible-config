@@ -1,7 +1,7 @@
 from dataclasses import replace
 
-from stk.component import Component
-from stk.update_step import UpdateStep
+from stk.engine.component import Component
+from stk.engine.update_step import UpdateStep
 from stk.updates.steps.dotfiles import (
     CHECKOUT_EXISTS,
     STK_SHIM_EXISTS,

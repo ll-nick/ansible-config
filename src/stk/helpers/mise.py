@@ -3,10 +3,10 @@ import tomllib
 from pathlib import Path
 from typing import cast
 
-from stk.commands import run_command
-from stk.json_settings import parse_json_object
-from stk.links import symlink_file
-from stk.requirement import Requirement
+from stk.engine.requirement import Requirement
+from stk.helpers.commands import run_command
+from stk.helpers.json_settings import parse_json_object
+from stk.helpers.links import symlink_file
 
 MISE_INSTALL_SCRIPT_URL = "https://mise.jdx.dev/install.sh"
 

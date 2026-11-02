@@ -13,13 +13,13 @@ from pyinfra.api.exceptions import PyinfraError
 from pyinfra.api.operations import run_ops
 from pyinfra.api.state import BaseStateCallback, State
 
-from stk.component import Component
-from stk.pyinfra_adapters import (
+from stk.engine.component import Component
+from stk.engine.pyinfra_adapters import (
     create_local_state,
     operation_order,
     prepare_component,
 )
-from stk.reporting import (
+from stk.reporting.reporter import (
     ComponentOutcome,
     ComponentPlan,
     ComponentResult,

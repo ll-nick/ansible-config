@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from stk.github import clone_github_repository
-from stk.links import symlink_file
-from stk.pyinfra_adapters import component_deploy
-from stk.shells import add_bash_snippet
+from stk.engine.pyinfra_adapters import component_deploy
+from stk.helpers.github import clone_github_repository
+from stk.helpers.links import symlink_file
+from stk.helpers.shells import add_bash_snippet
 
 FILES = Path(__file__).resolve().parent / "files"
 
