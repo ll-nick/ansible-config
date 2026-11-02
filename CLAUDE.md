@@ -67,7 +67,7 @@ Components declare apt package names in `system_packages`; the runner merges the
 Privileged operations use `_sudo=True`; everything else must work without root.
 
 **Reporting.**
-Components are reported through the `Reporter` protocol (`reporting.py`): `RichReporter` on terminals, `PlainReporter` otherwise, always combined with `LogFileReporter`.
+Components are reported through the `Reporter` protocol (`reporting.py`): `RichReporter`, which only animates on terminals, always combined with `LogFileReporter`.
 Keep success output minimal and never hide errors.
 
 **Update steps** (`updates/`) run sequentially against the terminal (`stk update`).

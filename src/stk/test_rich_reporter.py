@@ -78,6 +78,17 @@ def test_changes_are_listed_and_unchanged_operations_stay_hidden() -> None:
     assert "Copy theme" not in text
 
 
+def test_changes_are_printed_as_soon_as_they_finish() -> None:
+    console, output = make_console()
+    reporter = RichReporter(console, 0)
+    reporter.run_started(["bat"])
+    reporter.component_started("bat")
+
+    reporter.operation_finished(operation("bat", "Copy config", changed=True))
+
+    assert "Copy config" in output.getvalue()
+
+
 def test_verbose_output_includes_unchanged_operations() -> None:
     console, output = make_console()
     operations = {"bat": [operation("bat", "Copy theme", changed=False)]}

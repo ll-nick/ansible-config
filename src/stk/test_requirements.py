@@ -4,13 +4,14 @@ from typing import override
 
 import pytest
 from click.testing import CliRunner
+from rich.console import Console
 
 from stk import cli as cli_module
 from stk.component import Component
 from stk.enablement import enable
-from stk.plain_reporter import PlainReporter
 from stk.reporting import ComponentOutcome, ComponentResult
 from stk.requirement import Requirement
+from stk.rich_reporter import RichReporter
 from stk.runner import RunOptions, run_components
 
 UNMET = Requirement("a display", lambda: False)
@@ -21,9 +22,9 @@ def noop() -> None:
     pass
 
 
-class RecordingReporter(PlainReporter):
+class RecordingReporter(RichReporter):
     def __init__(self) -> None:
-        super().__init__(verbosity=0)
+        super().__init__(Console(), 0)
         self.outcomes: dict[str, ComponentOutcome] = {}
 
     @override

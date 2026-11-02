@@ -59,7 +59,7 @@ class RichReporter:
     _total_components: int
     _finished_count: int
     _running: RunningComponent | None
-    _operations: list[OperationResult]
+    _component_announced: bool
     _live: Live | None
     _run_started_at: float
 
@@ -73,7 +73,7 @@ class RichReporter:
         self._total_components = 0
         self._finished_count = 0
         self._running = None
-        self._operations = []
+        self._component_announced = False
         self._live = None
         self._run_started_at = time.monotonic()
 
@@ -123,7 +123,9 @@ class RichReporter:
 
     def component_started(self, component_name: str) -> None:
         self._running = RunningComponent(component_name, time.monotonic())
-        if self._live is None and self._console.is_terminal:
+        self._component_announced = False
+        can_animate = self._console.is_terminal and not self._console.is_dumb_terminal
+        if self._live is None and can_animate:
             self._live = Live(
                 self, console=self._console, refresh_per_second=10, transient=True
             )
@@ -134,12 +136,23 @@ class RichReporter:
             self._running.current_operation = description.operation_name
 
     def operation_finished(self, result: OperationResult) -> None:
-        self._operations.append(result)
+        if not self._is_visible(result):
+            return
+        if not self._component_announced:
+            self._component_announced = True
+            symbol, style = (
+                (SYMBOL_CHANGED, "yellow")
+                if result.changed
+                else (SYMBOL_UNCHANGED, "green")
+            )
+            self._console.print(
+                self._status_line(symbol, style, result.description.component_name, "")
+            )
+        self._print_operation(result)
 
     def component_finished(self, result: ComponentResult) -> None:
         self._running = None
         self._finished_count += 1
-        operations, self._operations = self._operations, []
         name = result.component_name
         duration = format_duration(result.duration_seconds)
 
@@ -160,19 +173,7 @@ class RichReporter:
             self._console.print(
                 self._status_line(SYMBOL_FAILED, "bold red", name, duration)
             )
-            self._print_operations(operations)
             self._console.print(self._failure_panel(result))
-            return
-
-        changed = [operation for operation in operations if operation.changed]
-        has_warning = any(op.ignored_error_output is not None for op in operations)
-        if not changed and not has_warning and self._verbosity < 1:
-            return
-        symbol, style = (
-            (SYMBOL_CHANGED, "yellow") if changed else (SYMBOL_UNCHANGED, "green")
-        )
-        self._console.print(self._status_line(symbol, style, name, duration))
-        self._print_operations(operations)
 
     def run_finished(
         self, results: Sequence[ComponentResult], duration_seconds: float
@@ -250,29 +251,33 @@ class RichReporter:
             (detail, "dim"),
         )
 
-    def _print_operations(self, operations: Sequence[OperationResult]) -> None:
-        for operation in operations:
-            name = self._shorten(operation.description.operation_name)
-            if operation.ignored_error_output is not None:
-                self._console.print(
-                    Text(f"    {SYMBOL_WARNING} {name} (error ignored)", style="yellow")
-                )
-                for line in operation.ignored_error_output.splitlines():
+    def _is_visible(self, operation: OperationResult) -> bool:
+        return (
+            operation.changed
+            or operation.ignored_error_output is not None
+            or self._verbosity >= 1
+        )
+
+    def _print_operation(self, operation: OperationResult) -> None:
+        name = self._shorten(operation.description.operation_name)
+        if operation.ignored_error_output is not None:
+            self._console.print(
+                Text(f"    {SYMBOL_WARNING} {name} (error ignored)", style="yellow")
+            )
+            for line in operation.ignored_error_output.splitlines():
+                self._console.print(Text(f"        {line}", style="dim"))
+        else:
+            symbol, style = (
+                (SYMBOL_CHANGED, "yellow")
+                if operation.changed
+                else (SYMBOL_UNCHANGED, "dim")
+            )
+            duration = format_duration(operation.duration_seconds)
+            self._console.print(Text(f"    {symbol} {name} ({duration})", style=style))
+        if self._verbosity >= 2:
+            for line in (operation.stdout + "\n" + operation.stderr).splitlines():
+                if line.strip():
                     self._console.print(Text(f"        {line}", style="dim"))
-            elif operation.changed or self._verbosity >= 1:
-                symbol, style = (
-                    (SYMBOL_CHANGED, "yellow")
-                    if operation.changed
-                    else (SYMBOL_UNCHANGED, "dim")
-                )
-                duration = format_duration(operation.duration_seconds)
-                self._console.print(
-                    Text(f"    {symbol} {name} ({duration})", style=style)
-                )
-            if self._verbosity >= 2:
-                for line in (operation.stdout + "\n" + operation.stderr).splitlines():
-                    if line.strip():
-                        self._console.print(Text(f"        {line}", style="dim"))
 
     def _failure_panel(self, result: ComponentResult) -> Panel:
         failure = result.failure

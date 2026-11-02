@@ -1,11 +1,12 @@
 from pathlib import Path
 
 import pytest
+from rich.console import Console
 
 from stk.component import Component
 from stk.links import replaced_files_directory, symlink_file
-from stk.plain_reporter import PlainReporter
 from stk.pyinfra_adapters import component_deploy
+from stk.rich_reporter import RichReporter
 from stk.runner import RunOptions, run_components
 
 
@@ -17,7 +18,7 @@ def link_with_a_run(source: Path, destination: Path) -> None:
     exit_code = run_components(
         [Component("linking", apply)],
         RunOptions(dry_run=False, assume_yes=True, fail_on_change=False),
-        PlainReporter(verbosity=0),
+        RichReporter(Console(), 0),
     )
 
     assert exit_code == 0

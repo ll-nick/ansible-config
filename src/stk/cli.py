@@ -24,9 +24,7 @@ from stk.environment import (
     remove_own_virtual_environment,
 )
 from stk.log_file_reporter import LogFileReporter
-from stk.plain_reporter import PlainReporter
 from stk.registry import UnknownComponentError, select_components, without_skipped
-from stk.reporting import Reporter
 from stk.rich_reporter import RichReporter
 from stk.run_settings import PRIVILEGED, RunSettings, configure_run_settings
 from stk.runner import RunOptions, run_components
@@ -124,7 +122,6 @@ def disable_command(names: tuple[str, ...]) -> None:
     multiple=True,
     help=f"Leave out a component and its dependents, or `{SUDO_ENTRY}`. Repeatable.",
 )
-@click.option("--plain", is_flag=True, help="Use plain output even on a terminal.")
 @click.option("-v", "--verbose", count=True, help="Show unchanged operations.")
 def apply(
     component_names: tuple[str, ...],
@@ -132,7 +129,6 @@ def apply(
     yes: bool,
     fail_on_change: bool,
     skipped_names: tuple[str, ...],
-    plain: bool,
     verbose: int,
 ) -> None:
     """Apply COMPONENT_NAMES (default: all enabled) together with their dependencies.
@@ -214,18 +210,11 @@ def apply(
         sudo_password=sudo_password,
     )
     log_file_reporter = LogFileReporter()
-    terminal_reporter = build_terminal_reporter(verbose, plain, log_file_reporter)
+    terminal_reporter = RichReporter(
+        Console(), verbose, log_path=log_file_reporter.log_path
+    )
     reporter = CompositeReporter([terminal_reporter, log_file_reporter])
     raise SystemExit(run_components(components, options, reporter))
-
-
-def build_terminal_reporter(
-    verbosity: int, plain: bool, log_file_reporter: LogFileReporter
-) -> Reporter:
-    console = Console()
-    if plain or not console.is_terminal or console.is_dumb_terminal:
-        return PlainReporter(verbosity, log_path=log_file_reporter.log_path)
-    return RichReporter(console, verbosity, log_path=log_file_reporter.log_path)
 
 
 @cli.command("list")
