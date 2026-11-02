@@ -4,12 +4,12 @@ from collections.abc import Sequence
 
 from pyinfra.operations import apt
 
-from stk.component import Component
+from stk.component import Component, PrivilegedTask
 from stk.machine import distribution_ids
-from stk.pyinfra_adapters import component_deploy
-from stk.run_settings import PRIVILEGED
+from stk.pyinfra_adapters import component_deploy, deploy_as_root
 
 SYSTEM_PACKAGES_COMPONENT_NAME = "system-packages"
+PRIVILEGED_COMPONENT_SUFFIX = "-privileged"
 APT_CACHE_SECONDS = 3600
 
 
@@ -22,8 +22,10 @@ def merged_packages(all_packages: Sequence[tuple[str, ...]]) -> list[str]:
     return names
 
 
-def _is_applicable_once_privileged(component: Component) -> bool:
-    return component.unmet_requirement() in (None, PRIVILEGED)
+def _applicable(components: Sequence[Component]) -> list[Component]:
+    return [
+        component for component in components if component.unmet_requirement() is None
+    ]
 
 
 def installed_packages(names: Sequence[str]) -> frozenset[str]:
@@ -43,46 +45,38 @@ def installed_packages(names: Sequence[str]) -> frozenset[str]:
     )
 
 
-def missing_system_packages(components: Sequence[Component]) -> list[str]:
+def _missing_system_packages(components: Sequence[Component]) -> list[str]:
     if "debian" not in distribution_ids():
         return []
-    names = merged_packages(
-        [
-            component.system_packages
-            for component in components
-            if _is_applicable_once_privileged(component)
-        ]
-    )
+    names = merged_packages([component.system_packages for component in components])
     if not names:
         return []
     installed = installed_packages(names)
     return [name for name in names if name not in installed]
 
 
+def _pending_tasks(component: Component) -> list[PrivilegedTask]:
+    return [task for task in component.privileged_tasks if task.is_pending()]
+
+
 def pending_sudo_work(components: Sequence[Component]) -> list[str]:
+    applicable = _applicable(components)
     work: list[str] = []
-    missing_packages = missing_system_packages(components)
+    missing_packages = _missing_system_packages(applicable)
     if missing_packages:
         work.append(
             f"{SYSTEM_PACKAGES_COMPONENT_NAME}: install {', '.join(missing_packages)}"
         )
-    for component in components:
-        if component.pending_sudo_work is None:
-            continue
-        if not _is_applicable_once_privileged(component):
-            continue
-        description = component.pending_sudo_work()
-        if description is not None:
-            work.append(f"{component.name}: {description}")
+    for component in applicable:
+        work.extend(
+            f"{component.name}: {task.description}"
+            for task in _pending_tasks(component)
+        )
     return work
 
 
-def system_packages_component(components: Sequence[Component]) -> Component | None:
-    wanted = [
-        component.system_packages
-        for component in components
-        if component.unmet_requirement() is None
-    ]
+def _system_packages_component(components: Sequence[Component]) -> Component | None:
+    wanted = [component.system_packages for component in components]
     if not any(wanted) or "debian" not in distribution_ids():
         return None
 
@@ -99,21 +93,46 @@ def system_packages_component(components: Sequence[Component]) -> Component | No
     return Component(SYSTEM_PACKAGES_COMPONENT_NAME, apply_system_packages)
 
 
-def with_system_packages(components: Sequence[Component]) -> list[Component]:
-    installer = system_packages_component(components)
-    if installer is None:
-        return list(components)
+def _privileged_component(
+    component: Component, depends_on: tuple[str, ...]
+) -> Component | None:
+    tasks = _pending_tasks(component)
+    if not tasks:
+        return None
+    name = f"{component.name}{PRIVILEGED_COMPONENT_SUFFIX}"
 
-    # Everyone waits, not just those declaring packages: mise installs the tools of
-    # all components together, and any of them may need a package to run
+    def apply_tasks() -> None:
+        for task in tasks:
+            task.apply()
+
+    return Component(name, deploy_as_root(name, apply_tasks), depends_on=depends_on)
+
+
+def with_privileged_work(components: Sequence[Component]) -> list[Component]:
+    applicable = _applicable(components)
+    installer = _system_packages_component(applicable)
+    installer_names = () if installer is None else (installer.name,)
+
+    privileged_by_owner = {
+        component.name: privileged
+        for component in applicable
+        if (privileged := _privileged_component(component, installer_names))
+    }
+
+    def with_root_dependencies(component: Component) -> Component:
+        if component.unmet_requirement() is not None:
+            return component
+        privileged = privileged_by_owner.get(component.name)
+        privileged_names = () if privileged is None else (privileged.name,)
+        # Everyone waits, not just those declaring packages: mise installs the tools of
+        # all components together, and any of them may need a package to run
+        return dataclasses.replace(
+            component,
+            depends_on=(*component.depends_on, *installer_names, *privileged_names),
+        )
+
     return [
-        installer,
-        *(
-            dataclasses.replace(
-                component, depends_on=(*component.depends_on, installer.name)
-            )
-            if component.unmet_requirement() is None
-            else component
-            for component in components
-        ),
+        *([] if installer is None else [installer]),
+        *privileged_by_owner.values(),
+        *(with_root_dependencies(component) for component in components),
     ]

@@ -26,10 +26,9 @@ from stk.environment import (
 from stk.log_file_reporter import LogFileReporter
 from stk.registry import UnknownComponentError, select_components, without_skipped
 from stk.rich_reporter import RichReporter
-from stk.run_settings import PRIVILEGED, RunSettings, configure_run_settings
 from stk.runner import RunOptions, run_components
 from stk.sudo import SudoUnavailableError, obtain_sudo_password
-from stk.system_packages import missing_system_packages, pending_sudo_work
+from stk.system_packages import pending_sudo_work
 from stk.updates.check import check_updates, send_notification
 from stk.updates.context import TerminalUpdateContext
 from stk.updates.registry import all_update_steps
@@ -163,26 +162,20 @@ def apply(
         raise SystemExit(0)
 
     sudo_allowed = sudo_is_enabled() and SUDO_ENTRY not in skipped_names
-    sudo_work = pending_sudo_work(components) if sudo_allowed else []
+    sudo_work = pending_sudo_work(components) if SUDO_ENTRY not in skipped_names else []
     if sudo_work:
-        click.echo(f"Needs sudo (--skip {SUDO_ENTRY} to leave out):")
+        click.echo(
+            f"Needs sudo (--skip {SUDO_ENTRY} to leave out):"
+            if sudo_allowed
+            else f"Leaving out (`stk enable {SUDO_ENTRY}` if this machine may use it):"
+        )
         for description in sudo_work:
             click.echo(f"  {description}")
-    if not sudo_is_enabled():
-        missing_packages = missing_system_packages(components)
-        if missing_packages:
-            click.echo(
-                f"Not installing {', '.join(missing_packages)}:"
-                + f" run `stk enable {SUDO_ENTRY}` if this machine may use sudo"
-            )
 
     # A dry run must not ask for a password, so it leaves out what needs one
-    privileged = bool(sudo_work) and not dry_run
-    configure_run_settings(RunSettings(privileged=privileged))
+    privileged = bool(sudo_work) and sudo_allowed and not dry_run
     for component in components:
         requirement = component.unmet_requirement()
-        if requirement is PRIVILEGED and sudo_allowed:
-            continue
         if component.name in component_names and requirement is not None:
             raise click.UsageError(
                 f"{component.name} is not applicable here "
@@ -230,7 +223,7 @@ def list_components() -> None:
             details.append(f"needs {', '.join(component.depends_on)}")
         for requirement in component.requires:
             details.append(f"requires {requirement.description}")
-        if component.unmet_requirement() not in (None, PRIVILEGED):
+        if component.unmet_requirement() is not None:
             details.append("not applicable here")
         if enabled_names is not None and component.name not in enabled_names:
             details.append("not enabled")

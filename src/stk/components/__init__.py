@@ -12,7 +12,7 @@ from stk.components.joy.joy import apply_joy
 from stk.components.kitty.kitty import apply_kitty
 from stk.components.lazygit.lazygit import apply_lazygit
 from stk.components.leadr.leadr import apply_leadr
-from stk.components.locale.locale import apply_locale, pending_locale_work
+from stk.components.locale.locale import GENERATE_LOCALES
 from stk.components.mise.mise import MISE_UPDATE, apply_mise
 from stk.components.neovim.neovim import NEOVIM_UPDATE, apply_neovim
 from stk.components.nerdfont.nerdfont import apply_nerdfont
@@ -31,7 +31,6 @@ from stk.machine import (
     host_is,
     runs_distribution,
 )
-from stk.run_settings import PRIVILEGED
 
 COMPONENTS: tuple[Component, ...] = (
     Component("mise", apply_mise, update=MISE_UPDATE),
@@ -47,10 +46,9 @@ COMPONENTS: tuple[Component, ...] = (
     Component("bat", apply_bat, depends_on=("mise", "bash", "nushell")),
     Component(
         "locale",
-        apply_locale,
-        requires=(PRIVILEGED, runs_distribution("debian")),
+        requires=(runs_distribution("debian"),),
         system_packages=("locales",),
-        pending_sudo_work=pending_locale_work,
+        privileged_tasks=(GENERATE_LOCALES,),
     ),
     Component("ripgrep", apply_ripgrep, depends_on=("mise",)),
     Component("uv", apply_uv, depends_on=("mise",)),

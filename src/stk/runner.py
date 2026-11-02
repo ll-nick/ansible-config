@@ -30,8 +30,7 @@ from stk.reporting import (
     Reporter,
     RunFailure,
 )
-from stk.run_settings import RunSettings, configure_run_settings
-from stk.system_packages import with_system_packages
+from stk.system_packages import with_privileged_work
 
 HOST_PREFIX_PATTERN = re.compile(r"^\[[^\]]*\]\s*")
 NO_HOSTS_REMAINING_MESSAGE = "No hosts remaining!"
@@ -144,8 +143,10 @@ def describe_error(error: Exception) -> str:
     return f"{type(error).__name__}: {error}"
 
 
-def prepare_state(component: Component, callbacks: BaseStateCallback) -> State:
-    state = create_local_state(callbacks)
+def prepare_state(
+    component: Component, callbacks: BaseStateCallback, sudo_password: str | None
+) -> State:
+    state = create_local_state(callbacks, sudo_password)
     connect_all(state)
     prepare_component(state, component.apply)
     return state
@@ -176,19 +177,22 @@ def not_applicable_reason(component: Component) -> str | None:
     return f"requires {requirement.description}"
 
 
-def plan_component(component: Component) -> ComponentPlan:
+def plan_component(component: Component, sudo_password: str | None) -> ComponentPlan:
     reason = not_applicable_reason(component)
     if reason is not None:
         return ComponentPlan(component.name, (), None, not_applicable_reason=reason)
     try:
-        state = prepare_state(component, BaseStateCallback())
+        state = prepare_state(component, BaseStateCallback(), sudo_password)
     except Exception as error:
         return ComponentPlan(component.name, (), describe_error(error))
     return ComponentPlan(component.name, tuple(collect_plan(state)), None)
 
 
 def execute_component(
-    component: Component, reporter: Reporter, log_capture: LogCapture
+    component: Component,
+    reporter: Reporter,
+    log_capture: LogCapture,
+    sudo_password: str | None,
 ) -> ComponentResult:
     reason = not_applicable_reason(component)
     if reason is not None:
@@ -208,7 +212,7 @@ def execute_component(
     reporter.component_started(component.name)
     failure: RunFailure | None = None
     try:
-        state = prepare_state(component, callbacks)
+        state = prepare_state(component, callbacks, sudo_password)
         run_ops(state)
     except Exception as error:
         captured_lines = log_capture.lines()
@@ -283,11 +287,8 @@ def run_components(
     log_capture = LogCapture()
     pyinfra_logger.addHandler(log_capture)
     pyinfra_logger.setLevel(logging.INFO)
-    configure_run_settings(
-        RunSettings(privileged=options.privileged, sudo_password=options.sudo_password)
-    )
     if options.privileged:
-        components = with_system_packages(components)
+        components = with_privileged_work(components)
     try:
         return _run_components(components, options, reporter, log_capture)
     finally:
@@ -306,7 +307,7 @@ def _run_components(
     # Plans are only shown for a dry run or a confirmation, so otherwise skip the work
     plans_are_needed = options.dry_run or not options.assume_yes
     component_plans = (
-        [plan_component(component) for component in components]
+        [plan_component(component, options.sudo_password) for component in components]
         if plans_are_needed
         else []
     )
@@ -318,7 +319,9 @@ def _run_components(
         return EXIT_FAILURE
 
     def execute(component: Component) -> ComponentResult:
-        return execute_component(component, reporter, log_capture)
+        return execute_component(
+            component, reporter, log_capture, options.sudo_password
+        )
 
     def skip(component: Component, unsuccessful_dependency: str) -> ComponentResult:
         result = skipped_result(component, unsuccessful_dependency)

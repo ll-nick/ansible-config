@@ -6,8 +6,6 @@ from pyinfra.api.deploy import add_deploy, deploy  # pyright: ignore[reportUnkno
 from pyinfra.api.inventory import Inventory
 from pyinfra.api.state import BaseStateCallback, State
 
-from stk.run_settings import run_settings
-
 # pyinfra's own type hints are incomplete in these places,
 # so the untyped calls are confined to this module.
 
@@ -19,10 +17,17 @@ def component_deploy(name: str) -> Callable[[Callable[[], None]], Callable[[], N
     )
 
 
-def create_local_state(callbacks: BaseStateCallback) -> State:
+def deploy_as_root(name: str, apply: Callable[[], None]) -> Callable[[], object]:
+    wrapped = deploy(name)(apply)
+    return lambda: wrapped(_sudo=True)
+
+
+def create_local_state(
+    callbacks: BaseStateCallback, sudo_password: str | None
+) -> State:
     state = State(
         inventory=Inventory((["@local"], {})),  # pyright: ignore[reportUnknownArgumentType]
-        config=Config(SUDO_PASSWORD=run_settings().sudo_password),
+        config=Config(SUDO_PASSWORD=sudo_password),
     )
     state.add_callback_handler(callbacks)  # pyright: ignore[reportUnknownMemberType]
     return state

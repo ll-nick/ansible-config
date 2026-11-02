@@ -63,8 +63,11 @@ Disabling a component also leaves out whatever depends on it.
 
 **Privileged mode.**
 With `sudo` enabled, `stk apply` checks without root whether there is work needing it (`pending_sudo_work`), lists it, and only then asks for the password (`sudo.py`).
-Components declare apt package names in `system_packages`; the runner merges them into one synthetic `system-packages` component that runs first.
-Privileged operations use `_sudo=True`; everything else must work without root.
+Components declare root work in two ways, which run before everything else and can sit next to user-level work in the same component:
+apt package names in `system_packages`, merged into one synthetic `system-packages` component, and `privileged_tasks`, which each get a synthetic `<name>-privileged` component the owner depends on.
+A task pairs an `is_pending` check that must work without root with an `apply` whose operations all run with sudo.
+It therefore cannot use tools that components install in the same run.
+Everything else must work without root.
 
 **Reporting.**
 Components are reported through the `Reporter` protocol (`reporting.py`): `RichReporter`, which only animates on terminals, always combined with `LogFileReporter`.
