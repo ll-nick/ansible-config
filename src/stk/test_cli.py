@@ -144,6 +144,24 @@ def test_disabling_a_dependency_also_leaves_out_its_dependents() -> None:
 
 
 @pytest.mark.usefixtures("machine_state")
+def test_applying_a_component_with_a_disabled_dependency_names_both(
+    recorded_runs: list[RunOptions],
+) -> None:
+    CliRunner().invoke(cli, ["enable"])
+    CliRunner().invoke(cli, ["disable", "ripgrep"])
+
+    result = CliRunner().invoke(cli, ["apply", "neovim"])
+
+    assert result.exit_code == 2
+    assert "stk enable ripgrep neovim" in result.output
+    assert not recorded_runs
+
+    CliRunner().invoke(cli, ["enable", "ripgrep", "neovim"])
+
+    assert "neovim" in [component.name for component in enabled_components()]
+
+
+@pytest.mark.usefixtures("machine_state")
 def test_sudo_is_requested_when_there_is_work_for_it(
     monkeypatch: pytest.MonkeyPatch, recorded_runs: list[RunOptions]
 ) -> None:

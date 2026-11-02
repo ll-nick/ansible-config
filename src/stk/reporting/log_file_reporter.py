@@ -86,11 +86,12 @@ class LogFileReporter:
             self._write(f"    skipped because {result.skipped_because}")
         if result.failure is not None:
             self._write(f"    failure: {result.failure.message}")
-        for line in result.log_lines:
+        # What was captured for a failure already includes the log lines
+        log_lines = (
+            result.failure.captured_log_lines if result.failure else result.log_lines
+        )
+        for line in log_lines:
             self._write(f"    pyinfra: {line}")
-        if result.failure is not None:
-            for line in result.failure.captured_log_lines:
-                self._write(f"    failure log: {line}")
 
     def run_finished(
         self, results: Sequence[ComponentResult], duration_seconds: float

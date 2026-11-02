@@ -27,10 +27,6 @@ class TerminalUpdateContext:
         self._may_use_sudo = may_use_sudo
 
     @property
-    def assume_yes(self) -> bool:
-        return self._assume_yes
-
-    @property
     def bump_versions(self) -> bool:
         return self._bump_versions
 

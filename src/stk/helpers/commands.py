@@ -11,14 +11,8 @@ def run_command(
     *,
     when_any_changed: Sequence[OperationMeta] = (),
 ) -> None:
-    if when_any_changed:
-        server.shell(
-            name=name,
-            commands=[command],
-            _if=any_changed(*when_any_changed),
-        )
-    else:
-        server.shell(
-            name=name,
-            commands=[command],
-        )
+    server.shell(
+        name=name,
+        commands=[command],
+        _if=any_changed(*when_any_changed) if when_any_changed else [],
+    )

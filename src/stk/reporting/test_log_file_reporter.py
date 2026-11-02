@@ -6,6 +6,7 @@ from stk.reporting.reporter import (
     ComponentResult,
     OperationDescription,
     OperationResult,
+    RunFailure,
 )
 
 
@@ -28,6 +29,26 @@ def test_log_contains_operations_with_their_output(tmp_path: Path) -> None:
     assert "stdout: cache built" in log
     assert "stderr: warn" in log
     assert (tmp_path / LAST_RUN_LINK_NAME).resolve() == reporter.log_path.resolve()
+
+
+def test_the_output_of_a_failure_is_only_logged_once(tmp_path: Path) -> None:
+    reporter = LogFileReporter(tmp_path)
+    failure = RunFailure(None, "Operation failed", ["could not download"])
+
+    reporter.run_started(["bat"])
+    reporter.component_finished(
+        ComponentResult(
+            "bat",
+            ComponentOutcome.FAILED,
+            [],
+            0.5,
+            log_lines=["could not download"],
+            failure=failure,
+        )
+    )
+    reporter.close()
+
+    assert reporter.log_path.read_text().count("could not download") == 1
 
 
 def test_old_logs_are_pruned(tmp_path: Path) -> None:

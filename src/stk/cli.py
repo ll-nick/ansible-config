@@ -67,6 +67,16 @@ def enabled_components() -> tuple[Component, ...]:
     return resolve_enabled_components()[0]
 
 
+def names_to_enable(name: str) -> list[str]:
+    excluded = excluded_names(require_enabled_entries())
+    disabled_dependencies = [
+        component.name
+        for component in select_components((name,), COMPONENTS)
+        if component.name in excluded and component.name != name
+    ]
+    return [*disabled_dependencies, name]
+
+
 def report_enabled(entries: Sequence[str]) -> None:
     click.echo(f"Enabled: {', '.join(entries) or 'nothing'}")
     _components, dependents = resolve_enabled_components()
@@ -150,7 +160,8 @@ def apply(
     for name in component_names:
         if name not in enabled_names:
             raise click.UsageError(
-                f"{name} is not enabled on this machine, run `stk enable {name}`"
+                f"{name} is not enabled on this machine,"
+                + f" run `stk enable {' '.join(names_to_enable(name))}`"
             )
 
     entries = require_enabled_entries()
