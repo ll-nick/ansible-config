@@ -56,7 +56,8 @@ A failed component makes its dependents SKIPPED; independent components continue
 Components with unmet `requires` are NOT_APPLICABLE (not a failure).
 
 **Enabling.**
-`enablement.py` keeps what a machine gets in `~/.local/state/stk/enabled`: component names, `default` (every non-optional component) and `sudo`.
+`enablement.py` keeps what a machine gets in `~/.local/state/stk/enabled`: component names, groups (`default` holds every component that does not say otherwise), `sudo` and exclusions (`-name`, written by `stk disable` for a component a group selects).
+Disabling a component also leaves out whatever depends on it.
 `requires` says what a machine can do; this says what it should get.
 `stk apply` and `stk update` fail without that file, so losing it can only ever reduce what happens.
 

@@ -8,12 +8,14 @@ from stk.component import Component
 from stk.components import COMPONENTS
 from stk.composite_reporter import CompositeReporter
 from stk.enablement import (
+    EXCLUSION_PREFIX,
     SUDO_ENTRY,
     NothingEnabledError,
     disable,
     enable,
     enabled_component_names,
     enabled_entries,
+    excluded_names,
     sudo_is_enabled,
     valid_entries,
 )
@@ -48,9 +50,29 @@ def require_enabled_entries() -> tuple[str, ...]:
         raise click.UsageError(str(error)) from error
 
 
+def resolve_enabled_components() -> tuple[tuple[Component, ...], tuple[str, ...]]:
+    """Returns what is enabled, and what is left out for needing an excluded component.
+
+    Selecting a component pulls in its dependencies, so an exclusion has to be applied
+    afterwards to also hold for a dependency of something still enabled.
+    """
+    entries = require_enabled_entries()
+    names = enabled_component_names(entries, COMPONENTS)
+    selected = select_components(names) if names else ()
+    return without_skipped(selected, excluded_names(entries))
+
+
 def enabled_components() -> tuple[Component, ...]:
-    names = enabled_component_names(require_enabled_entries(), COMPONENTS)
-    return select_components(names) if names else ()
+    return resolve_enabled_components()[0]
+
+
+def report_enabled(entries: Sequence[str]) -> None:
+    click.echo(f"Enabled: {', '.join(entries) or 'nothing'}")
+    _components, dependents = resolve_enabled_components()
+    if dependents:
+        click.echo(
+            f"Left out for needing a disabled component: {', '.join(dependents)}"
+        )
 
 
 def reject_unknown_entries(names: Sequence[str]) -> None:
@@ -71,15 +93,20 @@ def enable_command(names: tuple[str, ...]) -> None:
     always includes them; use `stk disable default` to opt out.
     """
     reject_unknown_entries(names)
-    click.echo(f"Enabled: {', '.join(enable(names)) or 'nothing'}")
+    report_enabled(enable(names))
 
 
 @cli.command("disable")
 @click.argument("names", nargs=-1, required=True)
 def disable_command(names: tuple[str, ...]) -> None:
-    """Stop applying NAMES on this machine. Nothing installed is removed."""
-    require_enabled_entries()
-    click.echo(f"Enabled: {', '.join(disable(names)) or 'nothing'}")
+    """Stop applying NAMES on this machine. Nothing installed is removed.
+
+    Components that depend on a disabled component are left out as well.
+    """
+    entries = require_enabled_entries()
+    # A name stk no longer knows can still be cleaned out of the list
+    reject_unknown_entries([name for name in names if name not in entries])
+    report_enabled(disable(names, COMPONENTS))
 
 
 @cli.command()
@@ -127,7 +154,7 @@ def apply(
 
     entries = require_enabled_entries()
     for entry in entries:
-        if entry not in valid_entries(COMPONENTS):
+        if entry.removeprefix(EXCLUSION_PREFIX) not in valid_entries(COMPONENTS):
             click.echo(f"Ignoring unknown name in the enabled list: {entry}", err=True)
 
     components, dependents = without_skipped(

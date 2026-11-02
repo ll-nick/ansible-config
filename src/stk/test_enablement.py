@@ -31,7 +31,7 @@ def test_a_machine_without_a_file_has_nothing_enabled() -> None:
 
 def test_the_first_enable_includes_the_default_components() -> None:
     assert enable(()) == ("default",)
-    assert disable(("default",)) == ()
+    assert disable(("default",), ()) == ()
     assert enabled_entries() == ()
 
 
@@ -58,6 +58,37 @@ def test_components_are_selected_by_name_or_by_group() -> None:
         "flatpak",
     )
     assert enabled_component_names(("flatpak",), components) == ("flatpak",)
+
+
+def test_disabling_a_component_of_a_group_excludes_it() -> None:
+    components = [Component("base", noop), Component("other", noop)]
+    enable(())
+
+    assert disable(("base",), components) == ("default", "-base")
+    assert enabled_component_names(enabled_entries(), components) == ("other",)
+    assert disable(("base",), components) == ("default", "-base")
+
+
+def test_enabling_an_excluded_component_lifts_the_exclusion() -> None:
+    components = [Component("base", noop)]
+    enable(())
+    disable(("base",), components)
+
+    assert enable(("base",)) == ("default", "base")
+    assert enabled_component_names(enabled_entries(), components) == ("base",)
+
+
+def test_disabling_a_listed_component_outside_a_group_needs_no_exclusion() -> None:
+    components = [Component("flatpak", noop, groups=())]
+    enable(("flatpak",))
+
+    assert disable(("flatpak",), components) == ("default",)
+
+
+def test_an_exclusion_wins_over_a_listed_name() -> None:
+    components = [Component("base", noop)]
+
+    assert enabled_component_names(("base", "-base"), components) == ()
 
 
 def test_unknown_entries_are_left_out() -> None:

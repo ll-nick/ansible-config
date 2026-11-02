@@ -5,6 +5,7 @@ from stk.component import DEFAULT_GROUP, Component
 from stk.log_file_reporter import state_directory
 
 SUDO_ENTRY = "sudo"
+EXCLUSION_PREFIX = "-"
 
 
 class NothingEnabledError(RuntimeError):
@@ -46,16 +47,35 @@ def enable(names: Sequence[str]) -> tuple[str, ...]:
     except NothingEnabledError:
         entries = [DEFAULT_GROUP]
     for name in names or (DEFAULT_GROUP,):
+        if f"{EXCLUSION_PREFIX}{name}" in entries:
+            entries.remove(f"{EXCLUSION_PREFIX}{name}")
         if name not in entries:
             entries.append(name)
     _write_entries(entries)
     return tuple(entries)
 
 
-def disable(names: Sequence[str]) -> tuple[str, ...]:
-    entries = tuple(entry for entry in enabled_entries() if entry not in names)
+def disable(names: Sequence[str], components: Sequence[Component]) -> tuple[str, ...]:
+    """Removes the names; a component a group still selects gets an exclusion."""
+    entries = [entry for entry in enabled_entries() if entry not in names]
+    for component in components:
+        exclusion = f"{EXCLUSION_PREFIX}{component.name}"
+        if (
+            component.name in names
+            and exclusion not in entries
+            and any(group in entries for group in component.groups)
+        ):
+            entries.append(exclusion)
     _write_entries(entries)
-    return entries
+    return tuple(entries)
+
+
+def excluded_names(entries: Sequence[str]) -> tuple[str, ...]:
+    return tuple(
+        entry.removeprefix(EXCLUSION_PREFIX)
+        for entry in entries
+        if entry.startswith(EXCLUSION_PREFIX)
+    )
 
 
 def valid_entries(components: Sequence[Component]) -> frozenset[str]:
@@ -71,9 +91,13 @@ def valid_entries(components: Sequence[Component]) -> frozenset[str]:
 def enabled_component_names(
     entries: Sequence[str], components: Sequence[Component]
 ) -> tuple[str, ...]:
+    excluded = excluded_names(entries)
     return tuple(
         component.name
         for component in components
-        if component.name in entries
-        or any(group in entries for group in component.groups)
+        if component.name not in excluded
+        and (
+            component.name in entries
+            or any(group in entries for group in component.groups)
+        )
     )

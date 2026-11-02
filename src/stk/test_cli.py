@@ -5,8 +5,9 @@ import pytest
 from click.testing import CliRunner
 
 from stk import cli as cli_module
-from stk.cli import cli
+from stk.cli import cli, enabled_components
 from stk.component import Component
+from stk.enablement import enabled_file
 from stk.runner import RunOptions
 
 
@@ -96,6 +97,50 @@ def test_a_component_that_is_not_enabled_is_rejected(
     assert result.exit_code == 2
     assert "stk enable fd" in result.output
     assert not recorded_runs
+
+
+@pytest.mark.usefixtures("machine_state")
+def test_disable_rejects_unknown_names_but_cleans_up_stale_entries() -> None:
+    CliRunner().invoke(cli, ["enable"])
+
+    result = CliRunner().invoke(cli, ["disable", "nope"])
+
+    assert result.exit_code == 2
+    assert "Unknown names: nope" in result.output
+
+    enabled_file().write_text("default\nremoved\n")
+
+    assert CliRunner().invoke(cli, ["disable", "removed"]).exit_code == 0
+    assert enabled_file().read_text() == "default\n"
+
+
+@pytest.mark.usefixtures("machine_state")
+def test_a_disabled_component_of_the_default_group_is_not_applied(
+    recorded_runs: list[RunOptions],
+) -> None:
+    CliRunner().invoke(cli, ["enable"])
+
+    result = CliRunner().invoke(cli, ["disable", "fd"])
+
+    assert result.exit_code == 0
+    assert "-fd" in result.output
+    assert "fd" not in [component.name for component in enabled_components()]
+    assert "stk enable fd" in CliRunner().invoke(cli, ["apply", "fd"]).output
+    assert not recorded_runs
+
+
+@pytest.mark.usefixtures("machine_state")
+def test_disabling_a_dependency_also_leaves_out_its_dependents() -> None:
+    CliRunner().invoke(cli, ["enable"])
+
+    result = CliRunner().invoke(cli, ["disable", "ripgrep"])
+
+    enabled_names = [component.name for component in enabled_components()]
+    assert "ripgrep" not in enabled_names
+    assert "neovim" not in enabled_names
+    assert "git" in enabled_names
+    assert "Left out for needing a disabled component" in result.output
+    assert "neovim" in result.output
 
 
 @pytest.mark.usefixtures("machine_state")
