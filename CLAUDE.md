@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Personal setup for every machine the owner works on, run on localhost.
 Written in Python (3.14, managed with uv) on top of pyinfra, used as a library rather than through its CLI.
 Installs and configures a dev environment, preferring user-level installs through mise (`~/.local/bin`) and minimal root.
-Tested on Ubuntu (CI) and known to work on NixOS (unprivileged only).
+Tested on Ubuntu (CI) and known to work on NixOS (system packages are Debian only).
 This repo is the basis of all the owner's machines, so changes need to be careful and verified.
 
 ## Commands
@@ -18,18 +18,19 @@ uv run poe fix            # apply lint and format fixes
 uv run pytest             # unit tests + component tests
 uv run stk apply -n       # dry run: show the plan and stop
 uv run stk apply [names]  # apply components (and their dependencies)
-uv run stk apply --privileged   # also install system packages via sudo
+uv run stk apply --skip sudo    # one run without sudo (or --skip <component>)
+uv run stk enable [names]       # choose what this machine gets (default, components, sudo)
 ci/run.sh all             # Docker: build + apply, verify (pytest), idempotency check
 ci/run.sh shell           # shell in the image from the last build
 ci/vm.sh                  # disposable desktop VM for display, systemd and sudo tests
 ```
 
-The command is `stk` (`devstack.cli:cli`).
+The command is `stk` (`stk.cli:cli`).
 Subcommands: `apply`, `list`, `update`, `check`.
 
 ## Architecture
 
-All code lives in `src/devstack/`.
+All code lives in `src/stk/`.
 
 **Components** (`components/<name>/{<name>.py, files/, test_<name>.py}`) are the unit of the setup.
 Each module exposes an `apply_<name>` function decorated with `@component_deploy("<name>")`
@@ -40,7 +41,7 @@ link files and shell snippets, generate init scripts.
 
 **pyinfra use.**
 Components may call pyinfra directly.
-Shared pyinfra use lives in helper modules in `src/devstack/` and the engine (`runner`, `pyinfra_adapters`).
+Shared pyinfra use lives in helper modules in `src/stk/` and the engine (`runner`, `pyinfra_adapters`).
 Add a helper when it removes duplication or makes a component easier to read, not to hide pyinfra.
 
 **Two phases.**
@@ -56,8 +57,13 @@ Components with unmet `requires` are NOT_APPLICABLE (not a failure).
 pyinfra keeps its current state in a process-wide global, which `pyinfra_adapters.py` replaces with per-greenlet-tree storage; do not remove it (there is a regression test).
 Use `gevent.subprocess` for subprocesses during prepare, not threads.
 
+**Enabling.**
+`enablement.py` keeps what a machine gets in `~/.local/state/stk/enabled`: component names, `default` (every non-optional component) and `sudo`.
+`requires` says what a machine can do; this says what it should get.
+`stk apply` and `stk update` fail without that file, so losing it can only ever reduce what happens.
+
 **Privileged mode.**
-`--privileged` obtains the sudo password up front (`sudo.py`) and enables privileged parts.
+With `sudo` enabled, `stk apply` checks without root whether there is work needing it (`pending_sudo_work`), lists it, and only then asks for the password (`sudo.py`).
 Components declare apt package names in `system_packages`; the runner merges them into one synthetic `system-packages` component that runs first.
 Privileged operations use `_sudo=True`; everything else must work without root.
 
@@ -73,7 +79,7 @@ Like `stk apply`, `stk update` shows its plan and asks once; the steps themselve
 Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake.
 
 **Bootstrap.**
-`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/devstack` (the permanent checkout, `checkout.py`) and runs `stk apply`.
+`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, `checkout.py`) and runs `stk apply`.
 The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from that checkout.
 
 ## Conventions
@@ -82,7 +88,7 @@ The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from t
   Tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
 - Prefer separate files in a component's `files/` over inline content.
 - Files from `files/` are symlinked (`symlink_file`), not copied, so edits on the machine land in the repository.
-  They point into the tree `stk` runs from, normally `~/.config/devstack`; applying from another clone re-points them.
+  They point into the tree `stk` runs from, normally `~/.config/stk`; applying from another clone re-points them.
   The executable bit comes from git, so scripts need mode 755 in the index.
   systemd units are copied instead, and files a tool rewrites itself are merged (`claude` settings).
 - Helpers write files with explicit modes (`644`, `755`) so results do not depend on the umask.

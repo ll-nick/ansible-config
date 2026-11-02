@@ -19,4 +19,5 @@ WORKDIR /workspace
 
 RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
     mise install uv@latest \
-    && "$(mise which --tool uv@latest uv)" run --no-dev stk apply --yes --privileged
+    && "$(mise which --tool uv@latest uv)" run --no-dev stk enable sudo \
+    && "$(mise which --tool uv@latest uv)" run --no-dev stk apply --yes

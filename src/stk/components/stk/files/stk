@@ -1,0 +1,6 @@
+#!/bin/sh
+# Non-login shells may lack it
+PATH="$HOME/.local/bin:$PATH"
+# Resolved from the home directory, as a mise config in the current directory could get in the way
+uv_executable="$(cd "$HOME" && "$HOME/.local/bin/mise" --quiet which uv)" || exit 1
+exec "$uv_executable" run --quiet --no-dev --project "$HOME/.config/stk" stk "$@"

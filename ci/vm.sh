@@ -19,22 +19,22 @@
 # Requires KVM, and QEMU with genisoimage (on Ubuntu:
 # apt install qemu-system-x86 qemu-utils genisoimage), or Nix to fetch them.
 #
-# Settings: DEVSTACK_VM_MEMORY_MB, DEVSTACK_VM_CPUS, DEVSTACK_VM_SSH_PORT,
-# DEVSTACK_VM_DISK_SIZE, DEVSTACK_VM_UBUNTU_RELEASE
+# Settings: STK_VM_MEMORY_MB, STK_VM_CPUS, STK_VM_SSH_PORT,
+# STK_VM_DISK_SIZE, STK_VM_UBUNTU_RELEASE
 
 set -euo pipefail
 
-MEMORY_MB="${DEVSTACK_VM_MEMORY_MB:-6144}"
-CPUS="${DEVSTACK_VM_CPUS:-4}"
-SSH_PORT="${DEVSTACK_VM_SSH_PORT:-2222}"
-DISK_SIZE="${DEVSTACK_VM_DISK_SIZE:-40G}"
-UBUNTU_RELEASE="${DEVSTACK_VM_UBUNTU_RELEASE:-resolute}"
+MEMORY_MB="${STK_VM_MEMORY_MB:-6144}"
+CPUS="${STK_VM_CPUS:-4}"
+SSH_PORT="${STK_VM_SSH_PORT:-2222}"
+DISK_SIZE="${STK_VM_DISK_SIZE:-40G}"
+UBUNTU_RELEASE="${STK_VM_UBUNTU_RELEASE:-resolute}"
 
 VM_USER="tester"
 VM_PASSWORD="tester"
-VM_HOSTNAME="devstack-vm"
-VM_REPOSITORY="devstack.git"
-PROVISIONED_MARKER="DEVSTACK_VM_PROVISIONED"
+VM_HOSTNAME="stk-vm"
+VM_REPOSITORY="stk.git"
+PROVISIONED_MARKER="STK_VM_PROVISIONED"
 PROVISIONING_TIMEOUT="45m"
 BOOT_TIMEOUT_SECONDS=240
 SHUTDOWN_TIMEOUT_SECONDS=60
@@ -42,7 +42,7 @@ SHUTDOWN_TIMEOUT_SECONDS=60
 CLOUD_IMAGE_NAME="$UBUNTU_RELEASE-server-cloudimg-amd64.img"
 CLOUD_IMAGE_BASE_URL="https://cloud-images.ubuntu.com/$UBUNTU_RELEASE/current"
 
-STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/devstack-vm"
+STATE_DIRECTORY="${XDG_CACHE_HOME:-$HOME/.cache}/stk-vm"
 CLOUD_IMAGE="$STATE_DIRECTORY/$CLOUD_IMAGE_NAME"
 BASE_IMAGE="$STATE_DIRECTORY/base-$UBUNTU_RELEASE.qcow2"
 OVERLAY_IMAGE="$STATE_DIRECTORY/overlay.qcow2"
@@ -76,8 +76,8 @@ ensure_tools() {
         && command -v genisoimage > /dev/null; then
         return
     fi
-    if [ -z "${DEVSTACK_VM_IN_NIX_SHELL:-}" ] && command -v nix > /dev/null; then
-        DEVSTACK_VM_IN_NIX_SHELL=1 exec nix \
+    if [ -z "${STK_VM_IN_NIX_SHELL:-}" ] && command -v nix > /dev/null; then
+        STK_VM_IN_NIX_SHELL=1 exec nix \
             --extra-experimental-features "nix-command flakes" \
             shell nixpkgs#qemu_kvm nixpkgs#cdrkit -c "${BASH_SOURCE[0]}" "$@"
     fi
@@ -338,7 +338,7 @@ sync_branch() {
         | ssh "${SSH_OPTIONS[@]}" -p "$SSH_PORT" "$VM_USER@127.0.0.1" "cat > ~/deploy.sh"
 
     printf 'Pushed %s. In a terminal on the VM desktop, run:\n\n' "$branch"
-    printf '  sh ~/deploy.sh --repository ~/%s --branch %s --privileged\n\n' \
+    printf '  sh ~/deploy.sh --repository ~/%s --branch %s --enable sudo\n\n' \
         "$VM_REPOSITORY" "$branch"
 }
 

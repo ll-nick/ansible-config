@@ -12,7 +12,7 @@ set -e
 
 COMMAND="${1:-all}"
 WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
-IMAGE="devstack-ci"
+IMAGE="stk-ci"
 
 ci_build() {
     docker build \
@@ -26,7 +26,7 @@ ci_verify() {
 
 ci_idempotency() {
     docker run --rm ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$IMAGE" \
-        uv run --no-dev stk apply --yes --privileged --fail-on-change
+        uv run --no-dev stk apply --yes --fail-on-change
 }
 
 ci_shell() {

@@ -1,5 +1,5 @@
 [project]
-name = "devstack"
+name = "stk"
 version = "0.1.0"
 description = "My personal setup."
 readme = "README.md"
@@ -21,7 +21,7 @@ dev = [
 ]
 
 [project.scripts]
-stk = "devstack.cli:cli"
+stk = "stk.cli:cli"
 
 [build-system]
 requires = ["uv_build>=0.13.5,<0.14.0"]

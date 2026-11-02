@@ -1,0 +1,43 @@
+from dataclasses import replace
+
+from stk.component import Component
+from stk.components import COMPONENTS
+from stk.updates.step import UpdateStep
+from stk.updates.steps.dotfiles import (
+    CHECKOUT_EXISTS,
+    STK_SHIM_EXISTS,
+    update_dotfiles,
+)
+from stk.updates.steps.flatpak import FLATPAK_IS_INSTALLED, update_flatpak
+from stk.updates.steps.system import HAS_SYSTEM_PACKAGE_MANAGER, update_system
+
+# Not owned by a component, and the first to run:
+# a newer stk and fresh system packages are what the component steps build on
+CORE_UPDATE_STEPS: tuple[UpdateStep, ...] = (
+    UpdateStep(
+        "system", update_system, requires=(HAS_SYSTEM_PACKAGE_MANAGER,), uses_sudo=True
+    ),
+    UpdateStep(
+        "dotfiles", update_dotfiles, requires=(STK_SHIM_EXISTS, CHECKOUT_EXISTS)
+    ),
+    UpdateStep("flatpak", update_flatpak, requires=(FLATPAK_IS_INSTALLED,)),
+)
+
+
+def component_update_steps(
+    components: tuple[Component, ...] = COMPONENTS,
+) -> tuple[UpdateStep, ...]:
+    # A component's step only makes sense where the component itself applies
+    return tuple(
+        replace(
+            component.update, requires=(*component.requires, *component.update.requires)
+        )
+        for component in components
+        if component.update is not None
+    )
+
+
+def all_update_steps(
+    components: tuple[Component, ...] = COMPONENTS,
+) -> tuple[UpdateStep, ...]:
+    return (*CORE_UPDATE_STEPS, *component_update_steps(components))

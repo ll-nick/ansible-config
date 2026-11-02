@@ -1,18 +1,18 @@
 #!/bin/sh
-# Bootstraps devstack on a fresh machine.
+# Bootstraps stk on a fresh machine.
 # Only needs curl and git (installed on Debian and Ubuntu if missing);
-# everything else is set up by devstack itself.
+# everything else is set up by stk itself.
 #
 # Can be piped into a shell: curl <url> | sh
 
 set -eu
 
-REPOSITORY_URL="https://github.com/ll-nick/devstack.git"
-CHECKOUT_DIRECTORY="$HOME/.config/devstack"
+REPOSITORY_URL="https://github.com/ll-nick/stk.git"
+CHECKOUT_DIRECTORY="$HOME/.config/stk"
 MISE_EXECUTABLE="$HOME/.local/bin/mise"
 
 NO_CONFIRM=false
-PRIVILEGED=false
+ENABLED_NAMES=""
 BRANCH=""
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
@@ -28,7 +28,7 @@ Usage: $(basename "$0") [OPTIONS]
 
 Options:
   -y, --no-confirm      Automatically answer yes to all prompts.
-  --privileged          Also apply the parts that need root (requires sudo).
+  --enable <name>       Also enable this on the machine, e.g. sudo. Repeatable.
   --branch <name>       Check out this branch of the repository.
   --repository <url>    Clone from this repository instead of the default.
   -h, --help            Show this help message and exit.
@@ -112,8 +112,23 @@ ensure_uv() {
         || fail "uv installation failed."
 }
 
-ensure_checkout() {
+normalized_repository_url() {
+    printf '%s' "$1" | sed -e 's#^git@github.com:#https://github.com/#' -e 's#\.git$##'
+}
+
+fail_unless_checkout_of_this_repository() {
     if [ -d "$CHECKOUT_DIRECTORY/.git" ]; then
+        origin="$(git -C "$CHECKOUT_DIRECTORY" remote get-url origin 2> /dev/null || true)"
+        if [ "$(normalized_repository_url "$origin")" = "$(normalized_repository_url "$REPOSITORY_URL")" ]; then
+            return
+        fi
+    fi
+    fail "$CHECKOUT_DIRECTORY exists but is not a checkout of $REPOSITORY_URL. Please move or remove it and run this script again."
+}
+
+ensure_checkout() {
+    if [ -e "$CHECKOUT_DIRECTORY" ] || [ -L "$CHECKOUT_DIRECTORY" ]; then
+        fail_unless_checkout_of_this_repository
         printf "  ${COLOR_INFO}⬇ Updating %s...${COLOR_RESET}\n" "$CHECKOUT_DIRECTORY"
         git -C "$CHECKOUT_DIRECTORY" fetch origin
         if [ -n "$BRANCH" ]; then
@@ -131,32 +146,41 @@ ensure_checkout() {
     fi
 }
 
-run_devstack() {
+run_stk_in_checkout() {
+    (
+        cd "$CHECKOUT_DIRECTORY"
+        # When piped into a shell, stdin is the script and must not be read by prompts
+        if [ -t 0 ]; then
+            "$UV_EXECUTABLE" run --quiet --no-dev stk "$@"
+        elif (: < /dev/tty) 2> /dev/null; then
+            "$UV_EXECUTABLE" run --quiet --no-dev stk "$@" < /dev/tty
+        else
+            "$UV_EXECUTABLE" run --quiet --no-dev stk "$@" < /dev/null
+        fi
+    )
+}
+
+run_stk() {
     confirm "Do you wish to apply the configuration?" || fail "Nothing applied."
 
-    printf "\n  💬 Most tools are installed at the user level.\n\
+    case " $ENABLED_NAMES " in
+        *" sudo "*) ;;
+        *)
+            printf "\n  💬 Most tools are installed at the user level.\n\
      A few system packages require sudo.\n\
      Without it, those packages are expected to be installed already.\n"
+            if [ "$NO_CONFIRM" = false ] && confirm "May this machine use sudo?"; then
+                ENABLED_NAMES="$ENABLED_NAMES sudo"
+            fi
+            ;;
+    esac
 
-    if [ "$NO_CONFIRM" = false ] && [ "$PRIVILEGED" = false ]; then
-        if confirm "Do you want to also apply the privileged parts (requires sudo)?"; then
-            PRIVILEGED=true
-        fi
-    fi
+    # shellcheck disable=SC2086 # The names are separated by spaces
+    run_stk_in_checkout enable $ENABLED_NAMES
 
     set -- apply
     [ "$NO_CONFIRM" = true ] && set -- "$@" --yes
-    [ "$PRIVILEGED" = true ] && set -- "$@" --privileged
-
-    cd "$CHECKOUT_DIRECTORY"
-    # When piped into a shell, stdin is the script and must not be read by prompts
-    if [ -t 0 ]; then
-        "$UV_EXECUTABLE" run --quiet --no-dev stk "$@"
-    elif (: < /dev/tty) 2> /dev/null; then
-        "$UV_EXECUTABLE" run --quiet --no-dev stk "$@" < /dev/tty
-    else
-        "$UV_EXECUTABLE" run --quiet --no-dev stk "$@" < /dev/null
-    fi
+    run_stk_in_checkout "$@"
 }
 
 main() {
@@ -166,9 +190,10 @@ main() {
                 NO_CONFIRM=true
                 shift
                 ;;
-            --privileged)
-                PRIVILEGED=true
-                shift
+            --enable)
+                [ -n "${2:-}" ] || fail "--enable requires a name."
+                ENABLED_NAMES="$ENABLED_NAMES $2"
+                shift 2
                 ;;
             --branch)
                 [ -n "${2:-}" ] || fail "--branch requires a branch name."
@@ -202,11 +227,11 @@ main() {
     ensure_mise
     ensure_uv
 
-    print_header "📥 Fetching devstack"
+    print_header "📥 Fetching stk"
     ensure_checkout
 
-    print_header "🚀 Applying devstack"
-    run_devstack
+    print_header "🚀 Applying stk"
+    run_stk
 
     printf "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
 }

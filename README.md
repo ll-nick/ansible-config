@@ -1,4 +1,4 @@
-# 🛠️ devstack
+# 🛠️ stk
 
 This repository contains my personal setup used to configure and manage my systems consistently and efficiently.
 
@@ -7,12 +7,12 @@ This repository contains my personal setup used to configure and manage my syste
 The setup is written in Python on top of [pyinfra](https://pyinfra.com/) and is meant to be run on localhost.
 It is designed to install as many tools as possible on the user level.
 
-A very limited amount of tasks require root privileges for system-wide installation of basic dependencies,
-which can be deployed using the `--privileged` mode.
-Running without these privileges expects those packages to be installed already.
+A very limited amount of tasks require root privileges for system-wide installation of basic dependencies.
+These only run on machines where `stk enable sudo` was used;
+everywhere else, those packages are expected to be installed already.
 
-The config is [continuously tested on the latest Ubuntu](https://github.com/ll-nick/devstack/actions/workflows/ci.yml).
-It is also known to work on NixOS (without `--privileged`).
+The config is [continuously tested on the latest Ubuntu](https://github.com/ll-nick/stk/actions/workflows/ci.yml).
+It is also known to work on NixOS.
 
 ## 🚀 Usage
 
@@ -21,15 +21,16 @@ I'm not sure why you would want to use my config but don't let that stop you!
 The only requirements are `curl` and `git`.
 The bootstrap script installs [mise](https://mise.jdx.dev/) if needed,
 uses it to install [uv](https://docs.astral.sh/uv/),
-clones this repository to `~/.config/devstack` and applies the configuration:
+clones this repository to `~/.config/stk` and applies the configuration:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ll-nick/devstack/main/deploy/deploy.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ll-nick/stk/main/deploy/deploy.sh | sh
 ```
 
-Check `deploy.sh --help` for its options, for example `--privileged`.
+Check `deploy.sh --help` for its options, for example `--enable sudo`.
 
 From then on, everything runs through the `stk` command:
+`stk enable` chooses what the machine gets,
 `stk apply` applies the configuration (or only some components, e.g. `stk apply neovim`)
 and `stk update` keeps everything up to date.
 Check `stk --help` for details.
