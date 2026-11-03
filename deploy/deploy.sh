@@ -17,7 +17,6 @@ BRANCH=""
 MISSING_PACKAGES=""
 INSTALL_MISE=false
 CHECKOUT_STEP=""
-CHECKOUT_ORIGIN_UNVERIFIED=false
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
 COLOR_INFO='\033[0;36m'    # Cyan
@@ -106,7 +105,6 @@ plan_checkout() {
     # Without git, the origin and state of a checkout can only be checked once git is installed
     if ! is_installed git; then
         [ -d "$CHECKOUT_DIRECTORY/.git" ] || fail_unless_checkout_of_this_repository
-        CHECKOUT_ORIGIN_UNVERIFIED=true
         CHECKOUT_STEP="Update $CHECKOUT_DIRECTORY$branch_suffix"
         return
     fi
@@ -215,10 +213,12 @@ fail_unless_checkout_of_this_repository() {
 }
 
 ensure_checkout() {
+    if [ -z "$CHECKOUT_STEP" ]; then
+        return
+    fi
+
     if checkout_exists; then
-        if [ "$CHECKOUT_ORIGIN_UNVERIFIED" = true ]; then
-            fail_unless_checkout_of_this_repository
-        fi
+        fail_unless_checkout_of_this_repository
         printf "  ${COLOR_INFO}⬇ Updating %s...${COLOR_RESET}\n" "$CHECKOUT_DIRECTORY"
         git -C "$CHECKOUT_DIRECTORY" fetch origin
         if [ -n "$BRANCH" ]; then
@@ -304,15 +304,11 @@ main() {
     print_plan
     confirm "Proceed?" || fail "Nothing changed."
 
-    print_header "🔧 Installing the prerequisites"
+    print_header "🔧 Installing stk"
     install_system_packages
     install_mise
     ensure_uv
-
-    if [ -n "$CHECKOUT_STEP" ]; then
-        print_header "📥 Fetching stk"
-        ensure_checkout
-    fi
+    ensure_checkout
 
     print_header "🚀 Applying stk"
     run_stk
