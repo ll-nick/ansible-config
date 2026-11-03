@@ -16,6 +16,8 @@ ENABLED_NAMES=""
 BRANCH=""
 MISSING_PACKAGES=""
 INSTALL_MISE=false
+CHECKOUT_STEP=""
+CHECKOUT_ORIGIN_UNVERIFIED=false
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
 COLOR_INFO='\033[0;36m'    # Cyan
@@ -96,12 +98,32 @@ plan_mise() {
 }
 
 plan_checkout() {
+    branch_suffix="${BRANCH:+ (branch $BRANCH)}"
     if ! checkout_exists; then
+        CHECKOUT_STEP="Clone $REPOSITORY_URL into $CHECKOUT_DIRECTORY$branch_suffix"
         return
     fi
-    # Without git, the origin of a checkout can only be verified once git is installed
-    if is_installed git || [ ! -d "$CHECKOUT_DIRECTORY/.git" ]; then
-        fail_unless_checkout_of_this_repository
+    # Without git, the origin and state of a checkout can only be checked once git is installed
+    if ! is_installed git; then
+        [ -d "$CHECKOUT_DIRECTORY/.git" ] || fail_unless_checkout_of_this_repository
+        CHECKOUT_ORIGIN_UNVERIFIED=true
+        CHECKOUT_STEP="Update $CHECKOUT_DIRECTORY$branch_suffix"
+        return
+    fi
+    fail_unless_checkout_of_this_repository
+
+    current_branch="$(git -C "$CHECKOUT_DIRECTORY" symbolic-ref --quiet --short HEAD || true)"
+    branch="${BRANCH:-$current_branch}"
+    [ -n "$branch" ] || fail "$CHECKOUT_DIRECTORY is on no branch, please pass --branch."
+    remote_branch="$(git -C "$CHECKOUT_DIRECTORY" ls-remote origin "refs/heads/$branch")" \
+        || fail "Cannot reach the origin of $CHECKOUT_DIRECTORY."
+    [ -n "$remote_branch" ] || fail "There is no branch $branch in $REPOSITORY_URL."
+    remote_commit="$(printf '%s' "$remote_branch" | cut -f1)"
+
+    if [ "$branch" != "$current_branch" ]; then
+        CHECKOUT_STEP="Switch $CHECKOUT_DIRECTORY to branch $branch"
+    elif ! git -C "$CHECKOUT_DIRECTORY" merge-base --is-ancestor "$remote_commit" HEAD 2> /dev/null; then
+        CHECKOUT_STEP="Update $CHECKOUT_DIRECTORY to the latest $branch"
     fi
 }
 
@@ -133,14 +155,9 @@ print_plan() {
         print_step "Install mise to $MISE_EXECUTABLE"
     fi
     print_step "Install uv through mise"
-
-    branch_suffix="${BRANCH:+ (branch $BRANCH)}"
-    if checkout_exists; then
-        print_step "Update $CHECKOUT_DIRECTORY$branch_suffix"
-    else
-        print_step "Clone $REPOSITORY_URL into $CHECKOUT_DIRECTORY$branch_suffix"
+    if [ -n "$CHECKOUT_STEP" ]; then
+        print_step "$CHECKOUT_STEP"
     fi
-
     if [ -n "$ENABLED_NAMES" ]; then
         print_step "Enable$ENABLED_NAMES (and the default components on a new machine)"
     else
@@ -199,7 +216,9 @@ fail_unless_checkout_of_this_repository() {
 
 ensure_checkout() {
     if checkout_exists; then
-        fail_unless_checkout_of_this_repository
+        if [ "$CHECKOUT_ORIGIN_UNVERIFIED" = true ]; then
+            fail_unless_checkout_of_this_repository
+        fi
         printf "  ${COLOR_INFO}⬇ Updating %s...${COLOR_RESET}\n" "$CHECKOUT_DIRECTORY"
         git -C "$CHECKOUT_DIRECTORY" fetch origin
         if [ -n "$BRANCH" ]; then
@@ -290,8 +309,10 @@ main() {
     install_mise
     ensure_uv
 
-    print_header "📥 Fetching stk"
-    ensure_checkout
+    if [ -n "$CHECKOUT_STEP" ]; then
+        print_header "📥 Fetching stk"
+        ensure_checkout
+    fi
 
     print_header "🚀 Applying stk"
     run_stk
