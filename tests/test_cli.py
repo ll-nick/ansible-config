@@ -15,8 +15,9 @@ def test_list_shows_components_with_their_dependencies() -> None:
     result = CliRunner().invoke(cli, ["list"])
 
     assert result.exit_code == 0
-    assert "mise" in result.output
-    assert "bat (needs mise, bash, nushell)" in result.output
+    bat_row = next(line for line in result.output.splitlines() if "bat" in line)
+    assert "bash, nushell" in bat_row
+    assert "mise" not in bat_row
 
 
 def test_unknown_component_is_a_usage_error() -> None:

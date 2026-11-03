@@ -1,7 +1,11 @@
 import pytest
 
 from stk.engine.component import Component
-from stk.engine.registry import UnknownComponentError, select_components
+from stk.engine.registry import (
+    UnknownComponentError,
+    direct_dependencies,
+    select_components,
+)
 
 
 def noop() -> None:
@@ -38,3 +42,12 @@ def test_unrelated_components_are_not_selected() -> None:
 def test_unknown_component_is_rejected() -> None:
     with pytest.raises(UnknownComponentError, match="nope"):
         select_components(("nope",), AVAILABLE)
+
+
+def test_direct_dependencies_leave_out_what_another_dependency_pulls_in() -> None:
+    component = Component("combined", noop, depends_on=("base", "extra", "unrelated"))
+
+    assert direct_dependencies(component, (*AVAILABLE, component)) == (
+        "extra",
+        "unrelated",
+    )

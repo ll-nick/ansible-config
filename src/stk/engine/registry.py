@@ -33,6 +33,19 @@ def without_skipped(
     return tuple(kept), tuple(dependents)
 
 
+def direct_dependencies(
+    component: Component, available: Sequence[Component]
+) -> tuple[str, ...]:
+    """The dependencies of a component that none of its other dependencies pulls in."""
+    pulled_in_names = {
+        dependency.name
+        for name in component.depends_on
+        for dependency in select_components((name,), available)
+        if dependency.name != name
+    }
+    return tuple(name for name in component.depends_on if name not in pulled_in_names)
+
+
 def select_components(
     requested_names: Sequence[str],
     available: Sequence[Component],

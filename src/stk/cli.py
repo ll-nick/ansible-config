@@ -2,7 +2,9 @@ from collections.abc import Sequence
 from datetime import timedelta
 
 import click
+from rich import box
 from rich.console import Console
+from rich.table import Table
 
 from stk.components import COMPONENTS
 from stk.enablement import (
@@ -20,6 +22,7 @@ from stk.enablement import (
 from stk.engine.component import Component
 from stk.engine.registry import (
     UnknownComponentError,
+    direct_dependencies,
     select_components,
     without_skipped,
 )
@@ -227,6 +230,25 @@ def apply(
     raise SystemExit(run_components(runnable, options, reporter))
 
 
+def component_status(component: Component, enabled_names: set[str] | None) -> str:
+    if component.unmet_requirement() is not None:
+        return "[yellow]not applicable[/]"
+    if enabled_names is None:
+        return ""
+    if component.name in enabled_names:
+        return "[green]enabled[/]"
+    return "[dim]not enabled[/]"
+
+
+def described_requirements(component: Component) -> str:
+    return ", ".join(
+        requirement.description
+        if requirement.is_met()
+        else f"[yellow]{requirement.description}[/]"
+        for requirement in component.requires
+    )
+
+
 @cli.command("list")
 def list_components() -> None:
     """List the available components."""
@@ -234,18 +256,24 @@ def list_components() -> None:
         enabled_names = {component.name for component in enabled_components()}
     except click.UsageError:
         enabled_names = None
+
+    table = Table(box=box.SIMPLE_HEAD, pad_edge=False)
+    table.add_column("Component", style="bold")
+    table.add_column("Status")
+    table.add_column("Needs")
+    table.add_column("Requires")
     for component in COMPONENTS:
-        details: list[str] = []
-        if component.depends_on:
-            details.append(f"needs {', '.join(component.depends_on)}")
-        for requirement in component.requires:
-            details.append(f"requires {requirement.description}")
-        if component.unmet_requirement() is not None:
-            details.append("not applicable here")
-        if enabled_names is not None and component.name not in enabled_names:
-            details.append("not enabled")
-        suffix = f" ({'; '.join(details)})" if details else ""
-        click.echo(f"{component.name}{suffix}")
+        table.add_row(
+            component.name,
+            component_status(component, enabled_names),
+            ", ".join(direct_dependencies(component, COMPONENTS)),
+            described_requirements(component),
+        )
+
+    console = Console()
+    console.print(table)
+    if enabled_names is None:
+        console.print("Nothing is enabled on this machine yet, see `stk enable`.")
 
 
 @cli.command()
