@@ -14,10 +14,11 @@ MISE_EXECUTABLE="$HOME/.local/bin/mise"
 NO_CONFIRM=false
 ENABLED_NAMES=""
 BRANCH=""
+MISSING_PACKAGES=""
+INSTALL_MISE=false
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
 COLOR_INFO='\033[0;36m'    # Cyan
-COLOR_WARN='\033[0;33m'    # Yellow
 COLOR_ERROR='\033[0;31m'   # Red
 COLOR_SUCCESS='\033[0;32m' # Green
 COLOR_RESET='\033[0m'
@@ -71,41 +72,111 @@ is_debian_based() {
     [ -f /etc/os-release ] && grep -qiE '^ID(_LIKE)?=.*(debian|ubuntu)' /etc/os-release
 }
 
-ensure_system_package() {
-    package="$1"
-
-    if command -v "$package" > /dev/null 2>&1; then
-        printf "  ${COLOR_SUCCESS}✔ %s is already installed.${COLOR_RESET}\n" "$package"
-        return
-    fi
-
-    printf "  ${COLOR_WARN}⚠ %s is not installed.${COLOR_RESET}\n" "$package"
-    is_debian_based || fail "Cannot install $package on this distribution, please install it manually."
-    confirm "Do you want to install $package? This requires sudo." \
-        || fail "$package is required but not installed."
-
-    sudo apt-get update
-    sudo apt-get install -y "$package"
-    command -v "$package" > /dev/null 2>&1 || fail "Failed to install $package."
-    printf "  ${COLOR_SUCCESS}✔ %s installed successfully.${COLOR_RESET}\n" "$package"
+is_installed() {
+    command -v "$1" > /dev/null 2>&1
 }
 
-ensure_mise() {
-    if [ -x "$MISE_EXECUTABLE" ]; then
-        printf "  ${COLOR_SUCCESS}✔ mise is already installed.${COLOR_RESET}\n"
+checkout_exists() {
+    [ -e "$CHECKOUT_DIRECTORY" ] || [ -L "$CHECKOUT_DIRECTORY" ]
+}
+
+plan_system_packages() {
+    for package in curl git; do
+        if ! is_installed "$package"; then
+            is_debian_based || fail "$package is missing and cannot be installed on this distribution, please install it manually."
+            MISSING_PACKAGES="$MISSING_PACKAGES $package"
+        fi
+    done
+}
+
+plan_mise() {
+    if [ ! -x "$MISE_EXECUTABLE" ]; then
+        INSTALL_MISE=true
+    fi
+}
+
+plan_checkout() {
+    if ! checkout_exists; then
+        return
+    fi
+    # Without git, the origin of a checkout can only be verified once git is installed
+    if is_installed git || [ ! -d "$CHECKOUT_DIRECTORY/.git" ]; then
+        fail_unless_checkout_of_this_repository
+    fi
+}
+
+plan_sudo() {
+    case " $ENABLED_NAMES " in
+        *" sudo "*) return ;;
+    esac
+    if [ "$NO_CONFIRM" = true ]; then
         return
     fi
 
-    printf "  ${COLOR_WARN}⚠ mise is not installed.${COLOR_RESET}\n"
-    confirm "Do you want to install mise?" || fail "mise is required but not installed."
+    printf "\n  💬 Most tools are installed at the user level.\n\
+     A few system packages require sudo.\n\
+     Without it, those packages are expected to be installed already.\n"
+    if confirm "May this machine use sudo?"; then
+        ENABLED_NAMES="$ENABLED_NAMES sudo"
+    fi
+}
 
-    printf "  ${COLOR_INFO}⬇ Installing mise...${COLOR_RESET}\n"
+print_step() {
+    printf "  ${COLOR_INFO}•${COLOR_RESET} %s\n" "$1"
+}
+
+print_plan() {
+    for package in $MISSING_PACKAGES; do
+        print_step "Install $package with apt (sudo)"
+    done
+    if [ "$INSTALL_MISE" = true ]; then
+        print_step "Install mise to $MISE_EXECUTABLE"
+    fi
+    print_step "Install uv through mise"
+
+    branch_suffix="${BRANCH:+ (branch $BRANCH)}"
+    if checkout_exists; then
+        print_step "Update $CHECKOUT_DIRECTORY$branch_suffix"
+    else
+        print_step "Clone $REPOSITORY_URL into $CHECKOUT_DIRECTORY$branch_suffix"
+    fi
+
+    if [ -n "$ENABLED_NAMES" ]; then
+        print_step "Enable$ENABLED_NAMES (and the default components on a new machine)"
+    else
+        print_step "Enable the default components"
+    fi
+    if [ "$NO_CONFIRM" = true ]; then
+        print_step "Apply the configuration"
+    else
+        print_step "Apply the configuration (stk shows what it will change and asks again)"
+    fi
+}
+
+install_system_packages() {
+    if [ -z "$MISSING_PACKAGES" ]; then
+        return
+    fi
+
+    sudo apt-get update
+    for package in $MISSING_PACKAGES; do
+        sudo apt-get install -y "$package"
+        is_installed "$package" || fail "Failed to install $package."
+    done
+}
+
+install_mise() {
+    if [ "$INSTALL_MISE" = false ]; then
+        return
+    fi
+
+    printf "  ${COLOR_INFO}⬇ %s${COLOR_RESET}\n" "Installing mise..."
     curl -fsSL https://mise.jdx.dev/install.sh | sh
     [ -x "$MISE_EXECUTABLE" ] || fail "mise installation failed."
 }
 
 ensure_uv() {
-    printf "  ${COLOR_INFO}⬇ Installing uv through mise...${COLOR_RESET}\n"
+    printf "  ${COLOR_INFO}⬇ %s${COLOR_RESET}\n" "Installing uv through mise..."
     # From the home directory, as a mise config in the current directory could get in the way
     (cd "$HOME" && "$MISE_EXECUTABLE" install --quiet uv@latest)
     UV_EXECUTABLE="$(cd "$HOME" && "$MISE_EXECUTABLE" --quiet which --tool uv@latest uv)" \
@@ -127,7 +198,7 @@ fail_unless_checkout_of_this_repository() {
 }
 
 ensure_checkout() {
-    if [ -e "$CHECKOUT_DIRECTORY" ] || [ -L "$CHECKOUT_DIRECTORY" ]; then
+    if checkout_exists; then
         fail_unless_checkout_of_this_repository
         printf "  ${COLOR_INFO}⬇ Updating %s...${COLOR_RESET}\n" "$CHECKOUT_DIRECTORY"
         git -C "$CHECKOUT_DIRECTORY" fetch origin
@@ -161,20 +232,6 @@ run_stk_in_checkout() {
 }
 
 run_stk() {
-    confirm "Do you wish to apply the configuration?" || fail "Nothing applied."
-
-    case " $ENABLED_NAMES " in
-        *" sudo "*) ;;
-        *)
-            printf "\n  💬 Most tools are installed at the user level.\n\
-     A few system packages require sudo.\n\
-     Without it, those packages are expected to be installed already.\n"
-            if [ "$NO_CONFIRM" = false ] && confirm "May this machine use sudo?"; then
-                ENABLED_NAMES="$ENABLED_NAMES sudo"
-            fi
-            ;;
-    esac
-
     # shellcheck disable=SC2086 # The names are separated by spaces
     run_stk_in_checkout enable $ENABLED_NAMES
 
@@ -219,12 +276,18 @@ main() {
 
     export PATH="$HOME/.local/bin:$PATH"
 
-    print_header "📦 Checking system packages"
-    ensure_system_package curl
-    ensure_system_package git
+    plan_system_packages
+    plan_mise
+    plan_checkout
+    plan_sudo
 
-    print_header "🔧 Checking mise and uv"
-    ensure_mise
+    print_header "📋 Plan"
+    print_plan
+    confirm "Proceed?" || fail "Nothing changed."
+
+    print_header "🔧 Installing the prerequisites"
+    install_system_packages
+    install_mise
     ensure_uv
 
     print_header "📥 Fetching stk"
@@ -233,7 +296,7 @@ main() {
     print_header "🚀 Applying stk"
     run_stk
 
-    printf "\n${COLOR_SUCCESS}✔ Deployment completed successfully!${COLOR_RESET}\n"
+    printf "\n${COLOR_SUCCESS}✔ %s${COLOR_RESET}\n" "Deployment completed successfully!"
 }
 
 main "$@"
