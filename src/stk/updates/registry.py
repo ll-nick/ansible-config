@@ -3,8 +3,9 @@ from pathlib import Path
 
 from stk.engine.component import Component
 from stk.engine.update_step import UpdateStep
+from stk.machine import has_executable
 from stk.updates.steps.dotfiles import dotfiles_update_step
-from stk.updates.steps.system import HAS_SYSTEM_PACKAGE_MANAGER, update_system
+from stk.updates.steps.system import update_system
 
 
 def core_update_steps(checkout: Path) -> tuple[UpdateStep, ...]:
@@ -15,7 +16,7 @@ def core_update_steps(checkout: Path) -> tuple[UpdateStep, ...]:
         UpdateStep(
             "system",
             update_system,
-            requires=(HAS_SYSTEM_PACKAGE_MANAGER,),
+            requires=(has_executable("apt"),),
             uses_sudo=True,
         ),
         dotfiles_update_step(checkout),

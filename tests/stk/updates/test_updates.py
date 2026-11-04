@@ -1,4 +1,3 @@
-import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -194,13 +193,7 @@ def test_core_steps_run_before_the_steps_of_components() -> None:
     assert [step.name for step in core_update_steps(Path("/checkout"))] == names[:2]
 
 
-def test_apt_upgrade_runs_without_further_prompts(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def fake_which(name: str) -> str:
-        return f"/usr/bin/{name}"
-
-    monkeypatch.setattr(shutil, "which", fake_which)
+def test_apt_upgrade_runs_without_further_prompts() -> None:
     context = RecordingContext()
 
     system.update_system(context)
