@@ -34,8 +34,8 @@ Subcommands: `apply`, `list`, `update`, `check`.
 The code is split so the tool could become its own repository:
 
 - `src/stk/`: the tool, which knows no specific component, machine or path of the owner
-- `src/stk_config/`: the owner's setup, built on the tool: its components,
-  the checkout location (`paths.py`) and the entry point (`cli.py`), which hands the tool a `Setup`
+- `src/stk_config/`: the owner's setup, built on the tool: its components
+  and the entry point (`cli.py`), which hands the tool a `Setup` with the checkout location
 
 Nothing in `stk` imports `stk_config` (`tests/stk/test_layering.py`).
 Within `src/stk/`, imports only point down this list:
@@ -97,7 +97,7 @@ Like `stk apply`, `stk update` shows its plan and asks once; the steps themselve
 Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake (`stk.testing.RecordingContext`).
 
 **Bootstrap.**
-`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, `stk_config/paths.py`) and runs `stk apply`.
+`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, set in `stk_config/cli.py`) and runs `stk apply`.
 The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from that checkout.
 
 ## Conventions

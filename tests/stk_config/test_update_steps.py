@@ -3,10 +3,11 @@ from pathlib import Path
 
 import pytest
 
+from stk.engine.registry import discover_components
 from stk.engine.update_step import StepOutcome
+from stk.setup import Setup
 from stk.testing import RecordingContext
 from stk.updates.registry import all_update_steps
-from stk_config.cli import SETUP
 from stk_config.components.mise.mise import update_mise
 
 
@@ -16,7 +17,9 @@ def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def all_step_names() -> list[str]:
-    return [step.name for step in all_update_steps(SETUP, SETUP.components)]
+    components = discover_components("stk_config.components")
+    setup = Setup(components=components, checkout=Path("/checkout"))
+    return [step.name for step in all_update_steps(setup, components)]
 
 
 def test_step_names_are_unique() -> None:
