@@ -15,7 +15,7 @@ This repo is the basis of all the owner's machines, so changes need to be carefu
 ```bash
 uv run poe check          # ruff lint + format check, basedpyright, lock check
 uv run poe fix            # apply lint and format fixes
-uv run pytest tests       # tests of the tool itself, no applied machine needed
+uv run pytest tests       # tests that need no applied machine
 uv run pytest             # also the component tests, for an applied machine (Docker harness)
 uv run stk apply -n       # dry run: show the plan and stop
 uv run stk apply [names]  # apply components (and their dependencies)
@@ -26,25 +26,31 @@ ci/run.sh shell           # shell in the image from the last build
 ci/vm.sh                  # disposable desktop VM for display, systemd and sudo tests
 ```
 
-The command is `stk` (`stk.cli:cli`).
+The command is `stk` (`stk_config.cli:main`).
 Subcommands: `apply`, `list`, `update`, `check`.
 
 ## Architecture
 
-All code lives in `src/stk/`, with imports only pointing down this list:
+The code is split so the tool could become its own repository:
 
-- `cli.py`: the only module that knows the `components` package and ties everything together
-- `components/`: one package per component
+- `src/stk/`: the tool, which knows no specific component, machine or path of the owner
+- `src/stk_config/`: the owner's setup, built on the tool: its components,
+  the checkout location (`paths.py`) and the entry point (`cli.py`), which hands the tool a `Setup`
+
+Nothing in `stk` imports `stk_config` (`tests/stk/test_layering.py`).
+Within `src/stk/`, imports only point down this list:
+
+- `cli.py`: the commands, run with the `Setup` (`setup.py`) as click's context object
 - `updates/` and `privileged/`: `stk update` and the work that needs root
-- `enablement.py`, `machine.py`, `helpers/`: what a machine gets and can do, and shared pyinfra use
-- `engine/` and `reporting/`: running components and reporting on them, unaware of any specific one
+- `enablement.py`, `machine.py`, `helpers/`, `setup.py`: what a machine gets and can do, and shared pyinfra use
+- `engine/` and `reporting/`: running components and reporting on them
 - `paths.py`
 
-**Components** (`components/<name>/{<name>.py, files/, test_<name>.py}`) are the unit of the setup.
+**Components** (`src/stk_config/components/<name>/{<name>.py, files/, test_<name>.py}`) are the unit of the setup.
 Each module declares its `Component` as a constant (e.g. `BAT`) with
 its `apply_<name>` function, `depends_on` (the constants of other components),
-`requires` (machine conditions, see `machine.py`) and `system_packages`.
-`cli.py` discovers them (`discover_components`), so adding a directory is enough to add a component.
+`requires` (machine conditions, see `stk/machine.py`) and `system_packages`.
+`stk_config/cli.py` discovers them (`discover_components`), so adding a directory is enough to add a component.
 The engine runs `apply` as a pyinfra deploy named after the component.
 Typical component: install via mise (`install_mise_tools`), clone a config repo from GitHub,
 link files and shell snippets, generate init scripts.
@@ -83,20 +89,20 @@ Everything else must work without root.
 Components are reported through the `Reporter` protocol (`reporting/reporter.py`): `RichReporter`, which only animates on terminals, always combined with `LogFileReporter`.
 Keep success output minimal and never hide errors.
 
-**Update steps** (`updates/`) run sequentially against the terminal (`stk update`).
+**Update steps** (`stk/updates/`) run sequentially against the terminal (`stk update`).
 A component can carry an `update` step (`Component.update`), which only applies where the component does.
-The core steps (`system`, `dotfiles`, `flatpak` in `updates/registry.py`) belong to no component and run first.
+The core steps (`system`, and `dotfiles`, which pulls `Setup.checkout` and applies again) belong to no component and run first (`updates/registry.py`).
 Like `stk apply`, `stk update` shows its plan and asks once; the steps themselves never prompt (except before pushing a version bump).
 `stk check` reports their timestamps.
-Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake.
+Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake (`stk.testing.RecordingContext`).
 
 **Bootstrap.**
-`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, `paths.py`) and runs `stk apply`.
+`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, `stk_config/paths.py`) and runs `stk apply`.
 The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from that checkout.
 
 ## Conventions
 
-- Tests of the tool itself live in `tests/`, mirroring `src/stk/`.
+- Tests that need no applied machine live in `tests/`, mirroring `src/` (`tests/stk/`, `tests/stk_config/`).
   A component keeps its test next to it, so it stays self-contained; these verify the applied result (e.g. the tool runs, a generated file exists) and use `skip_unless(requirement)` when the component is not applicable everywhere.
   Component tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
 - Prefer separate files in a component's `files/` over inline content.
