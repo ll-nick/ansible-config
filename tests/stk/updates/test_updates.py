@@ -13,6 +13,7 @@ from stk.engine.update_step import (
     UpdateContext,
     UpdateStep,
 )
+from stk.setup import Setup
 from stk.testing import RecordingContext
 from stk.updates.check import collect_freshness, describe_age
 from stk.updates.registry import (
@@ -22,9 +23,11 @@ from stk.updates.registry import (
 )
 from stk.updates.runner import plan_update_steps, run_update_steps
 from stk.updates.steps import system
-from stk.updates.steps.dotfiles import update_dotfiles
+from stk.updates.steps.stk import update_stk
 from stk.updates.timestamps import last_update, record_update
 from stk.updates.version_bump import commit_and_offer_push
+
+SETUP = Setup(components=(), checkout=Path("/checkout"), command=Path("/shim"))
 
 
 @pytest.fixture(autouse=True)
@@ -187,10 +190,10 @@ def test_core_steps_run_before_the_steps_of_components() -> None:
         "tool", update=UpdateStep("tool", lambda _: StepOutcome.UPDATED)
     )
 
-    names = [step.name for step in all_update_steps(Path("/checkout"), (component,))]
+    names = [step.name for step in all_update_steps(SETUP, (component,))]
 
-    assert names == ["system", "dotfiles", "tool"]
-    assert [step.name for step in core_update_steps(Path("/checkout"))] == names[:2]
+    assert names == ["system", "stk", "tool"]
+    assert [step.name for step in core_update_steps(SETUP)] == names[:2]
 
 
 def test_apt_upgrade_runs_without_further_prompts() -> None:
@@ -204,11 +207,13 @@ def test_apt_upgrade_runs_without_further_prompts() -> None:
     ]
 
 
-def test_dotfiles_pull_the_checkout_and_apply_without_sudo_when_left_out() -> None:
+def test_stk_pulls_the_checkout_and_applies_without_sudo_when_left_out() -> None:
     context = RecordingContext()
     context.may_use_sudo = False
 
-    update_dotfiles(context, Path("/checkout"))
+    update_stk(context, SETUP)
 
-    assert context.commands[0] == ["git", "pull", "--ff-only"]
-    assert context.commands[1][1:] == ["apply", "--yes", "--skip", "sudo"]
+    assert context.commands == [
+        ["git", "pull", "--ff-only"],
+        ["/shim", "apply", "--yes", "--skip", "sudo"],
+    ]

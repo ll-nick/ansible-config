@@ -318,7 +318,7 @@ def update(
     skipped_names: tuple[str, ...],
 ) -> None:
     """Update the system and the tools (default: all STEP_NAMES)."""
-    all_steps = all_update_steps(setup.checkout, enabled_components(setup.components))
+    all_steps = all_update_steps(setup, enabled_components(setup.components))
     known_names = [step.name for step in all_steps]
     unknown_names = [
         name
@@ -396,7 +396,7 @@ def check(setup: Setup, reminder_days: int, notify: bool) -> None:
             send_notification(Console(), "stk has nothing enabled", error.message)
         raise
     check_updates(
-        all_update_steps(setup.checkout, components),
+        all_update_steps(setup, components),
         Console(),
         reminder_time=timedelta(days=reminder_days),
         notify=notify,

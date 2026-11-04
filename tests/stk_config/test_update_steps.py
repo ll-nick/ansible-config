@@ -16,7 +16,7 @@ def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def all_step_names() -> list[str]:
-    return [step.name for step in all_update_steps(SETUP.checkout, SETUP.components)]
+    return [step.name for step in all_update_steps(SETUP, SETUP.components)]
 
 
 def test_step_names_are_unique() -> None:

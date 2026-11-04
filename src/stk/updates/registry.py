@@ -1,14 +1,14 @@
 from dataclasses import replace
-from pathlib import Path
 
 from stk.engine.component import Component
 from stk.engine.update_step import UpdateStep
 from stk.machine import has_executable
-from stk.updates.steps.dotfiles import dotfiles_update_step
+from stk.setup import Setup
+from stk.updates.steps.stk import stk_update_step
 from stk.updates.steps.system import update_system
 
 
-def core_update_steps(checkout: Path) -> tuple[UpdateStep, ...]:
+def core_update_steps(setup: Setup) -> tuple[UpdateStep, ...]:
     # Not owned by a component, and the first to run:
     # a newer configuration and fresh system packages are what the component steps
     # build on
@@ -19,7 +19,7 @@ def core_update_steps(checkout: Path) -> tuple[UpdateStep, ...]:
             requires=(has_executable("apt"),),
             uses_sudo=True,
         ),
-        dotfiles_update_step(checkout),
+        stk_update_step(setup),
     )
 
 
@@ -37,6 +37,6 @@ def component_update_steps(
 
 
 def all_update_steps(
-    checkout: Path, components: tuple[Component, ...]
+    setup: Setup, components: tuple[Component, ...]
 ) -> tuple[UpdateStep, ...]:
-    return (*core_update_steps(checkout), *component_update_steps(components))
+    return (*core_update_steps(setup), *component_update_steps(components))

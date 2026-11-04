@@ -78,7 +78,9 @@ def test_explicitly_requesting_an_inapplicable_component_is_a_usage_error(
     enable(())
 
     result = CliRunner().invoke(
-        cli, ["apply", "gui"], obj=Setup(components=(gui,), checkout=tmp_path)
+        cli,
+        ["apply", "gui"],
+        obj=Setup(components=(gui,), checkout=tmp_path, command=tmp_path / "stk"),
     )
 
     assert result.exit_code == 2
