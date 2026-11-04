@@ -33,7 +33,7 @@ Subcommands: `apply`, `list`, `update`, `check`.
 
 All code lives in `src/stk/`, with imports only pointing down this list:
 
-- `cli.py`: the only module that knows `components.COMPONENTS` and ties everything together
+- `cli.py`: the only module that knows the `components` package and ties everything together
 - `components/`: one package per component
 - `updates/` and `privileged/`: `stk update` and the work that needs root
 - `enablement.py`, `machine.py`, `helpers/`: what a machine gets and can do, and shared pyinfra use
@@ -41,9 +41,11 @@ All code lives in `src/stk/`, with imports only pointing down this list:
 - `paths.py`
 
 **Components** (`components/<name>/{<name>.py, files/, test_<name>.py}`) are the unit of the setup.
-Each module exposes an `apply_<name>` function decorated with `@component_deploy("<name>")`
-and is registered in `components/__init__.py` as a `Component` with
-`depends_on`, `requires` (machine conditions, see `machine.py`) and `system_packages`.
+Each module declares its `Component` as a constant (e.g. `BAT`) with
+its `apply_<name>` function, `depends_on` (the constants of other components),
+`requires` (machine conditions, see `machine.py`) and `system_packages`.
+`cli.py` discovers them (`discover_components`), so adding a directory is enough to add a component.
+The engine runs `apply` as a pyinfra deploy named after the component.
 Typical component: install via mise (`install_mise_tools`), clone a config repo from GitHub,
 link files and shell snippets, generate init scripts.
 
@@ -107,4 +109,6 @@ The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from t
   Untyped pyinfra calls are confined to a few adapter modules with line-level ignores.
 - Keep `pyinfra<4` pinned: the engine relies on pyinfra internals.
 - `HOME=` does not sandbox mise (it reads the config via the passwd entry); use Docker for hermetic tests.
-- A change is only done when `uv run poe check`, `uv run pytest` and `ci/run.sh all` are green.
+- A change is only done when `uv run poe check` and `uv run pytest tests` are green.
+  Run `ci/run.sh all` only when a change affects what `stk apply` does on a machine:
+  it clones from GitHub, which can hit rate limits, and is slow.

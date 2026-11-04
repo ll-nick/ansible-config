@@ -8,7 +8,7 @@ from typing import final
 import pytest
 from rich.console import Console
 
-from stk.components import COMPONENTS
+from stk.cli import COMPONENTS
 from stk.components.mise.mise import update_mise
 from stk.enablement import enable
 from stk.engine.component import Component

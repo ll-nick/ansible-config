@@ -4,14 +4,12 @@ import pytest
 from rich.console import Console
 
 from stk.engine.component import Component
-from stk.engine.pyinfra_adapters import component_deploy
 from stk.engine.runner import RunOptions, run_components
 from stk.helpers.links import replaced_files_directory, symlink_file
 from stk.reporting.rich_reporter import RichReporter
 
 
 def link_with_a_run(source: Path, destination: Path) -> None:
-    @component_deploy("linking")
     def apply() -> None:
         symlink_file(source, destination)
 

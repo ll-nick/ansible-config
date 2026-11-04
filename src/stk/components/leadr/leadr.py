@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.bash.bash import BASH
+from stk.components.mise.mise import MISE
+from stk.components.nushell.nushell import NUSHELL
+from stk.engine.component import Component
 from stk.helpers.generated_file import write_generated_file
 from stk.helpers.github import clone_github_repository
 from stk.helpers.links import symlink_file
@@ -10,7 +13,6 @@ from stk.helpers.shells import add_bash_snippet
 FILES = Path(__file__).resolve().parent / "files"
 
 
-@component_deploy("leadr")
 def apply_leadr() -> None:
     autoload_directory = Path.home() / ".local/share/nushell/vendor/autoload"
 
@@ -23,3 +25,6 @@ def apply_leadr() -> None:
         mise_exec("leadr", "--nu"),
     )
     symlink_file(FILES / "leadr_env.nu", autoload_directory / "leadr_env.nu")
+
+
+LEADR = Component("leadr", apply_leadr, depends_on=(MISE, BASH, NUSHELL))

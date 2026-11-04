@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.mise.mise import MISE
+from stk.engine.component import Component
 from stk.helpers.generated_file import write_generated_file
 from stk.helpers.github import clone_github_repository
 from stk.helpers.mise import install_mise_tools, mise_exec
@@ -8,7 +9,6 @@ from stk.helpers.mise import install_mise_tools, mise_exec
 FILES = Path(__file__).resolve().parent / "files"
 
 
-@component_deploy("nushell")
 def apply_nushell() -> None:
     autoload_directory = Path.home() / ".local/share/nushell/vendor/autoload"
 
@@ -19,3 +19,6 @@ def apply_nushell() -> None:
         autoload_directory / "carapace.nu",
         mise_exec("carapace", "_carapace", "nushell"),
     )
+
+
+NUSHELL = Component("nushell", apply_nushell, depends_on=(MISE,))

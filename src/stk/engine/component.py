@@ -32,6 +32,9 @@ class Component:
     privileged_tasks: tuple[PrivilegedTask, ...] = ()
     update: UpdateStep | None = None
     groups: tuple[str, ...] = (DEFAULT_GROUP,)
+    # Only for the components the privileged pass makes, after checking without root
+    # what needs it
+    runs_as_root: bool = False
 
     @property
     def dependency_names(self) -> tuple[str, ...]:

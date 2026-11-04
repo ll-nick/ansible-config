@@ -2,13 +2,14 @@ import shlex
 import subprocess
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.mise.mise import MISE
+from stk.engine.component import Component
 from stk.helpers.archives import download_and_extract_zip
 from stk.helpers.commands import run_command
 from stk.helpers.dconf import DconfSetting, apply_dconf_settings
 from stk.helpers.links import symlink_file
 from stk.helpers.mise import install_mise_tools, mise_exec
-from stk.machine import distribution_ids
+from stk.machine import HAS_DISPLAY, distribution_ids
 
 FILES = Path(__file__).resolve().parent / "files"
 CURSOR_THEME_NAME = "catppuccin-mocha-blue-cursors"
@@ -73,7 +74,6 @@ def list_gnome_extensions(*arguments: str) -> str:
     return completed.stdout
 
 
-@component_deploy("gnome")
 def apply_gnome() -> None:
     home = Path.home()
 
@@ -164,3 +164,12 @@ def _install_and_enable_paperwm() -> None:
         run_command("Install PaperWM", f"{certificates}{gext} install {PAPERWM_UUID}")
     if PAPERWM_UUID not in list_gnome_extensions("--only-uuid"):
         run_command("Enable PaperWM", f"{gext} enable {PAPERWM_UUID}")
+
+
+GNOME = Component(
+    "gnome",
+    apply_gnome,
+    depends_on=(MISE,),
+    requires=(HAS_DISPLAY,),
+    system_packages=("unzip",),
+)

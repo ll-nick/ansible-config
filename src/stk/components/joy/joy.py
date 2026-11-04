@@ -2,15 +2,17 @@ from pathlib import Path
 
 from pyinfra.operations import files
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.bash.bash import BASH
+from stk.components.git.git import GIT
+from stk.engine.component import Component
 from stk.helpers.links import symlink_file
 from stk.helpers.shells import add_bash_snippet
 from stk.helpers.systemd import USER_UNIT_DIRECTORY, disable_user_unit
+from stk.machine import JOY_HOSTNAME, host_is
 
 FILES = Path(__file__).resolve().parent / "files"
 
 
-@component_deploy("joy")
 def apply_joy() -> None:
     add_bash_snippet(FILES / "joy.bash")
 
@@ -23,3 +25,11 @@ def apply_joy() -> None:
     # when the last session of the user ends
     if (USER_UNIT_DIRECTORY / "tmux.service").exists():
         disable_user_unit("tmux")
+
+
+JOY = Component(
+    "joy",
+    apply_joy,
+    depends_on=(BASH, GIT),
+    requires=(host_is(JOY_HOSTNAME),),
+)

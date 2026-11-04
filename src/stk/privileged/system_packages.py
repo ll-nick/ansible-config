@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from pyinfra.operations import apt
 
 from stk.engine.component import Component, PrivilegedTask
-from stk.engine.pyinfra_adapters import component_deploy, deploy_as_root
 from stk.machine import distribution_ids
 
 SYSTEM_PACKAGES_COMPONENT_NAME = "system-packages"
@@ -80,7 +79,6 @@ def _system_packages_component(components: Sequence[Component]) -> Component | N
     if not any(wanted) or "debian" not in distribution_ids():
         return None
 
-    @component_deploy(SYSTEM_PACKAGES_COMPONENT_NAME)
     def apply_system_packages() -> None:
         apt.packages(
             name="Install apt packages",
@@ -105,7 +103,7 @@ def _privileged_component(
         for task in tasks:
             task.apply()
 
-    return Component(name, deploy_as_root(name, apply_tasks), depends_on=depends_on)
+    return Component(name, apply_tasks, depends_on=depends_on, runs_as_root=True)
 
 
 def with_privileged_work(components: Sequence[Component]) -> list[Component]:

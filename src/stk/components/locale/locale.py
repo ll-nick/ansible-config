@@ -2,9 +2,10 @@ import re
 import subprocess
 from pathlib import Path
 
-from stk.engine.component import PrivilegedTask
+from stk.engine.component import Component, PrivilegedTask
 from stk.helpers.commands import run_command
 from stk.helpers.file_edit import replace_line
+from stk.machine import runs_distribution
 
 LOCALE_GEN_PATH = Path("/etc/locale.gen")
 LOCALES = ("de_DE.UTF-8", "en_US.UTF-8")
@@ -38,4 +39,12 @@ def locale_is_generated(locale: str) -> bool:
 
 GENERATE_LOCALES = PrivilegedTask(
     f"generate {', '.join(LOCALES)}", locales_are_missing, generate_locales
+)
+
+
+LOCALE = Component(
+    "locale",
+    requires=(runs_distribution("debian"),),
+    system_packages=("locales",),
+    privileged_tasks=(GENERATE_LOCALES,),
 )

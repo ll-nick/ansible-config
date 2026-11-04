@@ -1,7 +1,10 @@
 import shlex
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.bash.bash import BASH
+from stk.components.mise.mise import MISE
+from stk.components.nushell.nushell import NUSHELL
+from stk.engine.component import Component
 from stk.helpers.commands import run_command
 from stk.helpers.links import symlink_file
 from stk.helpers.mise import install_mise_tools, mise_exec
@@ -10,7 +13,6 @@ from stk.helpers.shells import add_bash_snippet, add_nushell_snippet
 FILES = Path(__file__).resolve().parent / "files"
 
 
-@component_deploy("bat")
 def apply_bat() -> None:
     config_directory = Path.home() / ".config" / "bat"
 
@@ -34,3 +36,6 @@ def apply_bat() -> None:
 
     add_bash_snippet(FILES / "bat.bash")
     add_nushell_snippet(FILES / "bat.nu")
+
+
+BAT = Component("bat", apply_bat, depends_on=(MISE, BASH, NUSHELL))

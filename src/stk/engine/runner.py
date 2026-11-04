@@ -146,7 +146,7 @@ def prepare_state(
 ) -> State:
     state = create_local_state(callbacks, sudo_password)
     connect_all(state)
-    prepare_component(state, component.apply)
+    prepare_component(state, component)
     return state
 
 

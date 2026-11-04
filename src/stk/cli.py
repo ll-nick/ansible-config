@@ -6,7 +6,6 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from stk.components import COMPONENTS
 from stk.enablement import (
     EXCLUSION_PREFIX,
     SUDO_ENTRY,
@@ -23,6 +22,7 @@ from stk.engine.component import Component
 from stk.engine.registry import (
     UnknownComponentError,
     direct_dependencies,
+    discover_components,
     select_components,
     without_skipped,
 )
@@ -40,6 +40,8 @@ from stk.updates.check import check_updates, send_notification
 from stk.updates.context import TerminalUpdateContext
 from stk.updates.registry import all_update_steps
 from stk.updates.runner import plan_update_steps, run_update_steps
+
+COMPONENTS = discover_components("stk.components")
 
 
 @click.group()

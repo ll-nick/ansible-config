@@ -1,7 +1,11 @@
 from collections.abc import Callable
 
+from pyinfra.api.state import BaseStateCallback
+
 from stk.engine.component import Component
-from stk.engine.runner import run_in_dependency_order
+from stk.engine.pyinfra_adapters import operation_order
+from stk.engine.runner import prepare_state, run_in_dependency_order
+from stk.helpers.commands import run_command
 from stk.reporting.reporter import ComponentOutcome, ComponentResult
 
 
@@ -71,3 +75,13 @@ def test_dependencies_outside_the_selection_do_not_block() -> None:
     results = run_in_dependency_order(components, make_execute(), skip)
 
     assert results["tool"].outcome is ComponentOutcome.SUCCEEDED
+
+
+def test_operations_are_named_after_their_component() -> None:
+    def apply() -> None:
+        run_command("Say hello", "true")
+
+    state = prepare_state(Component("greeter", apply), BaseStateCallback(), None)
+
+    op_hash = operation_order(state)[0]
+    assert state.op_meta[op_hash].names == {"greeter | Say hello"}

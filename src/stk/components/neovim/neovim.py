@@ -1,7 +1,13 @@
 import shlex
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.bash.bash import BASH
+from stk.components.fd.fd import FD
+from stk.components.mise.mise import MISE
+from stk.components.nodejs.nodejs import NODEJS
+from stk.components.nushell.nushell import NUSHELL
+from stk.components.ripgrep.ripgrep import RIPGREP
+from stk.engine.component import Component
 from stk.engine.requirement import Requirement
 from stk.engine.update_step import StepOutcome, UpdateContext, UpdateStep
 from stk.helpers.commands import run_command
@@ -26,7 +32,6 @@ def headless_neovim_command(*vim_commands: str) -> str:
     return shlex.join(arguments)
 
 
-@component_deploy("neovim")
 def apply_neovim() -> None:
     install_mise_tools("neovim", FILES / "mise.toml")
 
@@ -66,4 +71,13 @@ NEOVIM_UPDATE = UpdateStep(
         MISE_IS_INSTALLED,
         Requirement("a neovim config", CONFIG_DIRECTORY.exists),
     ),
+)
+
+
+NEOVIM = Component(
+    "neovim",
+    apply_neovim,
+    depends_on=(MISE, BASH, NUSHELL, FD, RIPGREP, NODEJS),
+    system_packages=("gcc", "make", "unzip"),
+    update=NEOVIM_UPDATE,
 )

@@ -23,10 +23,6 @@ def hostname() -> str:
     return socket.gethostname().split(".", maxsplit=1)[0]
 
 
-def has_inkscape() -> bool:
-    return shutil.which("inkscape") is not None
-
-
 def has_systemd() -> bool:
     return SYSTEMD_RUNTIME_DIRECTORY.is_dir()
 
@@ -69,7 +65,6 @@ def git_version() -> tuple[int, ...] | None:
 
 
 HAS_DISPLAY = Requirement("a display", has_display)
-HAS_INKSCAPE = Requirement("inkscape", has_inkscape)
 
 
 def runs_distribution(*identifiers: str) -> Requirement:
@@ -85,6 +80,10 @@ def does_not_run_distribution(identifier: str) -> Requirement:
         f"a distribution other than {identifier}",
         lambda: identifier not in distribution_ids(),
     )
+
+
+def has_executable(name: str) -> Requirement:
+    return Requirement(name, lambda: shutil.which(name) is not None)
 
 
 def host_is(name: str) -> Requirement:

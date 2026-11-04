@@ -1,3 +1,5 @@
+import importlib
+import pkgutil
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
 
@@ -12,6 +14,35 @@ class UnknownComponentError(ValueError):
             f"Unknown components: {', '.join(unknown_names)}"
             + f" (known: {', '.join(known_names)})"
         )
+
+
+class MissingComponentError(LookupError):
+    def __init__(self, module_name: str, component_name: str) -> None:
+        super().__init__(f"{module_name} declares no component named {component_name}")
+
+
+def discover_components(package_name: str) -> tuple[Component, ...]:
+    """Finds the component that each `<package>.<name>.<name>` module declares."""
+    package = importlib.import_module(package_name)
+    discovered: list[Component] = []
+    for module_info in pkgutil.iter_modules(package.__path__):
+        if not module_info.ispkg:
+            continue
+        name = module_info.name
+        module = importlib.import_module(f"{package_name}.{name}.{name}")
+        module_values: list[object] = list(vars(module).values())
+        component = next(
+            (
+                value
+                for value in module_values
+                if isinstance(value, Component) and value.name == name
+            ),
+            None,
+        )
+        if component is None:
+            raise MissingComponentError(module.__name__, name)
+        discovered.append(component)
+    return select_components((), discovered)
 
 
 def without_skipped(

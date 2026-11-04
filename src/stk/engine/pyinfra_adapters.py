@@ -1,25 +1,12 @@
-from collections.abc import Callable
-from typing import cast
-
 from pyinfra.api.config import Config
 from pyinfra.api.deploy import add_deploy, deploy  # pyright: ignore[reportUnknownVariableType]
 from pyinfra.api.inventory import Inventory
 from pyinfra.api.state import BaseStateCallback, State
 
+from stk.engine.component import Component
+
 # pyinfra's own type hints are incomplete in these places,
 # so the untyped calls are confined to this module.
-
-
-def component_deploy(name: str) -> Callable[[Callable[[], None]], Callable[[], None]]:
-    return cast(
-        "Callable[[Callable[[], None]], Callable[[], None]]",
-        deploy(name),
-    )
-
-
-def deploy_as_root(name: str, apply: Callable[[], None]) -> Callable[[], object]:
-    wrapped = deploy(name)(apply)
-    return lambda: wrapped(_sudo=True)
 
 
 def create_local_state(
@@ -33,8 +20,13 @@ def create_local_state(
     return state
 
 
-def prepare_component(state: State, apply: Callable[[], object]) -> None:
-    add_deploy(state, apply)
+def prepare_component(state: State, component: Component) -> None:
+    # The deploy name prefixes the operation names, which tell reporting the component
+    apply = deploy(component.name)(component.apply)
+    if component.runs_as_root:
+        add_deploy(state, apply, _sudo=True)
+    else:
+        add_deploy(state, apply)
 
 
 def operation_order(state: State) -> list[str]:

@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.mise.mise import MISE
+from stk.engine.component import Component
 from stk.helpers.links import symlink_file
 from stk.helpers.mise import install_mise_tools
 from stk.machine import git_version
@@ -15,7 +16,6 @@ CONFIG_FILE_NAMES = (
 FIRST_VERSION_WITH_ZDIFF3 = (2, 35)
 
 
-@component_deploy("git")
 def apply_git() -> None:
     config_directory = Path.home() / ".config" / "git"
 
@@ -33,3 +33,11 @@ def apply_git() -> None:
         else "conflict-style.gitconfig"
     )
     symlink_file(FILES / conflict_style, config_directory / "conflict-style.gitconfig")
+
+
+GIT = Component(
+    "git",
+    apply_git,
+    depends_on=(MISE,),
+    system_packages=("git",),
+)

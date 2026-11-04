@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.bash.bash import BASH
+from stk.components.mise.mise import MISE
+from stk.components.nushell.nushell import NUSHELL
+from stk.engine.component import Component
 from stk.helpers.json_settings import write_merged_json_settings
 from stk.helpers.links import symlink_file
 from stk.helpers.mise import install_mise_tools
@@ -9,7 +12,6 @@ from stk.helpers.shells import add_bash_snippet, add_nushell_snippet
 FILES = Path(__file__).resolve().parent / "files"
 
 
-@component_deploy("claude")
 def apply_claude() -> None:
     config_directory = Path.home() / ".claude"
 
@@ -44,3 +46,6 @@ def apply_claude() -> None:
 
     add_bash_snippet(FILES / "claude.bash")
     add_nushell_snippet(FILES / "claude.nu")
+
+
+CLAUDE = Component("claude", apply_claude, depends_on=(MISE, BASH, NUSHELL))

@@ -1,4 +1,4 @@
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.engine.component import Component
 from stk.engine.update_step import StepOutcome, UpdateContext, UpdateStep
 from stk.helpers.commands import run_command
 from stk.helpers.mise import MISE_INSTALL_SCRIPT_URL, MISE_IS_INSTALLED, mise_executable
@@ -6,7 +6,6 @@ from stk.helpers.mise import MISE_INSTALL_SCRIPT_URL, MISE_IS_INSTALLED, mise_ex
 PREBUILT_BINARIES_ONLY = {"MISE_NODE_COMPILE": "false", "MISE_PYTHON_COMPILE": "false"}
 
 
-@component_deploy("mise")
 def apply_mise() -> None:
     if not mise_executable().exists():
         # Downloading first, as a failing curl in a pipe would run an empty script
@@ -28,3 +27,6 @@ def update_mise(context: UpdateContext) -> StepOutcome:
 
 
 MISE_UPDATE = UpdateStep("mise", update_mise, requires=(MISE_IS_INSTALLED,))
+
+
+MISE = Component("mise", apply_mise, update=MISE_UPDATE)

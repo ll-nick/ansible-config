@@ -1,9 +1,14 @@
+import sys
+from pathlib import Path
+
 import pytest
 
 from stk.engine.component import Component
 from stk.engine.registry import (
+    MissingComponentError,
     UnknownComponentError,
     direct_dependencies,
+    discover_components,
     select_components,
 )
 
@@ -50,3 +55,45 @@ def test_direct_dependencies_leave_out_what_another_dependency_pulls_in() -> Non
         "extra",
         "unrelated",
     )
+
+
+def write_component_module(package: Path, name: str, source: str) -> None:
+    (package / name).mkdir(parents=True)
+    (package / name / "__init__.py").write_text("")
+    (package / name / f"{name}.py").write_text(source)
+
+
+def test_discovery_finds_each_declared_component_in_dependency_order(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    package = tmp_path / "discovered_components"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    write_component_module(
+        package,
+        "app",
+        "from discovered_components.base.base import BASE\n"
+        + "from stk.engine.component import Component\n"
+        + 'APP = Component("app", depends_on=(BASE,))\n',
+    )
+    write_component_module(
+        package,
+        "base",
+        'from stk.engine.component import Component\nBASE = Component("base")\n',
+    )
+    monkeypatch.setattr(sys, "path", [str(tmp_path), *sys.path])
+
+    assert names(discover_components("discovered_components")) == ["base", "app"]
+
+
+def test_discovery_rejects_a_module_without_its_component(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    package = tmp_path / "incomplete_components"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    write_component_module(package, "tool", "TOOL = None\n")
+    monkeypatch.setattr(sys, "path", [str(tmp_path), *sys.path])
+
+    with pytest.raises(MissingComponentError, match="no component named tool"):
+        discover_components("incomplete_components")

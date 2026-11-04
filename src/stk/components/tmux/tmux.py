@@ -1,7 +1,10 @@
 import shlex
 from pathlib import Path
 
-from stk.engine.pyinfra_adapters import component_deploy
+from stk.components.bash.bash import BASH
+from stk.components.mise.mise import MISE
+from stk.components.nushell.nushell import NUSHELL
+from stk.engine.component import Component
 from stk.engine.requirement import Requirement
 from stk.engine.update_step import StepOutcome, UpdateContext, UpdateStep
 from stk.helpers.commands import run_command
@@ -16,7 +19,6 @@ TMUX_PLUGIN_MANAGER_URL = "https://github.com/tmux-plugins/tpm"
 PLUGIN_UPDATER = Path.home() / ".config/tmux/plugins/tpm/bin/update_plugins"
 
 
-@component_deploy("tmux")
 def apply_tmux() -> None:
     config_directory = Path.home() / ".config" / "tmux"
     plugin_manager_directory = config_directory / "plugins" / "tpm"
@@ -56,4 +58,13 @@ TMUX_UPDATE = UpdateStep(
         MISE_IS_INSTALLED,
         Requirement("the tmux plugin manager", PLUGIN_UPDATER.exists),
     ),
+)
+
+
+TMUX = Component(
+    "tmux",
+    apply_tmux,
+    depends_on=(MISE, BASH, NUSHELL),
+    system_packages=("xclip",),
+    update=TMUX_UPDATE,
 )
