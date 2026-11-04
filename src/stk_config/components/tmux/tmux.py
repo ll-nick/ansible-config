@@ -8,10 +8,8 @@ from stk.helpers.commands import run_command
 from stk.helpers.github import clone_github_repository, clone_repository
 from stk.helpers.mise import MISE_IS_INSTALLED, install_mise_tools, mise_exec
 from stk.helpers.shells import add_bash_snippet, add_nushell_snippet
-from stk.helpers.systemd import enable_user_unit, install_user_unit_file
-from stk.machine import has_systemd, hostname
+from stk.helpers.systemd import remove_user_unit
 from stk_config.components.bash.bash import BASH
-from stk_config.components.joy.joy import JOY_HOSTNAME
 from stk_config.components.mise.mise import MISE
 from stk_config.components.nushell.nushell import NUSHELL
 
@@ -40,10 +38,9 @@ def apply_tmux() -> None:
     add_bash_snippet(FILES / "tmux.bash")
     add_nushell_snippet(FILES / "tmux.nu")
 
-    # Joy's sessions must survive logouts, so it gets no autostart service
-    if has_systemd() and hostname() != JOY_HOSTNAME:
-        install_user_unit_file(FILES / "tmux.service")
-        enable_user_unit("tmux")
+    # Earlier versions saved and restored sessions with a service, which
+    # tmux-continuum does now
+    remove_user_unit("tmux")
 
 
 def update_tmux(context: UpdateContext) -> StepOutcome:
