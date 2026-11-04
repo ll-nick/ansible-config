@@ -26,12 +26,16 @@ class PrivilegedTask:
 class Component:
     name: str
     apply: Callable[[], object] = no_user_work
-    depends_on: tuple[str, ...] = ()
+    depends_on: tuple[Component, ...] = ()
     requires: tuple[Requirement, ...] = ()
     system_packages: tuple[str, ...] = ()
     privileged_tasks: tuple[PrivilegedTask, ...] = ()
     update: UpdateStep | None = None
     groups: tuple[str, ...] = (DEFAULT_GROUP,)
+
+    @property
+    def dependency_names(self) -> tuple[str, ...]:
+        return tuple(dependency.name for dependency in self.depends_on)
 
     def unmet_requirement(self) -> Requirement | None:
         return first_unmet_requirement(self.requires)

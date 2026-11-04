@@ -25,7 +25,7 @@ def without_skipped(
     for component in components:
         if component.name in removed_names:
             continue
-        if removed_names.intersection(component.depends_on):
+        if removed_names.intersection(component.dependency_names):
             removed_names.add(component.name)
             dependents.append(component.name)
             continue
@@ -39,11 +39,13 @@ def direct_dependencies(
     """The dependencies of a component that none of its other dependencies pulls in."""
     pulled_in_names = {
         dependency.name
-        for name in component.depends_on
+        for name in component.dependency_names
         for dependency in select_components((name,), available)
         if dependency.name != name
     }
-    return tuple(name for name in component.depends_on if name not in pulled_in_names)
+    return tuple(
+        name for name in component.dependency_names if name not in pulled_in_names
+    )
 
 
 def select_components(
@@ -64,7 +66,7 @@ def select_components(
         if name in needed_names:
             continue
         needed_names.add(name)
-        dependency_names = components_by_name[name].depends_on
+        dependency_names = components_by_name[name].dependency_names
         unknown_dependencies = [
             dependency
             for dependency in dependency_names
@@ -77,5 +79,5 @@ def select_components(
     sorter: TopologicalSorter[str] = TopologicalSorter()
     for component in available:
         if component.name in needed_names:
-            sorter.add(component.name, *component.depends_on)
+            sorter.add(component.name, *component.dependency_names)
     return tuple(components_by_name[name] for name in sorter.static_order())

@@ -254,7 +254,7 @@ def run_in_dependency_order(
         unsuccessful_dependency = next(
             (
                 name
-                for name in component.depends_on
+                for name in component.dependency_names
                 if name in results
                 and results[name].outcome is not ComponentOutcome.SUCCEEDED
             ),

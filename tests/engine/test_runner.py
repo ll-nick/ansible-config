@@ -32,11 +32,13 @@ def skip(component: Component, blocker: str) -> ComponentResult:
 
 
 def test_failure_skips_dependents_but_not_independent_components() -> None:
+    base = Component("base", noop)
+    broken = Component("broken", noop, depends_on=(base,))
     components = [
-        Component("base", noop),
-        Component("broken", noop, depends_on=("base",)),
-        Component("dependent", noop, depends_on=("broken",)),
-        Component("independent", noop, depends_on=("base",)),
+        base,
+        broken,
+        Component("dependent", noop, depends_on=(broken,)),
+        Component("independent", noop, depends_on=(base,)),
     ]
 
     results = run_in_dependency_order(
@@ -50,11 +52,9 @@ def test_failure_skips_dependents_but_not_independent_components() -> None:
 
 
 def test_skips_propagate_through_chains() -> None:
-    components = [
-        Component("broken", noop),
-        Component("middle", noop, depends_on=("broken",)),
-        Component("last", noop, depends_on=("middle",)),
-    ]
+    broken = Component("broken", noop)
+    middle = Component("middle", noop, depends_on=(broken,))
+    components = [broken, middle, Component("last", noop, depends_on=(middle,))]
 
     results = run_in_dependency_order(
         components, make_execute(failing=frozenset({"broken"})), skip
@@ -65,7 +65,8 @@ def test_skips_propagate_through_chains() -> None:
 
 
 def test_dependencies_outside_the_selection_do_not_block() -> None:
-    components = [Component("tool", noop, depends_on=("not-selected",))]
+    not_selected = Component("not-selected", noop)
+    components = [Component("tool", noop, depends_on=(not_selected,))]
 
     results = run_in_dependency_order(components, make_execute(), skip)
 

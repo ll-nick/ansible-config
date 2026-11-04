@@ -96,12 +96,10 @@ def test_unknown_entries_are_left_out() -> None:
 
 
 def test_skipping_removes_transitive_dependents() -> None:
-    components = [
-        Component("base", noop),
-        Component("middle", noop, depends_on=("base",)),
-        Component("top", noop, depends_on=("middle",)),
-        Component("other", noop),
-    ]
+    base = Component("base", noop)
+    middle = Component("middle", noop, depends_on=(base,))
+    top = Component("top", noop, depends_on=(middle,))
+    components = [base, middle, top, Component("other", noop)]
 
     kept, dependents = without_skipped(components, ("base",))
 

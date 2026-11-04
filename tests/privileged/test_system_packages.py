@@ -86,13 +86,10 @@ def test_all_applicable_components_depend_on_the_installer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     use_distributions(monkeypatch, "debian")
+    mise = Component("mise", noop)
     components = [
-        Component(
-            "git",
-            noop,
-            depends_on=("mise",),
-            system_packages=("git",),
-        ),
+        mise,
+        Component("git", noop, depends_on=(mise,), system_packages=("git",)),
         Component("fd", noop),
     ]
 
@@ -100,8 +97,8 @@ def test_all_applicable_components_depend_on_the_installer(
 
     assert result[0].name == SYSTEM_PACKAGES_COMPONENT_NAME
     by_name = {component.name: component for component in result}
-    assert by_name["git"].depends_on == ("mise", SYSTEM_PACKAGES_COMPONENT_NAME)
-    assert by_name["fd"].depends_on == (SYSTEM_PACKAGES_COMPONENT_NAME,)
+    assert by_name["git"].dependency_names == ("mise", SYSTEM_PACKAGES_COMPONENT_NAME)
+    assert by_name["fd"].dependency_names == (SYSTEM_PACKAGES_COMPONENT_NAME,)
 
 
 def test_inapplicable_components_do_not_wait_for_the_installer(
@@ -118,7 +115,7 @@ def test_inapplicable_components_do_not_wait_for_the_installer(
         component.name: component for component in with_privileged_work(components)
     }
 
-    assert by_name["gui"].depends_on == ()
+    assert by_name["gui"].dependency_names == ()
 
 
 def test_nothing_is_added_when_no_component_needs_packages() -> None:
@@ -182,9 +179,11 @@ def test_a_pending_task_runs_before_its_component_and_after_the_packages(
         "locale",
         "fd",
     ]
-    assert by_name["locale-privileged"].depends_on == (SYSTEM_PACKAGES_COMPONENT_NAME,)
-    assert "locale-privileged" in by_name["locale"].depends_on
-    assert "locale-privileged" not in by_name["fd"].depends_on
+    assert by_name["locale-privileged"].dependency_names == (
+        SYSTEM_PACKAGES_COMPONENT_NAME,
+    )
+    assert "locale-privileged" in by_name["locale"].dependency_names
+    assert "locale-privileged" not in by_name["fd"].dependency_names
 
 
 def test_settled_tasks_add_nothing() -> None:

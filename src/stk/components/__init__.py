@@ -32,83 +32,109 @@ from stk.machine import (
     runs_distribution,
 )
 
+MISE = Component("mise", apply_mise, update=MISE_UPDATE)
+BASH = Component("bash", apply_bash)
+GIT = Component(
+    "git",
+    apply_git,
+    depends_on=(MISE,),
+    system_packages=("git",),
+)
+NUSHELL = Component("nushell", apply_nushell, depends_on=(MISE,))
+FD = Component("fd", apply_fd, depends_on=(MISE,))
+BAT = Component("bat", apply_bat, depends_on=(MISE, BASH, NUSHELL))
+LOCALE = Component(
+    "locale",
+    requires=(runs_distribution("debian"),),
+    system_packages=("locales",),
+    privileged_tasks=(GENERATE_LOCALES,),
+)
+RIPGREP = Component("ripgrep", apply_ripgrep, depends_on=(MISE,))
+UV = Component("uv", apply_uv, depends_on=(MISE,))
+EZA = Component("eza", apply_eza, depends_on=(MISE, BASH, NUSHELL))
+FZF = Component("fzf", apply_fzf, depends_on=(MISE, BASH, NUSHELL))
+LAZYGIT = Component("lazygit", apply_lazygit, depends_on=(MISE, BASH, NUSHELL))
+ZOXIDE = Component("zoxide", apply_zoxide, depends_on=(MISE, BASH, NUSHELL))
+STARSHIP = Component("starship", apply_starship, depends_on=(MISE, BASH, NUSHELL))
+NODEJS = Component(
+    "nodejs",
+    apply_nodejs,
+    depends_on=(MISE,),
+    system_packages=("libatomic1",),
+)
+NEOVIM = Component(
+    "neovim",
+    apply_neovim,
+    depends_on=(MISE, BASH, NUSHELL, FD, RIPGREP, NODEJS),
+    system_packages=("gcc", "make", "unzip"),
+    update=NEOVIM_UPDATE,
+)
+LEADR = Component("leadr", apply_leadr, depends_on=(MISE, BASH, NUSHELL))
+CLAUDE = Component("claude", apply_claude, depends_on=(MISE, BASH, NUSHELL))
+TMUX = Component(
+    "tmux",
+    apply_tmux,
+    depends_on=(MISE, BASH, NUSHELL),
+    system_packages=("xclip",),
+    update=TMUX_UPDATE,
+)
+INKFLOW = Component(
+    "inkflow",
+    apply_inkflow,
+    depends_on=(MISE, BASH, NUSHELL, NEOVIM),
+    requires=(HAS_DISPLAY, HAS_INKSCAPE),
+)
+JOY = Component(
+    "joy",
+    apply_joy,
+    depends_on=(BASH, GIT),
+    requires=(host_is(JOY_HOSTNAME),),
+)
+NERDFONT = Component(
+    "nerdfont",
+    apply_nerdfont,
+    requires=(HAS_DISPLAY,),
+    system_packages=("fontconfig", "fonts-noto", "unzip"),
+)
+KITTY = Component(
+    "kitty",
+    apply_kitty,
+    depends_on=(MISE,),
+    requires=(HAS_DISPLAY,),
+)
+GNOME = Component(
+    "gnome",
+    apply_gnome,
+    depends_on=(MISE,),
+    requires=(HAS_DISPLAY,),
+    system_packages=("unzip",),
+)
+STK = Component("stk", apply_stk)
+
 COMPONENTS: tuple[Component, ...] = (
-    Component("mise", apply_mise, update=MISE_UPDATE),
-    Component("bash", apply_bash),
-    Component(
-        "git",
-        apply_git,
-        depends_on=("mise",),
-        system_packages=("git",),
-    ),
-    Component("nushell", apply_nushell, depends_on=("mise",)),
-    Component("fd", apply_fd, depends_on=("mise",)),
-    Component("bat", apply_bat, depends_on=("mise", "bash", "nushell")),
-    Component(
-        "locale",
-        requires=(runs_distribution("debian"),),
-        system_packages=("locales",),
-        privileged_tasks=(GENERATE_LOCALES,),
-    ),
-    Component("ripgrep", apply_ripgrep, depends_on=("mise",)),
-    Component("uv", apply_uv, depends_on=("mise",)),
-    Component("eza", apply_eza, depends_on=("mise", "bash", "nushell")),
-    Component("fzf", apply_fzf, depends_on=("mise", "bash", "nushell")),
-    Component("lazygit", apply_lazygit, depends_on=("mise", "bash", "nushell")),
-    Component("zoxide", apply_zoxide, depends_on=("mise", "bash", "nushell")),
-    Component("starship", apply_starship, depends_on=("mise", "bash", "nushell")),
-    Component(
-        "nodejs",
-        apply_nodejs,
-        depends_on=("mise",),
-        system_packages=("libatomic1",),
-    ),
-    Component(
-        "neovim",
-        apply_neovim,
-        depends_on=("mise", "bash", "nushell", "fd", "ripgrep", "nodejs"),
-        system_packages=("gcc", "make", "unzip"),
-        update=NEOVIM_UPDATE,
-    ),
-    Component("leadr", apply_leadr, depends_on=("mise", "bash", "nushell")),
-    Component("claude", apply_claude, depends_on=("mise", "bash", "nushell")),
-    Component(
-        "tmux",
-        apply_tmux,
-        depends_on=("mise", "bash", "nushell"),
-        system_packages=("xclip",),
-        update=TMUX_UPDATE,
-    ),
-    Component(
-        "inkflow",
-        apply_inkflow,
-        depends_on=("mise", "bash", "nushell", "neovim"),
-        requires=(HAS_DISPLAY, HAS_INKSCAPE),
-    ),
-    Component(
-        "joy",
-        apply_joy,
-        depends_on=("bash", "git"),
-        requires=(host_is(JOY_HOSTNAME),),
-    ),
-    Component(
-        "nerdfont",
-        apply_nerdfont,
-        requires=(HAS_DISPLAY,),
-        system_packages=("fontconfig", "fonts-noto", "unzip"),
-    ),
-    Component(
-        "kitty",
-        apply_kitty,
-        depends_on=("mise",),
-        requires=(HAS_DISPLAY,),
-    ),
-    Component(
-        "gnome",
-        apply_gnome,
-        depends_on=("mise",),
-        requires=(HAS_DISPLAY,),
-        system_packages=("unzip",),
-    ),
-    Component("stk", apply_stk),
+    MISE,
+    BASH,
+    GIT,
+    NUSHELL,
+    FD,
+    BAT,
+    LOCALE,
+    RIPGREP,
+    UV,
+    EZA,
+    FZF,
+    LAZYGIT,
+    ZOXIDE,
+    STARSHIP,
+    NODEJS,
+    NEOVIM,
+    LEADR,
+    CLAUDE,
+    TMUX,
+    INKFLOW,
+    JOY,
+    NERDFONT,
+    KITTY,
+    GNOME,
+    STK,
 )

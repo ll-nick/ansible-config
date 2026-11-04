@@ -12,12 +12,11 @@ def noop() -> None:
     pass
 
 
-AVAILABLE = (
-    Component("base", noop),
-    Component("tool", noop, depends_on=("base",)),
-    Component("extra", noop, depends_on=("tool",)),
-    Component("unrelated", noop),
-)
+BASE = Component("base", noop)
+TOOL = Component("tool", noop, depends_on=(BASE,))
+EXTRA = Component("extra", noop, depends_on=(TOOL,))
+UNRELATED = Component("unrelated", noop)
+AVAILABLE = (BASE, TOOL, EXTRA, UNRELATED)
 
 
 def names(components: tuple[Component, ...]) -> list[str]:
@@ -45,7 +44,7 @@ def test_unknown_component_is_rejected() -> None:
 
 
 def test_direct_dependencies_leave_out_what_another_dependency_pulls_in() -> None:
-    component = Component("combined", noop, depends_on=("base", "extra", "unrelated"))
+    component = Component("combined", noop, depends_on=(BASE, EXTRA, UNRELATED))
 
     assert direct_dependencies(component, (*AVAILABLE, component)) == (
         "extra",

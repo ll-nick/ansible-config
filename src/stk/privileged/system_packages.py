@@ -94,7 +94,7 @@ def _system_packages_component(components: Sequence[Component]) -> Component | N
 
 
 def _privileged_component(
-    component: Component, depends_on: tuple[str, ...]
+    component: Component, depends_on: tuple[Component, ...]
 ) -> Component | None:
     tasks = _pending_tasks(component)
     if not tasks:
@@ -111,24 +111,24 @@ def _privileged_component(
 def with_privileged_work(components: Sequence[Component]) -> list[Component]:
     applicable = _applicable(components)
     installer = _system_packages_component(applicable)
-    installer_names = () if installer is None else (installer.name,)
+    installers = () if installer is None else (installer,)
 
     privileged_by_owner = {
         component.name: privileged
         for component in applicable
-        if (privileged := _privileged_component(component, installer_names))
+        if (privileged := _privileged_component(component, installers))
     }
 
     def with_root_dependencies(component: Component) -> Component:
         if component.unmet_requirement() is not None:
             return component
         privileged = privileged_by_owner.get(component.name)
-        privileged_names = () if privileged is None else (privileged.name,)
+        privileged_components = () if privileged is None else (privileged,)
         # Everyone waits, not just those declaring packages: mise installs the tools of
         # all components together, and any of them may need a package to run
         return dataclasses.replace(
             component,
-            depends_on=(*component.depends_on, *installer_names, *privileged_names),
+            depends_on=(*component.depends_on, *installers, *privileged_components),
         )
 
     return [

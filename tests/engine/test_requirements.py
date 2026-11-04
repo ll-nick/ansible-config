@@ -58,12 +58,10 @@ def test_not_applicable_components_are_no_failure(
 
 def test_dependents_of_a_not_applicable_component_are_skipped() -> None:
     reporter = RecordingReporter()
+    gui = Component("gui", noop, requires=(UNMET,))
 
     exit_code = run_components(
-        [
-            Component("gui", noop, requires=(UNMET,)),
-            Component("theme", noop, depends_on=("gui",)),
-        ],
+        [gui, Component("theme", noop, depends_on=(gui,))],
         RunOptions(dry_run=False, assume_yes=True, fail_on_change=False),
         reporter,
     )
