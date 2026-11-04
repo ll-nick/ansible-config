@@ -27,7 +27,6 @@ NEOVIM = Component("neovim", noop, depends_on=(MISE, BASH, NUSHELL, FD, RIPGREP)
 SETUP = Setup(
     components=(MISE, BASH, NUSHELL, GIT, FD, RIPGREP, BAT, NEOVIM),
     checkout=Path("/checkout"),
-    command=Path("/shim"),
 )
 
 

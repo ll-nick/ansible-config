@@ -1,3 +1,4 @@
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -27,7 +28,7 @@ from stk.updates.steps.stk import update_stk
 from stk.updates.timestamps import last_update, record_update
 from stk.updates.version_bump import commit_and_offer_push
 
-SETUP = Setup(components=(), checkout=Path("/checkout"), command=Path("/shim"))
+SETUP = Setup(components=(), checkout=Path("/checkout"))
 
 
 @pytest.fixture(autouse=True)
@@ -207,7 +208,11 @@ def test_apt_upgrade_runs_without_further_prompts() -> None:
     ]
 
 
-def test_stk_pulls_the_checkout_and_applies_without_sudo_when_left_out() -> None:
+def test_stk_pulls_the_checkout_and_applies_without_sudo_when_left_out(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("UV", "/uv")
+    monkeypatch.setattr(sys, "argv", ["/checkout/.venv/bin/stk", "update"])
     context = RecordingContext()
     context.may_use_sudo = False
 
@@ -215,5 +220,8 @@ def test_stk_pulls_the_checkout_and_applies_without_sudo_when_left_out() -> None
 
     assert context.commands == [
         ["git", "pull", "--ff-only"],
-        ["/shim", "apply", "--yes", "--skip", "sudo"],
+        [
+            *["/uv", "run", "--quiet", "--no-dev", "--project", "/checkout", "stk"],
+            *["apply", "--yes", "--skip", "sudo"],
+        ],
     ]

@@ -11,5 +11,3 @@ class Setup:
     components: tuple[Component, ...]
     # The git checkout of the configuration, which `stk update` pulls
     checkout: Path
-    # Runs stk from the checkout, so `stk update` can apply the code it just pulled
-    command: Path

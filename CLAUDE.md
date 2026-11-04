@@ -35,7 +35,7 @@ The code is split so the tool could become its own repository:
 
 - `src/stk/`: the tool, which knows no specific component, machine or path of the owner
 - `src/stk_config/`: the owner's setup, built on the tool: its components,
-  the checkout location and the shim that runs from it (`paths.py`) and the entry point (`cli.py`), which hands the tool a `Setup`
+  the checkout location (`paths.py`) and the entry point (`cli.py`), which hands the tool a `Setup`
 
 Nothing in `stk` imports `stk_config` (`tests/stk/test_layering.py`).
 Within `src/stk/`, imports only point down this list:
@@ -91,7 +91,7 @@ Keep success output minimal and never hide errors.
 
 **Update steps** (`stk/updates/`) run sequentially against the terminal (`stk update`).
 A component can carry an `update` step (`Component.update`), which only applies where the component does.
-The core steps (`system` for apt, and `stk`, which pulls `Setup.checkout` and applies again through `Setup.command`) belong to no component and run first (`updates/registry.py`).
+The core steps (`system` for apt, and `stk`, which pulls `Setup.checkout` and applies again by running itself from there through uv) belong to no component and run first (`updates/registry.py`).
 Like `stk apply`, `stk update` shows its plan and asks once; the steps themselves never prompt (except before pushing a version bump).
 `stk check` reports their timestamps.
 Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake (`stk.testing.RecordingContext`).
