@@ -66,6 +66,5 @@ TMUX = Component(
     "tmux",
     apply_tmux,
     depends_on=(MISE, BASH, NUSHELL),
-    system_packages=("xclip",),
     update=TMUX_UPDATE,
 )
