@@ -25,7 +25,7 @@ def obtain_sudo_password() -> str | None:
     if os.geteuid() == 0 or _sudo_works_without_password():
         return None
     for _attempt in range(3):
-        password = getpass.getpass("sudo password: ")
+        password = getpass.getpass("sudo password: ", echo_char=None)
         if _sudo_accepts(password):
             return password
     raise SudoUnavailableError("sudo did not accept the password")
