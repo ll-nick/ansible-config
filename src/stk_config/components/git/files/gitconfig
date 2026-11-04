@@ -1,0 +1,41 @@
+[includeIf "hasconfig:remote.*.url:git@gitlab.mrt.kit.edu:*/**"]
+  path = ~/.config/git/gitconfig-gitlab.kit.edu
+
+[includeIf "hasconfig:remote.*.url:https://gitlab.mrt.kit.edu/**"]
+  path = ~/.config/git/gitconfig-gitlab.kit.edu
+
+[includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
+  path = ~/.config/git/gitconfig-github.com
+
+[includeIf "hasconfig:remote.*.url:https://github.com/**"]
+  path = ~/.config/git/gitconfig-github.com
+
+[includeIf "hasconfig:remote.*.url:git@gitlab.com:*/**"]
+  path = ~/.config/git/gitconfig-gitlab.com
+
+# Repositories are cloned over HTTPS so that machines without an SSH key can still fetch them
+[url "git@github.com:"]
+  pushInsteadOf = https://github.com/
+
+[core]
+  excludesFile = ~/.config/git/gitignore
+
+[init]
+  defaultBranch = main
+
+[push]
+  autoSetupRemote = true
+
+[pull]
+  rebase = true
+
+[include]
+  path = ~/.config/git/delta.gitconfig
+
+[include]
+  path = ~/.config/git/conflict-style.gitconfig
+
+# Machine-specific settings
+[include]
+  path = ~/.config/git/local.gitconfig
+

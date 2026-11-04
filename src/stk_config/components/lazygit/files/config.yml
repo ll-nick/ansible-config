@@ -1,0 +1,55 @@
+customCommands:
+  - key: '<alt+p>'
+    description: "Push to a specific remote repository"
+    context: 'global'
+    loadingText: 'Pushing ...'
+    prompts:
+      - type: 'menuFromCommand'
+        title: 'Which remote repository to push to?'
+        command: bash -c "git remote --verbose | grep '/.* (push)'"
+        filter: '(?P<remote>.*)\s+(?P<url>.*) \(push\)'
+        valueFormat: '{{ .remote }}'
+        labelFormat: '{{ .remote | bold | cyan }} {{ .url }}'
+      - type: 'menu'
+        title: 'How to push?'
+        options:
+          - value: 'push'
+          - value: 'push --force-with-lease'
+          - value: 'push --force'
+    command: "git {{index .PromptResponses 1}} {{index .PromptResponses 0}}"
+git:
+  diffRenderers:
+    - command: delta --dark --paging=never
+gui:
+  theme:
+    activeBorderColor:
+      - '#89b4fa'
+      - bold
+    inactiveBorderColor:
+      - '#a6adc8'
+    searchingActiveBorderColor:
+      - '#f9e2af'
+    optionsTextColor:
+      - '#89b4fa'
+    selectedLineBgColor:
+      - '#89b4fa'
+    inactiveViewSelectedLineBgColor:
+      - '#6c7086'
+    cherryPickedCommitFgColor:
+      - '#89b4fa'
+    cherryPickedCommitBgColor:
+      - '#45475a'
+    markedBaseCommitFgColor:
+      - '#89b4fa'
+    markedBaseCommitBgColor:
+      - '#f9e2af'
+    unstagedChangesColor:
+      - '#f38ba8'
+    defaultFgColor:
+      - '#cdd6f4'
+    authorColors:
+      '*': '#b4befe'
+keybinding:
+  commits:
+    moveDownCommit: <c-d>
+    moveUpCommit: <c-u>

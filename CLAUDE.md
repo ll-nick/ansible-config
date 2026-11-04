@@ -1,0 +1,120 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+Personal setup for every machine the owner works on, run on localhost.
+Written in Python (3.14, managed with uv) on top of pyinfra, used as a library rather than through its CLI.
+Installs and configures a dev environment, preferring user-level installs through mise (`~/.local/bin`) and minimal root.
+Tested on Ubuntu (CI) and known to work on NixOS (system packages are Debian only).
+This repo is the basis of all the owner's machines, so changes need to be careful and verified.
+
+## Commands
+
+```bash
+uv run poe check          # ruff lint + format check, basedpyright, lock check
+uv run poe fix            # apply lint and format fixes
+uv run pytest tests       # tests that need no applied machine
+uv run pytest             # also the component tests, for an applied machine (Docker harness)
+uv run stk apply -n       # dry run: show the plan and stop
+uv run stk apply [names]  # apply components (and their dependencies)
+uv run stk apply --skip sudo    # one run without sudo (or --skip <component>)
+uv run stk enable [names]       # choose what this machine gets (default, components, sudo)
+ci/run.sh all             # Docker: build + apply, verify (pytest), idempotency check
+ci/run.sh shell           # shell in the image from the last build
+ci/vm.sh                  # disposable desktop VM for display, systemd and sudo tests
+```
+
+The command is `stk` (`stk_config.cli:main`).
+Subcommands: `apply`, `list`, `update`, `check`.
+
+## Architecture
+
+The code is split so the tool could become its own repository:
+
+- `src/stk/`: the tool, which knows no specific component, machine or path of the owner
+- `src/stk_config/`: the owner's setup, built on the tool: its components
+  and the entry point (`cli.py`), which hands the tool a `Setup` with the checkout location
+
+Nothing in `stk` imports `stk_config` (`tests/stk/test_layering.py`).
+Within `src/stk/`, imports only point down this list:
+
+- `cli.py`: the commands, run with the `Setup` (`setup.py`) as click's context object
+- `updates/` and `privileged/`: `stk update` and the work that needs root
+- `enablement.py`, `machine.py`, `helpers/`, `setup.py`: what a machine gets and can do, and shared pyinfra use
+- `engine/` and `reporting/`: running components and reporting on them
+- `paths.py`
+
+**Components** (`src/stk_config/components/<name>/{<name>.py, files/, test_<name>.py}`) are the unit of the setup.
+Each module declares its `Component` as a constant (e.g. `BAT`) with
+its `apply_<name>` function, `depends_on` (the constants of other components),
+`requires` (machine conditions, see `stk/machine.py`) and `system_packages`.
+`stk_config/cli.py` discovers them (`discover_components`), so adding a directory is enough to add a component.
+The engine runs `apply` as a pyinfra deploy named after the component.
+Typical component: install via mise (`install_mise_tools`), clone a config repo from GitHub,
+link files and shell snippets, generate init scripts.
+
+**pyinfra use.**
+Components may call pyinfra directly.
+Shared pyinfra use lives in `helpers/` and `engine/` (`runner`, `pyinfra_adapters`).
+Add a helper when it removes duplication or makes a component easier to read, not to hide pyinfra.
+
+**Two phases.**
+pyinfra first prepares a component (runs facts, evaluates the Python in `apply_*`, queues operations), then executes the queued operations.
+Plain Python in a component runs at prepare time, so it sees the machine as it is before the component runs.
+Tools a component installs itself are therefore not available to prepare-time checks.
+Each component gets a fresh pyinfra `State`, prepared right before it executes, so it sees the effects of the components before it.
+
+**Engine.**
+`engine/runner.py` plans all components, optionally asks for confirmation, then runs them one at a time in dependency order.
+A failed component makes its dependents SKIPPED; independent components continue.
+Components with unmet `requires` are NOT_APPLICABLE (not a failure).
+
+**Enabling.**
+`enablement.py` keeps what a machine gets in `~/.local/state/stk/enabled`: component names, groups (`default` holds every component that does not say otherwise), `sudo` and exclusions (`-name`, written by `stk disable` for a component a group selects).
+Disabling a component also leaves out whatever depends on it.
+`requires` says what a machine can do; this says what it should get.
+`stk apply` and `stk update` fail without that file, so losing it can only ever reduce what happens.
+
+**Privileged mode.**
+With `sudo` enabled, `stk apply` checks without root whether there is work needing it (`pending_sudo_work`), lists it, and only then asks for the password (`privileged/sudo.py`).
+Components declare root work in two ways, which run before everything else and can sit next to user-level work in the same component:
+apt package names in `system_packages`, merged into one synthetic `system-packages` component, and `privileged_tasks`, which each get a synthetic `<name>-privileged` component the owner depends on.
+A task pairs an `is_pending` check that must work without root with an `apply` whose operations all run with sudo.
+It therefore cannot use tools that components install in the same run.
+Everything else must work without root.
+
+**Reporting.**
+Components are reported through the `Reporter` protocol (`reporting/reporter.py`): `RichReporter`, which only animates on terminals, always combined with `LogFileReporter`.
+Keep success output minimal and never hide errors.
+
+**Update steps** (`stk/updates/`) run sequentially against the terminal (`stk update`).
+A component can carry an `update` step (`Component.update`), which only applies where the component does.
+The core steps (`system` for apt, and `stk`, which pulls `Setup.checkout` and applies again by running itself from there through uv) belong to no component and run first (`updates/registry.py`).
+Like `stk apply`, `stk update` shows its plan and asks once; the steps themselves never prompt (except before pushing a version bump).
+`stk check` reports their timestamps.
+Steps are written against the `UpdateContext` protocol so they can be tested with a recording fake (`stk.testing.RecordingContext`).
+
+**Bootstrap.**
+`deploy/deploy.sh` installs mise, uses it to install uv, clones the repo to `~/.config/stk` (the permanent checkout, set in `stk_config/cli.py`) and runs `stk apply`.
+The `stk` component installs `~/.local/bin/stk`, a shim that runs the CLI from that checkout.
+
+## Conventions
+
+- Tests that need no applied machine live in `tests/`, mirroring `src/` (`tests/stk/`, `tests/stk_config/`).
+  A component keeps its test next to it, so it stays self-contained; these verify the applied result (e.g. the tool runs, a generated file exists) and use `skip_unless(requirement)` when the component is not applicable everywhere.
+  Component tests assume the machine was applied, so they run in the Docker harness, not on a bare checkout.
+- Prefer separate files in a component's `files/` over inline content.
+- Files from `files/` are symlinked (`symlink_file`), not copied, so edits on the machine land in the repository.
+  They point into the tree `stk` runs from, normally `~/.config/stk`; applying from another clone re-points them.
+  The executable bit comes from git, so scripts need mode 755 in the index.
+  systemd units are copied instead, and files a tool rewrites itself are merged (`claude` settings).
+- Helpers write files with explicit modes (`644`, `755`) so results do not depend on the umask.
+- Linting policy: fix properly first, then a line-level ignore with a reason, never disable rules globally.
+  Untyped pyinfra calls are confined to a few adapter modules with line-level ignores.
+- Keep `pyinfra<4` pinned: the engine relies on pyinfra internals.
+- `HOME=` does not sandbox mise (it reads the config via the passwd entry); use Docker for hermetic tests.
+- A change is only done when `uv run poe check` and `uv run pytest tests` are green.
+  Run `ci/run.sh all` only when a change affects what `stk apply` does on a machine:
+  it clones from GitHub, which can hit rate limits, and is slow.

@@ -1,0 +1,114 @@
+import importlib
+import pkgutil
+from collections.abc import Sequence
+from graphlib import TopologicalSorter
+
+from stk.engine.component import Component
+
+
+class UnknownComponentError(ValueError):
+    def __init__(
+        self, unknown_names: Sequence[str], known_names: Sequence[str]
+    ) -> None:
+        super().__init__(
+            f"Unknown components: {', '.join(unknown_names)}"
+            + f" (known: {', '.join(known_names)})"
+        )
+
+
+class MissingComponentError(LookupError):
+    def __init__(self, module_name: str, component_name: str) -> None:
+        super().__init__(f"{module_name} declares no component named {component_name}")
+
+
+def discover_components(package_name: str) -> tuple[Component, ...]:
+    """Finds the component that each `<package>.<name>.<name>` module declares."""
+    package = importlib.import_module(package_name)
+    discovered: list[Component] = []
+    for module_info in pkgutil.iter_modules(package.__path__):
+        if not module_info.ispkg:
+            continue
+        name = module_info.name
+        module = importlib.import_module(f"{package_name}.{name}.{name}")
+        module_values: list[object] = list(vars(module).values())
+        component = next(
+            (
+                value
+                for value in module_values
+                if isinstance(value, Component) and value.name == name
+            ),
+            None,
+        )
+        if component is None:
+            raise MissingComponentError(module.__name__, name)
+        discovered.append(component)
+    return select_components((), discovered)
+
+
+def without_skipped(
+    components: Sequence[Component], skipped_names: Sequence[str]
+) -> tuple[tuple[Component, ...], tuple[str, ...]]:
+    """Leaves out the skipped components and everything depending on them."""
+    removed_names = set(skipped_names)
+    kept: list[Component] = []
+    dependents: list[str] = []
+    # Dependencies come first in a selection
+    for component in components:
+        if component.name in removed_names:
+            continue
+        if removed_names.intersection(component.dependency_names):
+            removed_names.add(component.name)
+            dependents.append(component.name)
+            continue
+        kept.append(component)
+    return tuple(kept), tuple(dependents)
+
+
+def direct_dependencies(
+    component: Component, available: Sequence[Component]
+) -> tuple[str, ...]:
+    """The dependencies of a component that none of its other dependencies pulls in."""
+    pulled_in_names = {
+        dependency.name
+        for name in component.dependency_names
+        for dependency in select_components((name,), available)
+        if dependency.name != name
+    }
+    return tuple(
+        name for name in component.dependency_names if name not in pulled_in_names
+    )
+
+
+def select_components(
+    requested_names: Sequence[str],
+    available: Sequence[Component],
+) -> tuple[Component, ...]:
+    components_by_name = {component.name: component for component in available}
+    known_names = list(components_by_name)
+
+    unknown_names = [name for name in requested_names if name not in components_by_name]
+    if unknown_names:
+        raise UnknownComponentError(unknown_names, known_names)
+
+    needed_names: set[str] = set()
+    names_to_visit = list(requested_names or known_names)
+    while names_to_visit:
+        name = names_to_visit.pop()
+        if name in needed_names:
+            continue
+        needed_names.add(name)
+        dependency_names = components_by_name[name].dependency_names
+        unknown_dependencies = [
+            dependency
+            for dependency in dependency_names
+            if dependency not in components_by_name
+        ]
+        if unknown_dependencies:
+            raise UnknownComponentError(unknown_dependencies, known_names)
+        names_to_visit.extend(dependency_names)
+
+    sorter: TopologicalSorter[str] = TopologicalSorter()
+    for component in available:
+        if component.name in needed_names:
+            sorter.add(component.name, *component.dependency_names)
+    return tuple(components_by_name[name] for name in sorter.static_order())
