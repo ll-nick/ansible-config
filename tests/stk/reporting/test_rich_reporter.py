@@ -73,7 +73,7 @@ def test_changes_are_listed_and_unchanged_operations_stay_hidden() -> None:
     run(RichReporter(console, 0), [succeeded("bat", operations["bat"])], operations)
 
     text = output.getvalue()
-    assert "✱ bat" in text
+    assert "● bat" in text
     assert "Copy config" in text
     assert "Copy theme" not in text
 
@@ -152,6 +152,6 @@ def test_ignored_errors_are_shown_as_warnings() -> None:
     run(RichReporter(console, 0), [succeeded("bash", operations["bash"])], operations)
 
     text = output.getvalue()
-    assert "! Clone ll-nick/bash-config (error ignored)" in text
+    assert "⚠ Clone ll-nick/bash-config (error ignored)" in text
     assert "Repository not found." in text
     assert "1 warnings" in text

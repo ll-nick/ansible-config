@@ -11,7 +11,6 @@ from rich.spinner import Spinner
 from rich.status import Status
 from rich.table import Table
 from rich.text import Text
-from rich.tree import Tree
 
 from stk.reporting.reporter import (
     ComponentOutcome,
@@ -23,15 +22,16 @@ from stk.reporting.reporter import (
 )
 
 SYMBOL_UNCHANGED = "✔"
-SYMBOL_CHANGED = "✱"
+SYMBOL_CHANGED = "●"
+SYMBOL_WILL_CHANGE = "○"
 SYMBOL_FAILED = "✘"
 SYMBOL_SKIPPED = "⤼"
-SYMBOL_WARNING = "!"
+SYMBOL_WARNING = "⚠"
 
 PYINFRA_COMMAND_COUNT_PREFIX = "Error: executed"
 
 PLAN_MARKERS = {
-    PlannedChange.WILL_CHANGE: ("~", "yellow"),
+    PlannedChange.WILL_CHANGE: (SYMBOL_WILL_CHANGE, "green"),
     PlannedChange.CONDITIONAL: ("?", "dim"),
     PlannedChange.UNCHANGED: (" ", "dim"),
 }
@@ -98,7 +98,7 @@ class RichReporter:
             self._planning_status = None
         if not visible:
             return
-        tree = Tree("Plan", guide_style="dim")
+        self._console.print(Text("Plan", style="bold"))
         counts = {change: 0 for change in PlannedChange}
         for component_plan in component_plans:
             shown = [
@@ -112,16 +112,21 @@ class RichReporter:
                 continue
             if not shown and component_plan.planning_error is None:
                 continue
-            branch = tree.add(Text(component_plan.component_name, style="bold"))
+            self._console.print()
+            self._console.print(Text(component_plan.component_name, style="bold"))
             if component_plan.planning_error is not None:
-                branch.add(
-                    Text(f"! could not plan: {component_plan.planning_error}", "red")
+                self._console.print(
+                    Text(
+                        f"  {SYMBOL_FAILED} could not plan: "
+                        + component_plan.planning_error,
+                        "red",
+                    )
                 )
             for planned in shown:
                 marker, style = PLAN_MARKERS[planned.change]
                 operation_name = self._shorten(planned.description.operation_name)
-                branch.add(Text(f"{marker} {operation_name}", style))
-        self._console.print(tree)
+                self._console.print(Text(f"  {marker} {operation_name}", style))
+        self._console.print()
         self._console.print(
             Text(
                 f"{counts[PlannedChange.WILL_CHANGE]} to change · "
@@ -154,10 +159,11 @@ class RichReporter:
         if not self._component_announced:
             self._component_announced = True
             symbol, style = (
-                (SYMBOL_CHANGED, "yellow")
+                (SYMBOL_CHANGED, "green")
                 if result.changed
-                else (SYMBOL_UNCHANGED, "green")
+                else (SYMBOL_UNCHANGED, "dim")
             )
+            self._console.print()
             self._console.print(
                 self._status_line(symbol, style, result.description.component_name, "")
             )
@@ -171,18 +177,22 @@ class RichReporter:
 
         if result.outcome is ComponentOutcome.SKIPPED:
             detail = f"skipped ({result.skipped_because})"
+            self._console.print()
             self._console.print(self._status_line(SYMBOL_SKIPPED, "dim", name, detail))
             return
 
         if result.outcome is ComponentOutcome.NOT_APPLICABLE:
             if self._verbosity >= 1:
                 detail = f"not applicable ({result.skipped_because})"
+                self._console.print()
                 self._console.print(
                     self._status_line(SYMBOL_SKIPPED, "dim", name, detail)
                 )
             return
 
         if result.outcome is ComponentOutcome.FAILED and result.failure is not None:
+            if not self._component_announced:
+                self._console.print()
             self._console.print(
                 self._status_line(SYMBOL_FAILED, "bold red", name, duration)
             )
@@ -209,7 +219,7 @@ class RichReporter:
             )
             return
 
-        parts = [Text(f"{SYMBOL_CHANGED} {changed_count} changed", "yellow")]
+        parts = [Text(f"{SYMBOL_CHANGED} {changed_count} changed", "green")]
         if failed:
             parts.append(Text(f"{SYMBOL_FAILED} {len(failed)} failed", "bold red"))
         if skipped:
@@ -281,7 +291,7 @@ class RichReporter:
                 self._console.print(Text(f"        {line}", style="dim"))
         else:
             symbol, style = (
-                (SYMBOL_CHANGED, "yellow")
+                (SYMBOL_CHANGED, "green")
                 if operation.changed
                 else (SYMBOL_UNCHANGED, "dim")
             )
