@@ -278,6 +278,8 @@ main() {
             --repository)
                 [ -n "${2:-}" ] || fail "--repository requires a URL."
                 REPOSITORY_URL="$2"
+                # git records local clones by absolute path
+                [ ! -d "$2" ] || REPOSITORY_URL="$(cd "$2" && pwd)"
                 shift 2
                 ;;
             -h | --help)
