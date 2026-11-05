@@ -185,7 +185,7 @@ install_mise() {
     fi
 
     printf "  ${COLOR_INFO}⬇ %s${COLOR_RESET}\n" "Installing mise..."
-    curl -fsSL https://mise.jdx.dev/install.sh | sh
+    curl -fsSL https://mise.jdx.dev/install.sh | MISE_INSTALL_HELP=0 sh
     [ -x "$MISE_EXECUTABLE" ] || fail "mise installation failed."
 }
 
