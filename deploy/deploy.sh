@@ -133,9 +133,8 @@ plan_sudo() {
         return
     fi
 
-    printf "\n  💬 Most tools are installed at the user level.\n\
-     A few system packages require sudo.\n\
-     Without it, those packages are expected to be installed already.\n"
+    printf "\n  💬 Most tools install at user level, a few system packages need sudo.\n\
+     Without it, those packages must already be installed.\n"
     if confirm "May this machine use sudo?"; then
         ENABLED_NAMES="$ENABLED_NAMES sudo"
     fi
