@@ -16,6 +16,7 @@ ENABLED_NAMES=""
 BRANCH=""
 MISSING_PACKAGES=""
 INSTALL_MISE=false
+INSTALL_UV=true
 CHECKOUT_STEP=""
 
 COLOR_TITLE='\033[1;34m'   # Bold Blue
@@ -96,6 +97,14 @@ plan_mise() {
     fi
 }
 
+plan_uv() {
+    # mise is not on the PATH yet on a fresh machine, so it is called by path
+    if [ "$INSTALL_MISE" = false ] \
+        && (cd "$HOME" && "$MISE_EXECUTABLE" --quiet which --tool uv@latest uv > /dev/null 2>&1); then
+        INSTALL_UV=false
+    fi
+}
+
 plan_checkout() {
     branch_suffix="${BRANCH:+ (branch $BRANCH)}"
     if ! checkout_exists; then
@@ -151,7 +160,9 @@ print_plan() {
     if [ "$INSTALL_MISE" = true ]; then
         print_step "Install mise to $MISE_EXECUTABLE"
     fi
-    print_step "Install uv through mise"
+    if [ "$INSTALL_UV" = true ]; then
+        print_step "Install uv through mise"
+    fi
     if [ -n "$CHECKOUT_STEP" ]; then
         print_step "$CHECKOUT_STEP"
     fi
@@ -301,6 +312,7 @@ main() {
 
     plan_system_packages
     plan_mise
+    plan_uv
     plan_checkout
     plan_sudo
 
