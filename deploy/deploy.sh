@@ -198,7 +198,7 @@ ensure_uv() {
 }
 
 normalized_repository_url() {
-    printf '%s' "$1" | sed -e 's#^git@github.com:#https://github.com/#' -e 's#\.git$##'
+    printf '%s' "$1" | sed -e 's#^git@github.com:#https://github.com/#' -e 's#/*$##' -e 's#\.git$##'
 }
 
 fail_unless_checkout_of_this_repository() {
