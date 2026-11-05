@@ -295,6 +295,9 @@ main() {
 
     export PATH="$HOME/.local/bin:$PATH"
 
+    print_header "👋 stk setup"
+    printf "  Installs mise and uv, clones stk and applies it to this machine.\n"
+
     plan_system_packages
     plan_mise
     plan_checkout
