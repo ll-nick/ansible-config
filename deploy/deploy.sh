@@ -113,8 +113,8 @@ plan_checkout() {
     current_branch="$(git -C "$CHECKOUT_DIRECTORY" symbolic-ref --quiet --short HEAD || true)"
     branch="${BRANCH:-$current_branch}"
     [ -n "$branch" ] || fail "$CHECKOUT_DIRECTORY is on no branch, please pass --branch."
-    remote_branch="$(git -C "$CHECKOUT_DIRECTORY" ls-remote origin "refs/heads/$branch")" \
-        || fail "Cannot reach the origin of $CHECKOUT_DIRECTORY."
+    remote_branch="$(git -C "$CHECKOUT_DIRECTORY" ls-remote origin "refs/heads/$branch")" ||
+        fail "Cannot reach the origin of $CHECKOUT_DIRECTORY."
     [ -n "$remote_branch" ] || fail "There is no branch $branch in $REPOSITORY_URL."
     remote_commit="$(printf '%s' "$remote_branch" | cut -f1)"
 
@@ -194,8 +194,8 @@ ensure_uv() {
     printf "  ${COLOR_INFO}⬇ %s${COLOR_RESET}\n" "Installing uv through mise..."
     # From the home directory, as a mise config in the current directory could get in the way
     (cd "$HOME" && "$MISE_EXECUTABLE" install --quiet uv@latest)
-    UV_EXECUTABLE="$(cd "$HOME" && "$MISE_EXECUTABLE" --quiet which --tool uv@latest uv)" \
-        || fail "uv installation failed."
+    UV_EXECUTABLE="$(cd "$HOME" && "$MISE_EXECUTABLE" --quiet which --tool uv@latest uv)" ||
+        fail "uv installation failed."
 }
 
 normalized_repository_url() {
