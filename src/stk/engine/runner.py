@@ -302,6 +302,8 @@ def _run_components(
     reporter.run_started([component.name for component in components])
     # Plans are only shown for a dry run or a confirmation, so otherwise skip the work
     plans_are_needed = options.dry_run or not options.assume_yes
+    if plans_are_needed:
+        reporter.planning_started()
     component_plans = (
         [plan_component(component, options.sudo_password) for component in components]
         if plans_are_needed

@@ -8,6 +8,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.prompt import Confirm
 from rich.spinner import Spinner
+from rich.status import Status
 from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
@@ -61,6 +62,7 @@ class RichReporter:
     _running: RunningComponent | None
     _component_announced: bool
     _live: Live | None
+    _planning_status: Status | None
     _run_started_at: float
 
     def __init__(
@@ -75,6 +77,7 @@ class RichReporter:
         self._running = None
         self._component_announced = False
         self._live = None
+        self._planning_status = None
         self._run_started_at = time.monotonic()
 
     def run_started(self, component_names: Sequence[str]) -> None:
@@ -82,7 +85,17 @@ class RichReporter:
         self._total_components = len(component_names)
         self._run_started_at = time.monotonic()
 
+    def planning_started(self) -> None:
+        if self._console.is_terminal and not self._console.is_dumb_terminal:
+            self._planning_status = self._console.status(
+                "Checking what needs to change..."
+            )
+            self._planning_status.start()
+
     def plan(self, component_plans: Sequence[ComponentPlan], visible: bool) -> None:
+        if self._planning_status is not None:
+            self._planning_status.stop()
+            self._planning_status = None
         if not visible:
             return
         tree = Tree("Plan", guide_style="dim")

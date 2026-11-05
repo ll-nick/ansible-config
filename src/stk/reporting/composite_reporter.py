@@ -19,6 +19,10 @@ class CompositeReporter:
         for reporter in self._reporters:
             reporter.run_started(component_names)
 
+    def planning_started(self) -> None:
+        for reporter in self._reporters:
+            reporter.planning_started()
+
     def plan(self, component_plans: Sequence[ComponentPlan], visible: bool) -> None:
         for reporter in self._reporters:
             reporter.plan(component_plans, visible)
