@@ -344,7 +344,9 @@ class RichReporter:
     def _print_box_header(self, title: str) -> None:
         fill = max(self._box_width() - len(title) - 4, 3)
         self._console.print(
-            Text.assemble(("╭─ ", "dim"), (title, "bold"), (" " + "─" * fill, "dim"))
+            Text.assemble(
+                ("╭─ ", "dim"), (title, "bold blue"), (" " + "─" * fill, "dim")
+            )
         )
 
     def _print_box_footer(self, detail: Text | None = None) -> None:
