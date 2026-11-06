@@ -10,6 +10,7 @@ from stk.helpers.links import symlink_file
 from stk.helpers.mise import install_mise_tools, mise_exec
 from stk.machine import HAS_DISPLAY, distribution_ids
 from stk_config.components.mise.mise import MISE
+from stk_config.components.uv.uv import UV
 
 FILES = Path(__file__).resolve().parent / "files"
 CURSOR_THEME_NAME = "catppuccin-mocha-blue-cursors"
@@ -169,7 +170,7 @@ def _install_and_enable_paperwm() -> None:
 GNOME = Component(
     "gnome",
     apply_gnome,
-    depends_on=(MISE,),
+    depends_on=(MISE, UV),
     requires=(HAS_DISPLAY,),
     system_packages=("unzip",),
 )

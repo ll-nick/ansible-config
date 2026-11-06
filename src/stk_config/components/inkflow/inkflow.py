@@ -9,6 +9,7 @@ from stk_config.components.bash.bash import BASH
 from stk_config.components.mise.mise import MISE
 from stk_config.components.neovim.neovim import NEOVIM
 from stk_config.components.nushell.nushell import NUSHELL
+from stk_config.components.uv.uv import UV
 
 FILES = Path(__file__).resolve().parent / "files"
 
@@ -25,6 +26,6 @@ def apply_inkflow() -> None:
 INKFLOW = Component(
     "inkflow",
     apply_inkflow,
-    depends_on=(MISE, BASH, NUSHELL, NEOVIM),
+    depends_on=(MISE, BASH, NUSHELL, NEOVIM, UV),
     requires=(HAS_DISPLAY, has_executable("inkscape")),
 )
