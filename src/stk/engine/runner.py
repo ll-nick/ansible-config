@@ -315,7 +315,6 @@ def _run_components(
     reporter: Reporter,
     log_capture: LogCapture,
 ) -> int:
-    started_at = time.monotonic()
     reporter.run_started([component.name for component in components])
     # Plans are only shown for a dry run or a confirmation, so otherwise skip the work
     plans_are_needed = options.dry_run or not options.assume_yes
@@ -332,6 +331,8 @@ def _run_components(
         return EXIT_SUCCESS
     if needs_confirmation and not _confirmed(reporter):
         return EXIT_FAILURE
+    started_at = time.monotonic()
+    reporter.execution_started()
 
     def execute(component: Component) -> ComponentResult:
         return execute_component(

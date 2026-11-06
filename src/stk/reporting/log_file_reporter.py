@@ -37,6 +37,9 @@ class LogFileReporter:
     def planning_started(self) -> None:
         self._write("planning started")
 
+    def execution_started(self) -> None:
+        self._write("execution started")
+
     def plan(self, component_plans: Sequence[ComponentPlan], _visible: bool) -> None:
         for component_plan in component_plans:
             if component_plan.planning_error is not None:

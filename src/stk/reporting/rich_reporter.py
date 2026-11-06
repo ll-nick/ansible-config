@@ -102,6 +102,9 @@ class RichReporter:
         self._total_components = len(component_names)
         self._run_started_at = time.monotonic()
 
+    def execution_started(self) -> None:
+        self._run_started_at = time.monotonic()
+
     def planning_started(self) -> None:
         if self._console.is_terminal and not self._console.is_dumb_terminal:
             self._planning_status = self._console.status(
