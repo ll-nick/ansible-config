@@ -1,3 +1,4 @@
+import re
 from io import StringIO
 
 from rich.console import Console
@@ -73,8 +74,8 @@ def test_changes_are_listed_and_unchanged_operations_stay_hidden() -> None:
     run(RichReporter(console, 0), [succeeded("bat", operations["bat"])], operations)
 
     text = output.getvalue()
-    assert "● bat" in text
-    assert "Copy config" in text
+    assert "╭─ bat" in text
+    assert re.search(r"Copy\s+config", text)
     assert "Copy theme" not in text
 
 
@@ -86,7 +87,7 @@ def test_changes_are_printed_as_soon_as_they_finish() -> None:
 
     reporter.operation_finished(operation("bat", "Copy config", changed=True))
 
-    assert "Copy config" in output.getvalue()
+    assert re.search(r"Copy\s+config", output.getvalue())
 
 
 def test_verbose_output_includes_unchanged_operations() -> None:
@@ -95,7 +96,7 @@ def test_verbose_output_includes_unchanged_operations() -> None:
 
     run(RichReporter(console, 1), [succeeded("bat", operations["bat"])], operations)
 
-    assert "Copy theme" in output.getvalue()
+    assert re.search(r"Copy\s+theme", output.getvalue())
 
 
 def test_failures_are_always_shown_with_their_output_and_in_the_summary() -> None:
@@ -112,7 +113,8 @@ def test_failures_are_always_shown_with_their_output_and_in_the_summary() -> Non
     run(RichReporter(console, 0), [failed], {})
 
     text = output.getvalue()
-    assert "✘ nushell" in text
+    assert "╭─ nushell" in text
+    assert "✘ failed" in text
     assert "Install tools" in text
     assert "mise ERROR could not download" in text
     assert "1 failed" in text
@@ -152,6 +154,6 @@ def test_ignored_errors_are_shown_as_warnings() -> None:
     run(RichReporter(console, 0), [succeeded("bash", operations["bash"])], operations)
 
     text = output.getvalue()
-    assert "⚠ Clone ll-nick/bash-config (error ignored)" in text
+    assert re.search(r"⚠ Clone\s+ll-nick/bash-config \(error ignored\)", text)
     assert "Repository not found." in text
     assert "1 warnings" in text

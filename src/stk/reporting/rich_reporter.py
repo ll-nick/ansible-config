@@ -30,11 +30,28 @@ SYMBOL_WARNING = "⚠"
 
 PYINFRA_COMMAND_COUNT_PREFIX = "Error: executed"
 
+BOX_MAX_WIDTH = 72
+VERB_COLUMN_WIDTH = 8
+DESTRUCTIVE_VERBS = frozenset({"Remove", "Delete", "Disable", "Uninstall"})
+
 PLAN_MARKERS = {
-    PlannedChange.WILL_CHANGE: (SYMBOL_WILL_CHANGE, "green"),
+    PlannedChange.WILL_CHANGE: (SYMBOL_WILL_CHANGE, ""),
     PlannedChange.CONDITIONAL: ("?", "dim"),
     PlannedChange.UNCHANGED: (" ", "dim"),
 }
+
+
+@dataclass(frozen=True)
+class OperationLabel:
+    verb: str
+    detail: str
+
+
+def split_operation_name(operation_name: str) -> OperationLabel:
+    first_word, _, remainder = operation_name.partition(" ")
+    if first_word.isalpha() and first_word[0].isupper():
+        return OperationLabel(first_word, remainder)
+    return OperationLabel("", operation_name)
 
 
 def format_duration(seconds: float) -> str:
@@ -113,19 +130,26 @@ class RichReporter:
             if not shown and component_plan.planning_error is None:
                 continue
             self._console.print()
-            self._console.print(Text(component_plan.component_name, style="bold"))
+            self._print_box_header(component_plan.component_name)
             if component_plan.planning_error is not None:
                 self._console.print(
-                    Text(
-                        f"  {SYMBOL_FAILED} could not plan: "
-                        + component_plan.planning_error,
-                        "red",
+                    Text.assemble(
+                        ("│ ", "dim"),
+                        (f"{SYMBOL_FAILED} could not plan: ", "red"),
+                        component_plan.planning_error,
                     )
                 )
             for planned in shown:
                 marker, style = PLAN_MARKERS[planned.change]
-                operation_name = self._shorten(planned.description.operation_name)
-                self._console.print(Text(f"  {marker} {operation_name}", style))
+                self._console.print(
+                    self._operation_row(
+                        marker,
+                        style,
+                        planned.description.operation_name,
+                        dimmed=planned.change is not PlannedChange.WILL_CHANGE,
+                    )
+                )
+            self._print_box_footer()
         self._console.print()
         self._console.print(
             Text(
@@ -158,15 +182,8 @@ class RichReporter:
             return
         if not self._component_announced:
             self._component_announced = True
-            symbol, style = (
-                (SYMBOL_CHANGED, "green")
-                if result.changed
-                else (SYMBOL_UNCHANGED, "dim")
-            )
             self._console.print()
-            self._console.print(
-                self._status_line(symbol, style, result.description.component_name, "")
-            )
+            self._print_box_header(result.description.component_name)
         self._print_operation(result)
 
     def component_finished(self, result: ComponentResult) -> None:
@@ -193,10 +210,13 @@ class RichReporter:
         if result.outcome is ComponentOutcome.FAILED and result.failure is not None:
             if not self._component_announced:
                 self._console.print()
-            self._console.print(
-                self._status_line(SYMBOL_FAILED, "bold red", name, duration)
-            )
+                self._print_box_header(name)
+            self._print_box_footer(Text(f"{SYMBOL_FAILED} failed · {duration}", "red"))
             self._console.print(self._failure_panel(result))
+            return
+
+        if self._component_announced:
+            self._print_box_footer(Text(duration, "dim"))
 
     def run_finished(
         self, results: Sequence[ComponentResult], duration_seconds: float
@@ -282,13 +302,15 @@ class RichReporter:
         )
 
     def _print_operation(self, operation: OperationResult) -> None:
-        name = self._shorten(operation.description.operation_name)
+        name = operation.description.operation_name
         if operation.ignored_error_output is not None:
             self._console.print(
-                Text(f"    {SYMBOL_WARNING} {name} (error ignored)", style="yellow")
+                self._operation_row(
+                    SYMBOL_WARNING, "yellow", name, suffix=" (error ignored)"
+                )
             )
             for line in operation.ignored_error_output.splitlines():
-                self._console.print(Text(f"        {line}", style="dim"))
+                self._print_output_line(line)
         else:
             symbol, style = (
                 (SYMBOL_CHANGED, "green")
@@ -296,11 +318,61 @@ class RichReporter:
                 else (SYMBOL_UNCHANGED, "dim")
             )
             duration = format_duration(operation.duration_seconds)
-            self._console.print(Text(f"    {symbol} {name} ({duration})", style=style))
+            self._console.print(
+                self._operation_row(
+                    symbol,
+                    style,
+                    name,
+                    dimmed=not operation.changed,
+                    suffix=f" ({duration})",
+                )
+            )
         if self._verbosity >= 2:
             for line in (operation.stdout + "\n" + operation.stderr).splitlines():
                 if line.strip():
-                    self._console.print(Text(f"        {line}", style="dim"))
+                    self._print_output_line(line)
+
+    def _print_output_line(self, line: str) -> None:
+        self._console.print(Text.assemble(("│     ", "dim"), (line, "dim")))
+
+    def _box_width(self) -> int:
+        return min(self._console.width, BOX_MAX_WIDTH)
+
+    def _print_box_header(self, title: str) -> None:
+        fill = max(self._box_width() - len(title) - 4, 3)
+        self._console.print(
+            Text.assemble(("╭─ ", "dim"), (title, "bold"), (" " + "─" * fill, "dim"))
+        )
+
+    def _print_box_footer(self, detail: Text | None = None) -> None:
+        if detail is None:
+            self._console.print(Text("╰" + "─" * (self._box_width() - 1), "dim"))
+            return
+        self._console.print(Text.assemble(("╰─ ", "dim"), detail))
+
+    def _operation_row(
+        self,
+        symbol: str,
+        symbol_style: str,
+        operation_name: str,
+        dimmed: bool = False,
+        suffix: str = "",
+    ) -> Text:
+        label = split_operation_name(self._shorten(operation_name))
+        if dimmed:
+            verb_style = "dim"
+        elif label.verb in DESTRUCTIVE_VERBS:
+            verb_style = "bold red"
+        else:
+            verb_style = "bold"
+        return Text.assemble(
+            ("│ ", "dim"),
+            (f"{symbol} ", symbol_style),
+            (label.verb.ljust(VERB_COLUMN_WIDTH), verb_style),
+            " ",
+            (label.detail, "dim" if dimmed else ""),
+            (suffix, "dim"),
+        )
 
     def _failure_panel(self, result: ComponentResult) -> Panel:
         failure = result.failure
