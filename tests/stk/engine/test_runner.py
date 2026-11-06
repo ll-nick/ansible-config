@@ -1,12 +1,14 @@
 from collections.abc import Callable
+from pathlib import Path
 
 from pyinfra.api.state import BaseStateCallback
+from pyinfra.operations import files
 
 from stk.engine.component import Component
 from stk.engine.pyinfra_adapters import operation_order
-from stk.engine.runner import prepare_state, run_in_dependency_order
+from stk.engine.runner import collect_plan, prepare_state, run_in_dependency_order
 from stk.helpers.commands import run_command
-from stk.reporting.reporter import ComponentOutcome, ComponentResult
+from stk.reporting.reporter import ComponentOutcome, ComponentResult, PlannedChange
 
 
 def noop() -> None:
@@ -85,3 +87,35 @@ def test_operations_are_named_after_their_component() -> None:
 
     op_hash = operation_order(state)[0]
     assert state.op_meta[op_hash].names == {"greeter | Say hello"}
+
+
+def plan_changes(path: Path) -> list[PlannedChange]:
+    def apply() -> None:
+        created = files.file(name="Create marker", path=str(path), present=True)
+        run_command(
+            "Reload",
+            "true",
+            when_any_changed=[created],
+        )
+
+    state = prepare_state(Component("marker", apply), BaseStateCallback(), None)
+    return [planned.change for planned in collect_plan(state)]
+
+
+def test_a_command_depending_on_a_pending_change_is_planned_to_run(
+    tmp_path: Path,
+) -> None:
+    changes = plan_changes(tmp_path / "missing")
+
+    assert changes == [PlannedChange.WILL_CHANGE, PlannedChange.WILL_CHANGE]
+
+
+def test_a_command_depending_on_nothing_pending_is_planned_not_to_run(
+    tmp_path: Path,
+) -> None:
+    existing = tmp_path / "existing"
+    existing.touch()
+
+    changes = plan_changes(existing)
+
+    assert changes == [PlannedChange.UNCHANGED, PlannedChange.UNCHANGED]

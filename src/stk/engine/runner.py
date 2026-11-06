@@ -14,6 +14,7 @@ from pyinfra.api.operations import run_ops
 from pyinfra.api.state import BaseStateCallback, State
 
 from stk.engine.component import Component
+from stk.engine.conditions import AnyChanged
 from stk.engine.pyinfra_adapters import (
     create_local_state,
     operation_order,
@@ -152,16 +153,32 @@ def prepare_state(
 
 def collect_plan(state: State) -> list[PlannedOperation]:
     planned_operations: list[PlannedOperation] = []
+    # Operations come in order, so what a condition depends on is resolved by then
+    will_run_by_meta: dict[int, bool] = {}
     for op_hash in operation_order(state):
         change = PlannedChange.UNCHANGED
         for host in state.inventory.get_active_hosts():
             operation_data = state.get_op_data_for_host(host, op_hash)
-            if not operation_data.operation_meta.will_change:
-                continue
-            if operation_data.global_arguments["_if"]:
-                change = PlannedChange.CONDITIONAL
+            meta = operation_data.operation_meta
+            condition = operation_data.global_arguments["_if"]
+            if not meta.will_change:
+                host_change = PlannedChange.UNCHANGED
+            elif isinstance(condition, AnyChanged):
+                host_change = (
+                    PlannedChange.WILL_CHANGE
+                    if any(
+                        will_run_by_meta.get(id(dependency), dependency.will_change)
+                        for dependency in condition.dependencies
+                    )
+                    else PlannedChange.UNCHANGED
+                )
+            elif condition:
+                host_change = PlannedChange.CONDITIONAL
             else:
-                change = PlannedChange.WILL_CHANGE
+                host_change = PlannedChange.WILL_CHANGE
+            will_run_by_meta[id(meta)] = host_change is PlannedChange.WILL_CHANGE
+            if host_change is not PlannedChange.UNCHANGED:
+                change = host_change
         planned_operations.append(
             PlannedOperation(describe_operation(state, op_hash), change)
         )

@@ -2,7 +2,8 @@ from collections.abc import Sequence
 
 from pyinfra.api.operation import OperationMeta
 from pyinfra.operations import server
-from pyinfra.operations.util import any_changed
+
+from stk.engine.conditions import AnyChanged
 
 
 def run_command(
@@ -14,5 +15,5 @@ def run_command(
     server.shell(
         name=name,
         commands=[command],
-        _if=any_changed(*when_any_changed) if when_any_changed else [],
+        _if=AnyChanged(tuple(when_any_changed)) if when_any_changed else [],
     )
